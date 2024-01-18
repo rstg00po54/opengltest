@@ -13,6 +13,7 @@ endif
 CFLAG:= -lfreeglut -lglew32 -lopengl32 -lglfw3
 
 all: main.cpp glad.c
+	echo $(OS)
 	gcc  -o glad.o   -c glad.c
 	g++ -o main.o -c main.cpp  
 	g++     glad.o main.o  -o test $(CFLAG)
