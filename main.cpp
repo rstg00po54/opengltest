@@ -47,6 +47,16 @@ static const struct
 
 
 };
+
+unsigned int indices[] = {
+    // 注意索引从0开始! 
+    // 此例的索引(0,1,2,3)就是顶点数组vertices的下标，
+    // 这样可以由下标代表顶点组合成矩形
+
+    0, 1, 2, // 第一个三角形
+    3, 4, 5  // 第二个三角形
+};
+
 //  varying变量可以在Vertex Shader和Fragment Shader之间传递数据
 static const char* vertex_shader_text =
 "#version 330 core\n"
@@ -108,7 +118,7 @@ void testglm();
 int main(void)
 {
 	GLFWwindow* window;
-	GLuint vertex_buffer, vertex_shader, fragment_shader, program;
+	GLuint VAO, EBO, vertex_shader, fragment_shader, program;
 	GLint mvp_location, vpos_location, vcol_location, aTexCoord;
 	testglm();
 	// return 0;
@@ -195,11 +205,16 @@ int main(void)
     stbi_image_free(data);
 
 
+	glGenBuffers(1, &EBO);
+
     // NOTE: OpenGL error checks have been omitted for brevity
-    glGenBuffers(1, &vertex_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glGenBuffers(1, &VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VAO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
  
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
     glCompileShader(vertex_shader);
@@ -301,8 +316,11 @@ int main(void)
 		glUseProgram(program);
 		// glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &viewMatrix[0]);
 		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &trans[0]);
-		glDrawArrays(GL_TRIANGLES, 0, 12);
- 
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		// glBindVertexArray(VAO);
+		// glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+		// glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         // 确保帧缓冲区完整性
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
