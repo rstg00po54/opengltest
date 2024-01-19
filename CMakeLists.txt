@@ -6,7 +6,7 @@ project(test)
 include_directories(SYSTEM ./)
 find_package(glfw3 REQUIRED)
  
-file(GLOB project_file glad.c main.cpp stb_image.cpp)
+file(GLOB project_file glad.c main.cpp stb_image.cpp testglm.cpp)
 add_executable(${PROJECT_NAME} ${project_file})
  
 target_link_libraries(${PROJECT_NAME} glfw)

@@ -26,16 +26,26 @@ static const struct
     float x, y, z;
     float r, g, b;
     float tx, ty;
-} vertices[10] =
+} vertices[] =
 {
 //     ---- 位置 ----       ---- 颜色 ----     - 纹理坐标 -
-     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 右上
-     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, Size_h*2,   // 右下
-    -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, Size_h*2,   // 左下
+     0.5f,  0.5f, 0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 右上
+     0.5f, -0.5f, 0.5f,   0.0f, 1.0f, 0.0f,   1.0f, Size_h*2,   // 右下
+    -0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   0.0f, Size_h*2,   // 左下
 
-    -0.5f, -0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, Size_h*2,    // 左下
-    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, Size_h*3,    // 左上
-     0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   1.0f, Size_h*3,    // 右上
+    -0.5f, -0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   0.0f, Size_h*2,    // 左下
+    -0.5f,  0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   0.0f, Size_h*3,    // 左上
+     0.5f,  0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   1.0f, Size_h*3,    // 右上
+
+     0.5f,  0.5f, 0.5f,   1.0f, 0.0f, 0.0f,   0.0f, Size_h*4,   // 左上
+     0.5f,  0.5f,-0.5f,   0.0f, 1.0f, 0.0f,   1.0f, Size_h*4,   // 右上
+     0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   0.0f, Size_h*3,   // 左下
+
+     0.5f, -0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   0.0f, Size_h*3,    // 左下
+     0.5f,  0.5f,-0.5f,   1.0f, 1.0f, 0.0f,   1.0f, Size_h*4,    // 右上
+     0.5f, -0.5f,-0.5f,   1.0f, 1.0f, 1.0f,   1.0f, Size_h*3,    // 右下
+
+
 };
 //  varying变量可以在Vertex Shader和Fragment Shader之间传递数据
 static const char* vertex_shader_text =
@@ -44,12 +54,12 @@ static const char* vertex_shader_text =
 "uniform mat4 MVP;\n"
 "attribute vec3 vCol0;\n"
 "attribute vec2 aTex;\n"
-"attribute vec2 vPos;\n"
+"attribute vec3 vPos;\n"
 "varying vec3 color;\n"
 "varying vec2 TexCoord;\n"
 "void main()\n"
 "{\n"
-"    gl_Position = MVP * vec4(vPos, 0.0, 1.0);\n"
+"    gl_Position = MVP * vec4(vPos, 1.0);\n"
 "    color = vCol0;\n"
 "    TexCoord = aTex;\n"
 "}\n";
@@ -94,12 +104,14 @@ void getLog(GLint fragment_shader)
             fragment_shader = 0;
         }
 }
+void testglm();
 int main(void)
 {
-    GLFWwindow* window;
-    GLuint vertex_buffer, vertex_shader, fragment_shader, program;
-    GLint mvp_location, vpos_location, vcol_location, aTexCoord;
- 
+	GLFWwindow* window;
+	GLuint vertex_buffer, vertex_shader, fragment_shader, program;
+	GLint mvp_location, vpos_location, vcol_location, aTexCoord;
+	testglm();
+	// return 0;
     glfwSetErrorCallback(error_callback);
         int i = 0;
 		glm::vec3 A = glm::normalize(glm::vec3(1));
@@ -239,7 +251,7 @@ int main(void)
         pointer 指向缓冲对象中第一个顶点属性的第一个分量的地址。（offset的作用）
     */
     glEnableVertexAttribArray(vpos_location);
-    glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (void*) 0);
+    glVertexAttribPointer(vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (void*) 0);
 
     if(vcol_location > -1){
 
@@ -265,15 +277,31 @@ int main(void)
  
         glBindTexture(GL_TEXTURE_2D, texture);
         mat4x4_identity(m);
-        mat4x4_rotate_Z(m, m, (float) 0.1f);
-        mat4x4_rotate_X(m, m, (float) 0.5f);
-        mat4x4_rotate_Y(m, m, (float) 0.5f);
+		float t = (float)glfwGetTime();
+		// t = -90.0f;
+		t *= 90;
+
+
+
+#if 0
+        // mat4x4_rotate_Z(m, m, (float) t);
+        // mat4x4_rotate_Z(m, m, (float) 0.1f);
+        mat4x4_rotate_X(m, m, (float) t);
+        mat4x4_rotate_Y(m, m, (float) t);
         mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
         mat4x4_mul(mvp, p, m);
- 
-        glUseProgram(program);
-        glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        // glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
+#else
+		glm::vec4 vec2(1.0f, 0.0f, 0.0f, 1.0f);
+		glm::mat4 trans = glm::mat4(1.0f);
+		// 逆时针旋转90度。然后缩放0.5倍
+		// 旋转
+		trans = glm::rotate(trans, glm::radians(t), glm::vec3(0.0, 1.0, 0.0));
+#endif
+		glUseProgram(program);
+		// glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &viewMatrix[0]);
+		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &trans[0]);
+		glDrawArrays(GL_TRIANGLES, 0, 12);
  
 
         // 确保帧缓冲区完整性
