@@ -118,7 +118,7 @@ void testglm();
 int main(void)
 {
 	GLFWwindow* window;
-	GLuint VAO, EBO, vertex_shader, fragment_shader, program;
+	GLuint VAO, VBO, EBO, vertex_shader, fragment_shader, program;
 	GLint mvp_location, vpos_location, vcol_location, aTexCoord;
 	testglm();
 	// return 0;
@@ -201,12 +201,13 @@ int main(void)
 	}
 	stbi_image_free(data);
 
-
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
+	// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+	glBindVertexArray(VAO);
 
-	// NOTE: OpenGL error checks have been omitted for brevity
-	glGenBuffers(1, &VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -274,7 +275,7 @@ int main(void)
 		glEnableVertexAttribArray(aTexCoord);
 		glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (void*) (sizeof(float) * 6));
 	}
-
+	glBindVertexArray(0);
 	while (!glfwWindowShouldClose(window))
 	{
 		float ratio;
@@ -313,8 +314,9 @@ int main(void)
 		glUseProgram(program);
 		// glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &viewMatrix[0]);
 		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &trans[0]);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		// glBindVertexArray(VAO);
+		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		glBindVertexArray(VAO);
+		// glBindVertexArray(VBO);
 		// glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 		// glDrawArrays(GL_TRIANGLES, 0, 3);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

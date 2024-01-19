@@ -27,3 +27,5 @@ VAO（Vertex Array Object）和VBO（Vertex Buffer Object）是OpenGL中用于�
    - 解绑VAO：`glBindVertexArray`
 
 通过结合使用VAO和VBO，你可以更有效地组织和管理顶点数据，提高OpenGL应用程序的性能。这两个概念通常与渲染管线中的顶点着色器一起使用，以绘制图形和场景。
+
+RenderDoc
