@@ -44,11 +44,45 @@ static const struct
 	 0.5f, -0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   0.0f, Size_h*3,	// 左下
 	 0.5f,  0.5f,-0.5f,   1.0f, 1.0f, 0.0f,   1.0f, Size_h*4,	// 右上
 	 0.5f, -0.5f,-0.5f,   1.0f, 1.0f, 1.0f,   1.0f, Size_h*3,	// 右下
-
-
 };
 
-unsigned int indices[] = {
+typedef struct
+{
+	float x, y, z;
+	float r, g, b;
+	float tx, ty;
+} vertices0;
+
+
+/*
+		  Y
+		  |
+          1--------2
+         /        /|
+        /        / |
+       0--------3  6-----X
+       |  5     | /
+       |        |/
+       4--------7
+	  /
+	 Z
+*/
+
+
+vertices0 V0[] = 
+{
+//	 ---- 位置 ----	   		---- 颜色 ----	 	- 纹理坐标 -
+	0.0f,  0.5f, 0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 0
+	0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 1
+	0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 2
+	0.0f,  0.5f, 0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 3
+	0.0f,  0.0f, 0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 4
+	0.0f,  0.0f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 5
+	0.5f,  0.0f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 6
+	0.5f,  0.0f, 0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 7
+};
+
+unsigned int indices[36] = {
 	// 注意索引从0开始! 
 	// 此例的索引(0,1,2,3)就是顶点数组vertices的下标，
 	// 这样可以由下标代表顶点组合成矩形
@@ -208,7 +242,7 @@ int main(void)
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(V0), V0, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
@@ -264,16 +298,16 @@ int main(void)
 		pointer 指向缓冲对象中第一个顶点属性的第一个分量的地址。（offset的作用）
 	*/
 	glEnableVertexAttribArray(vpos_location);
-	glVertexAttribPointer(vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (void*) 0);
+	glVertexAttribPointer(vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(V0[0]), (void*) 0);
 
 	if(vcol_location > -1){
 
 		glEnableVertexAttribArray(vcol_location);
-		glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (void*) (sizeof(float) * 3));
+		glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(V0[0]), (void*) (sizeof(float) * 3));
 	}
 	if(aTexCoord > -1){
 		glEnableVertexAttribArray(aTexCoord);
-		glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (void*) (sizeof(float) * 6));
+		glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(V0[0]), (void*) (sizeof(float) * 6));
 	}
 	glBindVertexArray(0);
 	while (!glfwWindowShouldClose(window))
