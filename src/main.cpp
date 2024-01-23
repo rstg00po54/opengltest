@@ -7,7 +7,7 @@
 #include <stb_image.h>
 #include <stdlib.h>
 #include <stdio.h>
- 
+ #include <sys/time.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -21,12 +21,17 @@
 #include "stb_image_write.h"
 static int flag;
 #define Size_h (1.0f/6)
-static const struct
+
+
+typedef struct
 {
 	float x, y, z;
 	float r, g, b;
 	float tx, ty;
-} vertices[] =
+} vertices;
+
+
+static vertices vertices0[] =
 {
 //	 ---- 位置 ----	   ---- 颜色 ----	 - 纹理坐标 -
 	 0.5f,  0.5f, 0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 右上
@@ -44,17 +49,52 @@ static const struct
 	 0.5f, -0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   0.0f, Size_h*3,	// 左下
 	 0.5f,  0.5f,-0.5f,   1.0f, 1.0f, 0.0f,   1.0f, Size_h*4,	// 右上
 	 0.5f, -0.5f,-0.5f,   1.0f, 1.0f, 1.0f,   1.0f, Size_h*3,	// 右下
-
-
 };
 
-unsigned int indices[] = {
+// typedef struct
+// {
+// 	float x, y, z;
+// 	float r, g, b;
+// 	float tx, ty;
+// } vertices0;
+
+
+/*
+		  Y
+		  |
+          1--------2
+         /        /|
+        /        / |
+       0--------3  6-----X
+       |  5     | /
+       |        |/
+       4--------7
+	  /
+	 Z
+*/
+
+
+vertices V0[] = 
+{
+//	 ---- 位置 ----	   		---- 颜色 ----	 	- 纹理坐标 -
+	0.0f,  0.5f, 0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 0
+	0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   0.0f, Size_h*3,   // 1
+	0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 2
+	0.0f,  0.5f, 0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 3
+	0.0f,  0.0f, 0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 4
+	0.0f,  0.0f, 0.0f,   1.0f, 0.0f, 0.0f,   0.0f, 0.0f,   // 5
+	0.5f,  0.0f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 6
+	0.5f,  0.0f, 0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 7
+};
+
+unsigned int indices[36] = {
 	// 注意索引从0开始! 
 	// 此例的索引(0,1,2,3)就是顶点数组vertices的下标，
 	// 这样可以由下标代表顶点组合成矩形
-
-	0, 1, 2, // 第一个三角形
-	3, 4, 5  // 第二个三角形
+	0, 1, 2,
+	3, 4, 5, // 第一个三角形
+	6, 7, 8,  // 第二个三角形
+	9, 10, 11  // 第二个三角形
 };
 
 //  varying变量可以在Vertex Shader和Fragment Shader之间传递数据
@@ -67,9 +107,13 @@ static const char* vertex_shader_text =
 "attribute vec3 vPos;\n"
 "varying vec3 color;\n"
 "varying vec2 TexCoord;\n"
+"uniform mat4 model;\n"
+"uniform mat4 view;\n"
+"uniform mat4 projection;\n"
 "void main()\n"
 "{\n"
-"	gl_Position = MVP * vec4(vPos, 1.0);\n"
+"	gl_Position = projection * view * model * vec4(vPos, 1.0);\n"
+// "	gl_Position = MVP * vec4(vPos, 1.0);\n"
 "	color = vCol0;\n"
 "	TexCoord = aTex;\n"
 "}\n";
@@ -208,7 +252,7 @@ int main(void)
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices0), vertices0, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
@@ -263,17 +307,19 @@ int main(void)
 		stride （步长）指定连续两个顶点属性间的字节数。如果为 0，则表示顶点属性是紧密排列的。
 		pointer 指向缓冲对象中第一个顶点属性的第一个分量的地址。（offset的作用）
 	*/
-	glEnableVertexAttribArray(vpos_location);
-	glVertexAttribPointer(vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (void*) 0);
+	if(vpos_location > -1){
+		glEnableVertexAttribArray(vpos_location);
+		glVertexAttribPointer(vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertices), (void*) 0);
+	}
 
 	if(vcol_location > -1){
 
 		glEnableVertexAttribArray(vcol_location);
-		glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (void*) (sizeof(float) * 3));
+		glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertices), (void*) (sizeof(float) * 3));
 	}
 	if(aTexCoord > -1){
 		glEnableVertexAttribArray(aTexCoord);
-		glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (void*) (sizeof(float) * 6));
+		glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(vertices), (void*) (sizeof(float) * 6));
 	}
 	glBindVertexArray(0);
 	while (!glfwWindowShouldClose(window))
@@ -312,14 +358,30 @@ int main(void)
 		trans = glm::rotate(trans, glm::radians(t), glm::vec3(0.0, 1.0, 0.0));
 #endif
 		glUseProgram(program);
-		// glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &viewMatrix[0]);
+
+		// create transformations
+		glm::mat4 model         = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+		glm::mat4 view          = glm::mat4(1.0f);
+		glm::mat4 projection    = glm::mat4(1.0f);
+		model = glm::rotate(model, glm::radians(t), glm::vec3(0.0, 1.0, 0.0));
+		model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		view  = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+		projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+		// retrieve the matrix uniform locations
+		unsigned int modelLoc = glGetUniformLocation(program, "model");
+		unsigned int viewLoc  = glGetUniformLocation(program, "view");
+		unsigned int projectionLoc  = glGetUniformLocation(program, "projection");
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
 		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &trans[0]);
 		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		glBindVertexArray(VAO);
 		// glBindVertexArray(VBO);
 		// glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 		// glDrawArrays(GL_TRIANGLES, 0, 3);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
 
 		// 确保帧缓冲区完整性
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -349,6 +411,11 @@ int main(void)
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		long milliseconds = (long long)(tv.tv_sec) * 1000 + (long long)(tv.tv_usec) / 1000;
+		printf("%lld ms, diff %d ms, \n", milliseconds);
+
 	}
 
 	glfwDestroyWindow(window);
