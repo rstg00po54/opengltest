@@ -19,6 +19,13 @@
 #include <vector>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
+
+
+// imgui
+#include "../../imgui/imgui.h"
+#include "../../imgui/backends/imgui_impl_glfw.h"
+#include "../../imgui/backends/imgui_impl_opengl3.h"
+
 static int flag;
 #define Size_h (1.0f/6)
 
@@ -177,6 +184,9 @@ static const char* fragment_shader_text =
 "	gl_FragColor = texture(ourTexture, vec2(TexCoord.x,1.0 -TexCoord.y));\n"
 "}\n";
 
+void processInput(GLFWwindow *window);
+
+
 static void error_callback(int error, const char* description)
 {
 	fprintf(stderr, "Error: %s\n", description);
@@ -205,6 +215,37 @@ void getLog(GLint fragment_shader)
 			fragment_shader = 0;
 		}
 }
+
+// camera
+glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+// timing
+float deltaTime = 0.0f;	// time between current frame and last frame
+float lastFrame = 0.0f;
+void processInput(GLFWwindow *window)
+{
+	int flag = 0;
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+
+	float cameraSpeed = static_cast<float>(2.5 * deltaTime * 0.001);
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
+		printf("w key down\n");
+		flag = 1;
+		cameraPos += cameraSpeed * cameraFront;
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		cameraPos -= cameraSpeed * cameraFront;
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	if(flag){
+		printf("%f,%f,%f, deltaTime %f\n", cameraPos.x, cameraPos.y, cameraPos.z, deltaTime);
+	}
+}
+
 void testglm();
 int main(void)
 {
@@ -212,6 +253,9 @@ int main(void)
 	GLuint VAO, VBO, EBO, vertex_shader, fragment_shader, program;
 	GLint mvp_location, vpos_location, vcol_location, aTexCoord;
 	testglm();
+
+
+
 	// return 0;
 	glfwSetErrorCallback(error_callback);
 		int i = 0;
@@ -266,6 +310,19 @@ int main(void)
 	glfwSetKeyCallback(window, key_callback);
  
 	glfwMakeContextCurrent(window);
+
+
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext(); //创建上下文
+	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // 允许键盘控制
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // 允许游戏手柄控制
+
+	// 设置渲染器后端
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init();
+
 	// gladLoadGL(glfwGetProcAddress);
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 	glfwSwapInterval(1);
@@ -371,18 +428,34 @@ int main(void)
 		glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(vertices), (void*) (sizeof(float) * 6));
 	}
 	glBindVertexArray(0);
+	float degrees = 0.f;
+	glm::vec3 trans_vec3(0.f, 0.f, 0.f);
 	while (!glfwWindowShouldClose(window))
 	{
 		float ratio;
 		int width, height;
 		mat4x4 m, p, mvp;
+
+
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+        // 在这里添加你的 ImGui 窗口设置
+        ImGui::Begin("Custom Window");
+
+        // 设置 Text 窗口的大小
+        // ImGui::SetWindowSize(ImVec2(400, 300));
+
+
+		processInput(window);
  
 		glfwGetFramebufferSize(window, &width, &height);
 		ratio = width / (float) height;
 
 		glViewport(0, 0, width, height);
-		// glClear(GL_COLOR_BUFFER_BIT);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		
 		glBindTexture(GL_TEXTURE_2D, texture);
 		mat4x4_identity(m);
 		float t = (float)glfwGetTime();
@@ -412,9 +485,20 @@ int main(void)
 		glm::mat4 model         = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
 		glm::mat4 view          = glm::mat4(1.0f);
 		glm::mat4 projection    = glm::mat4(1.0f);
-		model = glm::rotate(model, glm::radians(t), glm::vec3(0.0, 1.0, 0.0));
-		model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		view  = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+		// model = glm::rotate(model, glm::radians(t), glm::vec3(0.0, 1.0, 0.0));
+		model = glm::rotate(model, glm::radians(degrees), glm::vec3(1.0f, 0.0f, 0.0f));
+
+		// 设置观察者的位置、观察点的位置和相机的上方向
+		glm::vec3 eye 		= glm::vec3(0.0f, 0.0f, 3.0f);
+		glm::vec3 center	= glm::vec3(0.0f, 0.0f, 0.0f);
+		glm::vec3 up 		= glm::vec3(0.0f, 1.0f, 0.0f);
+
+		// 创建 view 矩阵
+		view = glm::lookAt(eye, center, up);
+		// view  = glm::translate(view, trans_vec3);//平移
+
+
+
 		projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
 		// retrieve the matrix uniform locations
 		unsigned int modelLoc = glGetUniformLocation(program, "model");
@@ -456,15 +540,26 @@ int main(void)
 				free(pixels);
 			}
 		}
+		ImGui::Text("Avg fps: %.3f", ImGui::GetIO().Framerate);
+		ImGui::SliderFloat("Degree", &degrees, -180.0f, 180.0f);
+		ImGui::SliderFloat3("Trans_Axis.xyz", &trans_vec3.x, -10.0, 10.0);
+		// ImGui::SliderFloat3("Translation.xyz", &translation.x, -1.0, 1.0);
+		// ImGui::SliderFloat("Fov", &fov, 1.0f, 360.0f);
+		ImGui::End();
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
+
 		struct timeval tv;
 		gettimeofday(&tv, NULL);
 		static long last;
 		long milliseconds = (long long)(tv.tv_sec) * 1000 + (long long)(tv.tv_usec) / 1000;
-		printf("diff %d ms, \n", milliseconds-last);
+		// printf("diff %d ms, \n", milliseconds-last);
+		deltaTime = milliseconds-last;
 		last = milliseconds;
 
 	}
