@@ -8,5 +8,5 @@ project(MainProject)
 # 添加子项目 ProjectA
 
 # 添加子项目 ProjectB
-add_subdirectory(SDLDemo)
+# add_subdirectory(SDLDemo)
 add_subdirectory(LearnDemo1)

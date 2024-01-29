@@ -8,4 +8,5 @@ find_package(glfw3 REQUIRED)
  
 add_executable(SDLDemo ../src/glad.c main.cpp)
  
-target_link_libraries(SDLDemo glfw SDL2)
+# target_link_libraries(SDLDemo glfw SDL2 glew32)
+target_link_libraries(SDLDemo PRIVATE opengl32 glfw SDL2 glew32)

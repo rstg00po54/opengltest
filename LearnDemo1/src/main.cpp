@@ -30,25 +30,70 @@ typedef struct
 	float tx, ty;
 } vertices;
 
-
+/*
+		      Y
+		      |
+          1--------2
+         /        /|
+        /        / |
+       0--------3  6-----X
+       |  5     | /
+       |        |/
+       4--------7
+	  	   /
+		  Z
+*/
 static vertices vertices0[] =
 {
 //	 ---- 位置 ----	   ---- 颜色 ----	 - 纹理坐标 -
-	 0.5f,  0.5f, 0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 右上
-	 0.5f, -0.5f, 0.5f,   0.0f, 1.0f, 0.0f,   1.0f, Size_h*2,   // 右下
-	-0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   0.0f, Size_h*2,   // 左下
+// 下
+	-0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   0.0f, Size_h*1,   // 左下 4
+	-0.5f, -0.5f,-0.5f,   1.0f, 0.0f, 0.0f,   0.0f, Size_h*2,   // 左上 5
+	 0.5f, -0.5f,-0.5f,   1.0f, 1.0f, 1.0f,   1.0f, Size_h*2,   // 右上 6
 
-	-0.5f, -0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   0.0f, Size_h*2,	// 左下
-	-0.5f,  0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   0.0f, Size_h*3,	// 左上
-	 0.5f,  0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   1.0f, Size_h*3,	// 右上
+	-0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   0.0f, Size_h*1,	// 左下 4
+	 0.5f, -0.5f,-0.5f,   1.0f, 1.0f, 1.0f,   1.0f, Size_h*2,	// 右上 6
+	 0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   1.0f, Size_h*1,	// 右下 7	
+// 后
+	-0.5f, -0.5f,-0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*1,   // 右下 5
+	 0.5f,  0.5f,-0.5f,   0.0f, 1.0f, 0.0f,   0.0f, Size_h*2,   // 左上 2
+	-0.5f,  0.5f,-0.5f,   0.0f, 1.0f, 0.0f,   1.0f, Size_h*2,   // 右上 1
 
-	 0.5f,  0.5f, 0.5f,   1.0f, 0.0f, 0.0f,   0.0f, Size_h*4,   // 左上
-	 0.5f,  0.5f,-0.5f,   0.0f, 1.0f, 0.0f,   1.0f, Size_h*4,   // 右上
-	 0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   0.0f, Size_h*3,   // 左下
+	-0.5f, -0.5f,-0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*1,   // 右下 5
+	 0.5f, -0.5f,-0.5f,   1.0f, 1.0f, 1.0f,   0.0f, Size_h*1,   // 左下 6
+	 0.5f,  0.5f,-0.5f,   0.0f, 1.0f, 0.0f,   0.0f, Size_h*2,   // 左上 2
+// 左
+	-0.5f, -0.5f,-0.5f,   1.0f, 0.0f, 0.0f,   0.0f, Size_h*2,   // 左下 5
+	-0.5f,  0.5f,-0.5f,   0.0f, 1.0f, 0.0f,   0.0f, Size_h*3,   // 左上 1
+	-0.5f,  0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   1.0f, Size_h*3,   // 右上 0
 
-	 0.5f, -0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   0.0f, Size_h*3,	// 左下
-	 0.5f,  0.5f,-0.5f,   1.0f, 1.0f, 0.0f,   1.0f, Size_h*4,	// 右上
-	 0.5f, -0.5f,-0.5f,   1.0f, 1.0f, 1.0f,   1.0f, Size_h*3,	// 右下
+	-0.5f, -0.5f,-0.5f,   1.0f, 0.0f, 0.0f,   0.0f, Size_h*2,   // 左下 5
+	-0.5f,  0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   1.0f, Size_h*3,   // 右上 0
+	-0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   1.0f, Size_h*2,   // 右下 4
+// 前
+	 0.5f,  0.5f, 0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 右上 3
+	 0.5f, -0.5f, 0.5f,   0.0f, 1.0f, 0.0f,   1.0f, Size_h*2,   // 右下 7
+	-0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   0.0f, Size_h*2,   // 左下 4
+
+	-0.5f, -0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   0.0f, Size_h*2,	// 左下 4
+	-0.5f,  0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   0.0f, Size_h*3,	// 左上 0
+	 0.5f,  0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   1.0f, Size_h*3,	// 右上 3
+// 右
+	 0.5f,  0.5f, 0.5f,   1.0f, 0.0f, 0.0f,   0.0f, Size_h*4,   // 左上 3
+	 0.5f,  0.5f,-0.5f,   0.0f, 1.0f, 0.0f,   1.0f, Size_h*4,   // 右上 2
+	 0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   0.0f, Size_h*3,   // 左下 7
+
+	 0.5f, -0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   0.0f, Size_h*3,	// 左下 7
+	 0.5f,  0.5f,-0.5f,   1.0f, 1.0f, 0.0f,   1.0f, Size_h*4,	// 右上 2
+	 0.5f, -0.5f,-0.5f,   1.0f, 1.0f, 1.0f,   1.0f, Size_h*3,	// 右下 6
+// 上
+	 -0.5f, 0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   0.0f, Size_h*3,   // 左下 0
+	 -0.5f, 0.5f,-0.5f,   0.0f, 1.0f, 0.0f,   0.0f, Size_h*4,   // 左上 1
+	  0.5f, 0.5f,-0.5f,   0.0f, 0.0f, 1.0f,   1.0f, Size_h*4,   // 右上 2
+
+	 -0.5f, 0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   0.0f, Size_h*3,	// 左下 0
+	  0.5f, 0.5f,-0.5f,   1.0f, 1.0f, 0.0f,   1.0f, Size_h*4,	// 右上 2
+	  0.5f, 0.5f,0.5f,    1.0f, 1.0f, 1.0f,   1.0f, Size_h*3,	// 右下 3	
 };
 
 // typedef struct
@@ -94,7 +139,9 @@ unsigned int indices[36] = {
 	0, 1, 2,
 	3, 4, 5, // 第一个三角形
 	6, 7, 8,  // 第二个三角形
-	9, 10, 11  // 第二个三角形
+	9, 10, 11,  // 第二个三角形
+	12, 13, 14,  // 第二个三角形
+	15, 16, 17  // 第二个三角形
 };
 
 //  varying变量可以在Vertex Shader和Fragment Shader之间传递数据
@@ -180,7 +227,9 @@ int main(void)
 		// glm::vec3 I = glm::any(glm::isnan(glm::project(H, G, F, E[3]))) ? glm::vec3(2) : glm::vec3(1);
 		// glm::mat4 J = glm::lookAt(glm::normalize(glm::max(B, glm::vec3(0.001f))), H, I);
 
-
+	for(i=0;i<36;i++){
+		indices[i] = i;
+	} 
 	// 三个点的坐标
 	glm::vec3 eye(1.0f, 1.0f, 1.0f);	// 观察点
 	glm::vec3 center(0.0f, 0.0f, 0.0f); // 观察目标点
@@ -220,7 +269,7 @@ int main(void)
 	// gladLoadGL(glfwGetProcAddress);
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 	glfwSwapInterval(1);
-
+	glEnable(GL_DEPTH_TEST);
 
 	unsigned int texture;
 	glGenTextures(1, &texture);
@@ -232,7 +281,7 @@ int main(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	// 加载并生成纹理
 	int width, height, nrChannels;
-	unsigned char *data = stbi_load("../skin_debug.jpg", &width, &height, &nrChannels, 0);
+	unsigned char *data = stbi_load("../../LearnDemo1/skin_debug.jpg", &width, &height, &nrChannels, 0);
 	printf("%dx%d\n", width, height);
 	if (data)
 	{
@@ -332,8 +381,8 @@ int main(void)
 		ratio = width / (float) height;
 
 		glViewport(0, 0, width, height);
-		glClear(GL_COLOR_BUFFER_BIT);
-
+		// glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		mat4x4_identity(m);
 		float t = (float)glfwGetTime();
@@ -355,7 +404,7 @@ int main(void)
 		glm::mat4 trans = glm::mat4(1.0f);
 		// 逆时针旋转90度。然后缩放0.5倍
 		// 旋转
-		trans = glm::rotate(trans, glm::radians(t), glm::vec3(0.0, 1.0, 0.0));
+		// trans = glm::rotate(trans, glm::radians(t), glm::vec3(0.0, 1.0, 0.0));
 #endif
 		glUseProgram(program);
 
@@ -381,7 +430,7 @@ int main(void)
 		// glBindVertexArray(VBO);
 		// glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 		// glDrawArrays(GL_TRIANGLES, 0, 3);
-		glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, sizeof(vertices0)/sizeof(vertices0[0]), GL_UNSIGNED_INT, 0);
 
 		// 确保帧缓冲区完整性
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -413,8 +462,10 @@ int main(void)
 		glfwPollEvents();
 		struct timeval tv;
 		gettimeofday(&tv, NULL);
+		static long last;
 		long milliseconds = (long long)(tv.tv_sec) * 1000 + (long long)(tv.tv_usec) / 1000;
-		printf("%lld ms, diff %d ms, \n", milliseconds);
+		printf("diff %d ms, \n", milliseconds-last);
+		last = milliseconds;
 
 	}
 
