@@ -17,7 +17,7 @@
 #include <cstdio>
 #include <ctime>
 #include <vector>
-#define STB_IMAGE_WRITE_IMPLEMENTATION
+// #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
 
@@ -26,9 +26,9 @@
 #include "../../imgui/backends/imgui_impl_glfw.h"
 #include "../../imgui/backends/imgui_impl_opengl3.h"
 
-static int flag;
-#define Size_h (1.0f/6)
 
+#define Size_h (1.0f/6)
+extern void saveImg(int width, int height);
 
 typedef struct
 {
@@ -53,6 +53,15 @@ typedef struct
 static vertices vertices0[] =
 {
 //	 ---- 位置 ----	   ---- 颜色 ----	 - 纹理坐标 -
+	 0.f,  0.f,  0.f, 1.0f, 1.0f, 1.0f,   0.0f, Size_h*1,   // 左下 4
+	10.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,   0.0f, Size_h*1,   // 左下 4
+
+	 0.f,  0.f,  0.f, 0.0f, 1.0f, 0.0f,   0.0f, Size_h*1,   // 左下 4
+	0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,   0.0f, Size_h*1,   // 左下 4
+
+	 0.f,  0.f,  0.f, 1.0f, 0.0f, 0.0f,   0.0f, Size_h*1,   // 左下 4
+	0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,   0.0f, Size_h*1,   // 左下 4
+#if 1
 // 下
 	-0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   0.0f, Size_h*1,   // 左下 4
 	-0.5f, -0.5f,-0.5f,   1.0f, 0.0f, 0.0f,   0.0f, Size_h*2,   // 左上 5
@@ -101,6 +110,7 @@ static vertices vertices0[] =
 	 -0.5f, 0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   0.0f, Size_h*3,	// 左下 0
 	  0.5f, 0.5f,-0.5f,   1.0f, 1.0f, 0.0f,   1.0f, Size_h*4,	// 右上 2
 	  0.5f, 0.5f,0.5f,    1.0f, 1.0f, 1.0f,   1.0f, Size_h*3,	// 右下 3	
+#endif
 };
 
 // typedef struct
@@ -129,7 +139,7 @@ static vertices vertices0[] =
 vertices V0[] = 
 {
 //	 ---- 位置 ----	   		---- 颜色 ----	 	- 纹理坐标 -
-	0.0f,  0.5f, 0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 0
+	0.0f,  0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   1.0f, Size_h*3,   // 0
 	0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   0.0f, Size_h*3,   // 1
 	0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 2
 	0.0f,  0.5f, 0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 3
@@ -143,8 +153,8 @@ unsigned int indices[36] = {
 	// 注意索引从0开始! 
 	// 此例的索引(0,1,2,3)就是顶点数组vertices的下标，
 	// 这样可以由下标代表顶点组合成矩形
-	0, 1, 2,
-	3, 4, 5, // 第一个三角形
+	0, 1, 0,
+	3, 0, 5, 
 	6, 7, 8,  // 第二个三角形
 	9, 10, 11,  // 第二个三角形
 	12, 13, 14,  // 第二个三角形
@@ -171,7 +181,7 @@ static const char* vertex_shader_text =
 "	color = vCol0;\n"
 "	TexCoord = aTex;\n"
 "}\n";
-
+#if 0
 static const char* fragment_shader_text =
 "#version 330 core\n"
 "#pragma optimize(off)\n"
@@ -180,10 +190,27 @@ static const char* fragment_shader_text =
 "uniform sampler2D ourTexture;\n"
 "void main()\n"
 "{\n"
-"	gl_FragColor = vec4(color, 1.0);\n"
+// "	gl_FragColor = vec4(color, 1.0);\n"
 "	gl_FragColor = texture(ourTexture, vec2(TexCoord.x,1.0 -TexCoord.y));\n"
 "}\n";
-
+#else
+static const char* fragment_shader_text = R"(
+#version 330 core
+#pragma optimize(off)
+varying vec3 color;
+varying vec2 TexCoord;
+uniform int vertexInteger;
+uniform sampler2D ourTexture;
+void main()
+{
+	if (vertexInteger == 0) {
+	 	gl_FragColor = vec4(color, 1.0);
+	} else {
+		gl_FragColor = texture(ourTexture, vec2(TexCoord.x,1.0 -TexCoord.y));
+	}
+}
+)";
+#endif
 void processInput(GLFWwindow *window);
 
 
@@ -230,6 +257,9 @@ void processInput(GLFWwindow *window)
 		glfwSetWindowShouldClose(window, true);
 
 	float cameraSpeed = static_cast<float>(2.5 * deltaTime * 0.001);
+	// 查询窗口大小
+	int windowWidth, windowHeight;
+	glfwGetWindowSize(window, &windowWidth, &windowHeight);
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
 		printf("w key down\n");
 		flag = 1;
@@ -243,6 +273,21 @@ void processInput(GLFWwindow *window)
 		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 	if(flag){
 		printf("%f,%f,%f, deltaTime %f\n", cameraPos.x, cameraPos.y, cameraPos.z, deltaTime);
+	}
+	if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+	{
+		printf("left press\n");
+	}
+	// 查询鼠标位置
+	double xpos, ypos;
+	glfwGetCursorPos(window, &xpos, &ypos);
+	// 检查鼠标位置是否在窗口范围内
+	if (xpos >= 0 && xpos < windowWidth && ypos >= 0 && ypos < windowHeight) {
+		// 鼠标在窗口范围内
+		printf("Mouse position: (%.2f, %.2f)\n", xpos, ypos);
+	} else {
+		// 鼠标在窗口范围外
+		printf("Mouse is outside the window\n");
 	}
 }
 
@@ -271,32 +316,13 @@ int main(void)
 		// glm::vec3 I = glm::any(glm::isnan(glm::project(H, G, F, E[3]))) ? glm::vec3(2) : glm::vec3(1);
 		// glm::mat4 J = glm::lookAt(glm::normalize(glm::max(B, glm::vec3(0.001f))), H, I);
 
-	for(i=0;i<36;i++){
+	for(i=6;i<36;i++){
 		indices[i] = i;
 	} 
-	// 三个点的坐标
-	glm::vec3 eye(1.0f, 1.0f, 1.0f);	// 观察点
-	glm::vec3 center(0.0f, 0.0f, 0.0f); // 观察目标点
-	glm::vec3 up(0.0f, 1.0f, 0.0f);	  // 上方向
-
-	// 透视投影矩阵的参数
-	float fov = 45.0f;	 // 视场角度
-	float aspect = 1.0f;   // 宽高比
-	float nearClip = 0.1f;  // 近裁剪面
-	float farClip = 100.0f; // 远裁剪面
-
-	// 构建透视投影矩阵
-	glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), aspect, nearClip, farClip);
-
-	// 构建观察矩阵（视图矩阵）
-	glm::mat4 viewMatrix = glm::lookAt(eye, center, up);
-
-
-
 
 	if (!glfwInit())
 		exit(EXIT_FAILURE);
- 
+
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
  
@@ -338,7 +364,7 @@ int main(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	// 加载并生成纹理
 	int width, height, nrChannels;
-	unsigned char *data = stbi_load("../../LearnDemo1/skin_debug.jpg", &width, &height, &nrChannels, 0);
+	unsigned char *data = stbi_load("../LearnDemo1/skin_debug.jpg", &width, &height, &nrChannels, 0);
 	printf("%dx%d\n", width, height);
 	if (data)
 	{
@@ -347,7 +373,7 @@ int main(void)
 	}
 	else
 	{
-		// std::cout << "Failed to load texture" << std::endl;
+		printf("Failed to load texture\n");
 	}
 	stbi_image_free(data);
 
@@ -427,9 +453,21 @@ int main(void)
 		glEnableVertexAttribArray(aTexCoord);
 		glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(vertices), (void*) (sizeof(float) * 6));
 	}
+	unsigned int modelLoc = glGetUniformLocation(program, "model");
+	unsigned int viewLoc  = glGetUniformLocation(program, "view");
+	unsigned int projectionLoc  = glGetUniformLocation(program, "projection");
+
 	glBindVertexArray(0);
-	float degrees = 0.f;
+	glm::vec3 degrees(0.f, 0.f, 0.f);
 	glm::vec3 trans_vec3(0.f, 0.f, 0.f);
+	glm::mat4 model         = glm::mat4(1.0f);
+	glm::mat4 view          = glm::mat4(1.0f);
+	glm::mat4 projection    = glm::mat4(1.0f);
+
+	// 设置观察者的位置、观察点的位置和相机的上方向
+	glm::vec3 eye 		= glm::vec3(0.0f, 0.0f, 3.0f);
+	glm::vec3 center	= glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 up 		= glm::vec3(0.0f, 1.0f, 0.0f);
 	while (!glfwWindowShouldClose(window))
 	{
 		float ratio;
@@ -447,6 +485,8 @@ int main(void)
         // ImGui::SetWindowSize(ImVec2(400, 300));
 
 
+
+
 		processInput(window);
  
 		glfwGetFramebufferSize(window, &width, &height);
@@ -454,56 +494,32 @@ int main(void)
 
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-		
 		glBindTexture(GL_TEXTURE_2D, texture);
 		mat4x4_identity(m);
-		float t = (float)glfwGetTime();
+		// float t = (float)glfwGetTime();
 		// t = -90.0f;
-		t *= 90;
-
-
-
-#if 0
-		// mat4x4_rotate_Z(m, m, (float) t);
-		// mat4x4_rotate_Z(m, m, (float) 0.1f);
-		mat4x4_rotate_X(m, m, (float) t);
-		mat4x4_rotate_Y(m, m, (float) t);
-		mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-		mat4x4_mul(mvp, p, m);
-		// glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
-#else
+		// t *= 90;
 		glm::vec4 vec2(1.0f, 0.0f, 0.0f, 1.0f);
 		glm::mat4 trans = glm::mat4(1.0f);
 		// 逆时针旋转90度。然后缩放0.5倍
 		// 旋转
 		// trans = glm::rotate(trans, glm::radians(t), glm::vec3(0.0, 1.0, 0.0));
-#endif
 		glUseProgram(program);
-
-		// create transformations
-		glm::mat4 model         = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-		glm::mat4 view          = glm::mat4(1.0f);
-		glm::mat4 projection    = glm::mat4(1.0f);
 		// model = glm::rotate(model, glm::radians(t), glm::vec3(0.0, 1.0, 0.0));
-		model = glm::rotate(model, glm::radians(degrees), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::rotate(glm::mat4(1.0f), glm::radians(degrees.x), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(degrees.y), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(degrees.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
-		// 设置观察者的位置、观察点的位置和相机的上方向
-		glm::vec3 eye 		= glm::vec3(0.0f, 0.0f, 3.0f);
-		glm::vec3 center	= glm::vec3(0.0f, 0.0f, 0.0f);
-		glm::vec3 up 		= glm::vec3(0.0f, 1.0f, 0.0f);
+
 
 		// 创建 view 矩阵
 		view = glm::lookAt(eye, center, up);
 		// view  = glm::translate(view, trans_vec3);//平移
 
-
-
 		projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
-		// retrieve the matrix uniform locations
-		unsigned int modelLoc = glGetUniformLocation(program, "model");
-		unsigned int viewLoc  = glGetUniformLocation(program, "view");
-		unsigned int projectionLoc  = glGetUniformLocation(program, "projection");
+
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
@@ -514,35 +530,26 @@ int main(void)
 		// glBindVertexArray(VBO);
 		// glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 		// glDrawArrays(GL_TRIANGLES, 0, 3);
-		glDrawElements(GL_TRIANGLES, sizeof(vertices0)/sizeof(vertices0[0]), GL_UNSIGNED_INT, 0);
-
-		// 确保帧缓冲区完整性
-		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-			// 处理帧缓冲区不完整的情况
-			// ...
-			printf("frame buffer dont \n");
-			// 释放资源并退出
-			// glDeleteFramebuffers(1, &framebuffer);
-			// glDeleteTextures(1, &texture);
-			// exit(EXIT_FAILURE);
-		}else{
-			if (flag == 0){
-				printf("frame buffer done \n");
-				flag = 1;
-				// 读取帧缓冲区数据到内存中
-				unsigned char* pixels = (unsigned char*)malloc(3 * width * height);
-				glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-
-				// 保存图像文件
-				stbi_write_png("output.png", width, height, 3, pixels, 0);
-
-				// 释放资源
-				free(pixels);
-			}
-		}
+		glLineWidth(3.0f);
+		glUniform1i(glGetUniformLocation(program, "vertexInteger"), 0);
+		glDrawElements(GL_LINES, 6, GL_UNSIGNED_INT, 0);
+		glUniform1i(glGetUniformLocation(program, "vertexInteger"), 1); 
+		glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT,  (void*)(6 * sizeof(unsigned int)));
+		// glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, (void *)(sizeof(float)*8*6));
+		saveImg(width, height);
 		ImGui::Text("Avg fps: %.3f", ImGui::GetIO().Framerate);
-		ImGui::SliderFloat("Degree", &degrees, -180.0f, 180.0f);
+		ImGui::SliderFloat3("Degree", &degrees.x, -180.0f, 180.0f);
 		ImGui::SliderFloat3("Trans_Axis.xyz", &trans_vec3.x, -10.0, 10.0);
+		ImGui::SliderFloat3("eye.xyz", &eye.x, -10.0, 10.0);
+		ImGui::SliderFloat3("center.xyz", &center.x, -10.0, 10.0);
+		ImGui::SameLine();
+		if (ImGui::Button("Reset")) {
+		// 当点击按钮时，设置标志以指示需要重置
+		// resetButtonClicked = true;
+			printf("click reset\n");
+			center = glm::vec3(0.0f);;
+		}
+		ImGui::SliderFloat3("up.xyz", &up.x, -10.0, 10.0);
 		// ImGui::SliderFloat3("Translation.xyz", &translation.x, -1.0, 1.0);
 		// ImGui::SliderFloat("Fov", &fov, 1.0f, 360.0f);
 		ImGui::End();

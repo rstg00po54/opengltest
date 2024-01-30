@@ -8,7 +8,7 @@ include_directories(SYSTEM ../imgui/)
 
 find_package(glfw3 REQUIRED)
  
-file(GLOB project_file ../src/glad.c src/main.cpp ../src/stb_image.cpp src/testglm.cpp)
+file(GLOB project_file ../src/glad.c src/main.cpp ../src/stb_image.cpp src/testglm.cpp src/mglm.cpp)
 add_executable(LearnDemo1 ${project_file})
  
 target_link_libraries(LearnDemo1 glfw IMGUI)

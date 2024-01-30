@@ -3,3 +3,6 @@ build/*
 *.exe
 src/main.cpp
 .vscode/*
+bin/
+lib/
+RubicCube/Debug/
