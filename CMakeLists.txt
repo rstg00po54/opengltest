@@ -5,32 +5,27 @@ set(CMAKE_CXX_STANDARD 14)
  
 
 # 设置可执行文件的输出目录
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 # 设置共享库的输出目录
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 # 设置静态库的输出目录
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
-
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
+message(STATUS "Hello, this is a status message top.${CMAKE_CURRENT_BINARY_DIR}")
 project(MainProject)
 
 # 添加子项目 ProjectA
 
 # 添加子项目 ProjectB
 # add_subdirectory(SDLDemo)
-add_subdirectory(LearnDemo1)
+add_subdirectory(project/LearnDemo1)
+add_subdirectory(library/glad)
+add_subdirectory(library/imgui)
+add_subdirectory(library/stb_image)
 
 include_directories(SYSTEM ./imgui)
 include_directories(SYSTEM ./imgui/backends)
 find_package(glfw3 REQUIRED)
-add_library(IMGUI SHARED 
-    ./imgui/imgui.cpp 
-    ./imgui/backends/imgui_impl_glfw.cpp 
-    ./imgui/backends/imgui_impl_opengl3.cpp
-    ./imgui/imgui_draw.cpp 
-    ./imgui/imgui_tables.cpp 
-    ./imgui/imgui_widgets.cpp
-    ./imgui/imgui_demo.cpp
-)
-target_link_libraries(IMGUI glfw glew32)
+
+target_link_libraries(IMGUI glfw glew32 glad stb_image)

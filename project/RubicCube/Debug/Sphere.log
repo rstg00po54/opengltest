@@ -1,0 +1,111 @@
+﻿cl : 命令行 warning D9035: “Gm”选项已否决，并将在将来的版本中移除
+  StdAfx.cpp
+  _WIN32_WINNT not defined. Defaulting to _WIN32_WINNT_MAXVER (see WinSDKVer.h)
+cl : 命令行 warning D9035: “Gm”选项已否决，并将在将来的版本中移除
+  OpenGLView.cpp
+  SphereView.cpp
+D:\fly\opengl\opengl\RubicCube\SphereView.cpp(322,33): warning C4838: 从“double”转换到“GLfloat”需要收缩转换
+D:\fly\opengl\opengl\RubicCube\SphereView.cpp(322,33): warning C4244: “初始化”: 从“double”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\SphereView.cpp(323,11): warning C4838: 从“double”转换到“GLfloat”需要收缩转换
+D:\fly\opengl\opengl\RubicCube\SphereView.cpp(323,11): warning C4244: “初始化”: 从“double”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\SphereView.cpp(324,34): warning C4838: 从“double”转换到“GLfloat”需要收缩转换
+D:\fly\opengl\opengl\RubicCube\SphereView.cpp(324,34): warning C4244: “初始化”: 从“double”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\SphereView.cpp(331,35): warning C4838: 从“double”转换到“GLfloat”需要收缩转换
+D:\fly\opengl\opengl\RubicCube\SphereView.cpp(331,35): warning C4244: “初始化”: 从“double”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\SphereView.cpp(332,13): warning C4838: 从“double”转换到“GLfloat”需要收缩转换
+D:\fly\opengl\opengl\RubicCube\SphereView.cpp(332,13): warning C4244: “初始化”: 从“double”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\SphereView.cpp(333,34): warning C4838: 从“double”转换到“GLfloat”需要收缩转换
+D:\fly\opengl\opengl\RubicCube\SphereView.cpp(333,34): warning C4244: “初始化”: 从“double”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\SphereView.cpp(372,40): warning C4305: “初始化”: 从“double”到“GLfloat”截断
+D:\fly\opengl\opengl\RubicCube\SphereView.cpp(382,37): warning C4244: “参数”: 从“double”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\SphereView.cpp(382,24): warning C4244: “参数”: 从“double”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\SphereView.cpp(383,46): warning C4244: “参数”: 从“double”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\SphereView.cpp(383,26): warning C4244: “参数”: 从“double”转换到“GLfloat”，可能丢失数据
+  SphereDoc.cpp
+  Sphere.cpp
+D:\fly\opengl\opengl\RubicCube\Sphere.cpp(59,2): warning C4996: 'CWinApp::Enable3dControls': CWinApp::Enable3dControls is no longer needed. You should remove this call.
+  MainFrm.cpp
+  MagicCube.cpp
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(37,16): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(40,22): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(43,28): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(72,24): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(72,17): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(75,30): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(75,23): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(78,30): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(78,17): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(105,32): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(105,25): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(105,18): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(497,27): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(504,21): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(665,13): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(668,13): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(671,13): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(674,13): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(677,13): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+D:\fly\opengl\opengl\RubicCube\MagicCube.cpp(680,13): warning C4244: “参数”: 从“int”转换到“GLfloat”，可能丢失数据
+  GLTexture.cpp
+  glm.cpp
+D:\fly\opengl\opengl\RubicCube\glm.cpp(174,19): warning C4996: 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _strdup. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(220,9): warning C4996: 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _strdup. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(253,3): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(254,3): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(257,10): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(267,9): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(276,7): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(307,30): warning C4996: 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _strdup. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(311,9): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(319,7): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(321,45): warning C4996: 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _strdup. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(324,7): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(332,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(338,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(344,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(383,9): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(414,7): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(415,27): warning C4996: 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _strdup. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(434,7): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(438,2): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(439,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(440,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(443,8): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(447,18): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(449,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(450,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(453,8): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(457,18): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(459,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(460,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(463,8): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(469,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(470,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(473,8): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(533,9): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(542,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(549,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(556,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(565,7): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(581,7): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(585,2): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(588,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(591,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(596,8): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(606,18): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(611,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(615,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(621,8): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(634,18): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(638,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(641,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(646,8): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(658,2): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(660,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(662,2): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(666,8): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(1229,10): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\fly\opengl\opengl\RubicCube\glm.cpp(1238,26): warning C4996: 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _strdup. See online help for details.
+  FormCommandView.cpp
+  正在生成代码...
+  Sphere.vcxproj -> D:\fly\opengl\opengl\RubicCube\Debug\Sphere.exe
