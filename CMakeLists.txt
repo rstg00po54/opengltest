@@ -16,16 +16,20 @@ message(STATUS "Hello, this is a status message top.${CMAKE_CURRENT_BINARY_DIR}"
 project(MainProject)
 
 # 添加子项目 ProjectA
-
+# include_directories(SYSTEM ./imgui)
+# include_directories(SYSTEM ./imgui/backends)
+include_directories(SYSTEM library/glad/include/glad)
+include_directories(SYSTEM library/stb_image)
+include_directories(SYSTEM library/shader)
 # 添加子项目 ProjectB
 # add_subdirectory(SDLDemo)
 add_subdirectory(project/LearnDemo1)
 add_subdirectory(library/glad)
 add_subdirectory(library/imgui)
 add_subdirectory(library/stb_image)
+add_subdirectory(library/shader)
 
-include_directories(SYSTEM ./imgui)
-include_directories(SYSTEM ./imgui/backends)
+
 find_package(glfw3 REQUIRED)
 
-target_link_libraries(IMGUI glfw glew32 glad stb_image)
+target_link_libraries(IMGUI glfw glad stb_image shader)

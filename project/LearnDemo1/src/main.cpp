@@ -2,7 +2,7 @@
 // #include <glad/gl.h>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
- #include "glad.h"
+#include <glad.h>
 // #include "linmath.h"
 #include <stb_image.h>
 #include <stdlib.h>
@@ -19,6 +19,7 @@
 #include <vector>
 // #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
+#include <shader.hpp>
 
 
 // imgui
@@ -29,7 +30,7 @@
 
 #define Size_h (1.0f/6)
 extern void saveImg(int width, int height);
-
+extern glm::mat4 customPerspectiveMatrix(float fovy, float aspect, float near, float far, float u, float v);
 typedef struct
 {
 	float x, y, z;
@@ -54,13 +55,13 @@ static vertices vertices0[] =
 {
 //	 ---- 位置 ----	   ---- 颜色 ----	 - 纹理坐标 -
 	 0.f,  0.f,  0.f, 1.0f, 1.0f, 1.0f,   0.0f, Size_h*1,   // 左下 4
-	10.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,   0.0f, Size_h*1,   // 左下 4
+	1000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,   0.0f, Size_h*1,   // 左下 4
 
 	 0.f,  0.f,  0.f, 0.0f, 1.0f, 0.0f,   0.0f, Size_h*1,   // 左下 4
-	0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,   0.0f, Size_h*1,   // 左下 4
+	0.0f, 1000.0f, 0.0f, 0.0f, 1.0f, 0.0f,   0.0f, Size_h*1,   // 左下 4
 
 	 0.f,  0.f,  0.f, 1.0f, 0.0f, 0.0f,   0.0f, Size_h*1,   // 左下 4
-	0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,   0.0f, Size_h*1,   // 左下 4
+	0.0f, 0.0f, 1000.0f, 1.0f, 0.0f, 0.0f,   0.0f, Size_h*1,   // 左下 4
 #if 1
 // 下
 	-0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   0.0f, Size_h*1,   // 左下 4
@@ -162,55 +163,7 @@ unsigned int indices[36] = {
 };
 
 //  varying变量可以在Vertex Shader和Fragment Shader之间传递数据
-static const char* vertex_shader_text =
-"#version 330 core\n"
-"#pragma optimize(off)\n"
-"uniform mat4 MVP;\n"
-"attribute vec3 vCol0;\n"
-"attribute vec2 aTex;\n"
-"attribute vec3 vPos;\n"
-"varying vec3 color;\n"
-"varying vec2 TexCoord;\n"
-"uniform mat4 model;\n"
-"uniform mat4 view;\n"
-"uniform mat4 projection;\n"
-"void main()\n"
-"{\n"
-"	gl_Position = projection * view * model * vec4(vPos, 1.0);\n"
-// "	gl_Position = MVP * vec4(vPos, 1.0);\n"
-"	color = vCol0;\n"
-"	TexCoord = aTex;\n"
-"}\n";
-#if 0
-static const char* fragment_shader_text =
-"#version 330 core\n"
-"#pragma optimize(off)\n"
-"varying vec3 color;\n"
-"varying vec2 TexCoord;\n"
-"uniform sampler2D ourTexture;\n"
-"void main()\n"
-"{\n"
-// "	gl_FragColor = vec4(color, 1.0);\n"
-"	gl_FragColor = texture(ourTexture, vec2(TexCoord.x,1.0 -TexCoord.y));\n"
-"}\n";
-#else
-static const char* fragment_shader_text = R"(
-#version 330 core
-#pragma optimize(off)
-varying vec3 color;
-varying vec2 TexCoord;
-uniform int vertexInteger;
-uniform sampler2D ourTexture;
-void main()
-{
-	if (vertexInteger == 0) {
-	 	gl_FragColor = vec4(color, 1.0);
-	} else {
-		gl_FragColor = texture(ourTexture, vec2(TexCoord.x,1.0 -TexCoord.y));
-	}
-}
-)";
-#endif
+
 void processInput(GLFWwindow *window);
 
 
@@ -284,10 +237,10 @@ void processInput(GLFWwindow *window)
 	// 检查鼠标位置是否在窗口范围内
 	if (xpos >= 0 && xpos < windowWidth && ypos >= 0 && ypos < windowHeight) {
 		// 鼠标在窗口范围内
-		printf("Mouse position: (%.2f, %.2f)\n", xpos, ypos);
+		// printf("Mouse position: (%.2f, %.2f)\n", xpos, ypos);
 	} else {
 		// 鼠标在窗口范围外
-		printf("Mouse is outside the window\n");
+		// printf("Mouse is outside the window\n");
 	}
 }
 
@@ -304,17 +257,6 @@ int main(void)
 	// return 0;
 	glfwSetErrorCallback(error_callback);
 		int i = 0;
-		glm::vec3 A = glm::normalize(glm::vec3(1));
-		glm::vec3 B = glm::cross(A, glm::normalize(glm::vec3(1, 1, 2)));
-		glm::mat4 roj_mat = glm::perspective(glm::radians(45.0), 480/320.0, 0.1, 1000.0);
-		// glm::mat4 C = glm::rotate(glm::mat4(1.0f), i, B);
-		// glm::mat4 D = glm::scale(C, glm::vec3(0.8f, 1.0f, 1.2f));
-		// glm::mat4 E = glm::translate(D, glm::vec3(1.4f, 1.2f, 1.1f));
-		// glm::mat4 F = glm::perspective(i, 1.5f, 0.1f, 1000.f);
-		// glm::mat4 G = glm::inverse(F * E);
-		// glm::vec3 H = glm::unProject(glm::vec3(i), G, F, E[3]);
-		// glm::vec3 I = glm::any(glm::isnan(glm::project(H, G, F, E[3]))) ? glm::vec3(2) : glm::vec3(1);
-		// glm::mat4 J = glm::lookAt(glm::normalize(glm::max(B, glm::vec3(0.001f))), H, I);
 
 	for(i=6;i<36;i++){
 		indices[i] = i;
@@ -389,40 +331,11 @@ int main(void)
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+#if 1
+	program = LoadShaders( "VertexShader.vs", "FragmentShader.fs" );
+#else
 
-	vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
-	glCompileShader(vertex_shader);
-
-	GLint compiled = 0;
-	glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &compiled);
-	if (!compiled)
-	{
-		printf("create vertex_shader fail\n");
-		getLog(vertex_shader);
-	}else{
-		printf("create vertex_shader ok\n");
-	}
-	// 若编译失败，获取编译日志
-
-	fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
-	glCompileShader(fragment_shader);
-
-	 glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &compiled);
-	if (!compiled)
-	{
-		printf("create fragment_shader fail\n");
-		getLog(fragment_shader);
-	}else{
-		printf("create fragment_shader ok\n");
-	}
-
-	program = glCreateProgram();
-	glAttachShader(program, vertex_shader);
-	glAttachShader(program, fragment_shader);
-	glLinkProgram(program);
-
+#endif
 	mvp_location = glGetUniformLocation(program, "MVP");
 	vpos_location = glGetAttribLocation(program, "vPos");
 	vcol_location = glGetAttribLocation(program, "vCol0");
@@ -512,7 +425,7 @@ int main(void)
 		model = glm::rotate(glm::mat4(1.0f), glm::radians(degrees.x), glm::vec3(1.0f, 0.0f, 0.0f));
 		model = glm::rotate(model, glm::radians(degrees.y), glm::vec3(0.0f, 1.0f, 0.0f));
 		model = glm::rotate(model, glm::radians(degrees.z), glm::vec3(0.0f, 0.0f, 1.0f));
-
+		// model =	glm::scale(model, degrees);
 
 
 		// 创建 view 矩阵
@@ -520,7 +433,7 @@ int main(void)
 		// view  = glm::translate(view, trans_vec3);//平移
 
 		projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
-
+		// projection = customPerspectiveMatrix(glm::radians(90.0f), (float)width / (float)height, 0.1f, 100.0f, -0.0f, 0.0f);
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
@@ -535,13 +448,21 @@ int main(void)
 		glUniform1i(glGetUniformLocation(program, "vertexInteger"), 0);
 		glDrawElements(GL_LINES, 6, GL_UNSIGNED_INT, 0);
 		glUniform1i(glGetUniformLocation(program, "vertexInteger"), 1); 
-		glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT,  (void*)(6 * sizeof(unsigned int)));
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT,  (void*)(6 * sizeof(unsigned int)));
 		// glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, (void *)(sizeof(float)*8*6));
 		saveImg(width, height);
 		ImGui::Text("Avg fps: %.3f", ImGui::GetIO().Framerate);
 		ImGui::SliderFloat3("Degree", &degrees.x, -180.0f, 180.0f);
-		ImGui::SliderFloat3("Trans_Axis.xyz", &trans_vec3.x, -10.0, 10.0);
-		ImGui::SliderFloat3("eye.xyz", &eye.x, -10.0, 10.0);
+		// ImGui::SliderFloat3("Trans_Axis.xyz", &trans_vec3.x, -10.0, 10.0);
+		ImGui::SliderFloat3("eye.xyz", &eye.x, -100.0, 100.0);
+		ImGui::SameLine();
+		if (ImGui::Button("Reset")) {
+		// 当点击按钮时，设置标志以指示需要重置
+		// resetButtonClicked = true;
+			printf("click reset\n");
+			eye = glm::vec3(0.0f, 0.0f, 3.0f);
+		}
+
 		ImGui::SliderFloat3("center.xyz", &center.x, -10.0, 10.0);
 		ImGui::SameLine();
 		if (ImGui::Button("Reset")) {
@@ -569,6 +490,14 @@ int main(void)
 		// printf("diff %d ms, \n", milliseconds-last);
 		deltaTime = milliseconds-last;
 		last = milliseconds;
+		glm::vec4 src0 = glm::vec4(0.5f, 0.5f, 0.5f, 0.f);
+		// glm::mat4 src0    = glm::mat4(1.0f);
+		glm::vec4 dst0    = glm::vec4(0.5f);
+		dst0 = projection*view*model*src0;
+
+		// printf("%f, %f, %f, %f\n", dst0.x, dst0.y, dst0.z, dst0.w);
+
+		// "	gl_Position = projection * view * model * vec4(vPos, 1.0);\n"
 
 	}
 

@@ -2,11 +2,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
-#include "glad.h"
+#include <glad.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 #include <stdio.h>
 static int flag;
+// 垂直方向的视场角 fovy、纵横比 aspect、近平面距离 near、远平面距离 far，以及两个透视点的坐标 u 和 v
 glm::mat4 customPerspectiveMatrix(float fovy, float aspect, float near, float far, float u, float v) {
     float r = tan(glm::radians(fovy) / 2.0f) * near;
     float t = r / aspect;
