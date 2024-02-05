@@ -6,7 +6,7 @@ project(SDLDemo)
 include_directories(SYSTEM ../include/)
 find_package(glfw3 REQUIRED)
  
-add_executable(SDLDemo ../src/glad.c main.cpp)
+add_executable(SDLDemo main.cpp)
  
 # target_link_libraries(SDLDemo glfw SDL2 glew32)
 target_link_libraries(SDLDemo PRIVATE opengl32 glfw SDL2 glew32)

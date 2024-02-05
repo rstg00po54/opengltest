@@ -1,367 +1,61 @@
-//The headers
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_opengl.h"
-
-//Screen attributes
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
-const int SCREEN_BPP = 32;
-
-//The frame rate
-const int FRAMES_PER_SECOND = 60;
-
-//The attributes of the square
-const int SQUARE_WIDTH = 20;
-const int SQUARE_HEIGHT = 20;
-
-//Event handler
-SDL_Event event;
-
-//The square
-class Square
-{
-    private:
-    //The offsets
-    int x, y;
-
-    //The velocity of the square
-    int xVel, yVel;
-
-    public:
-    //Initializes
-    Square();
-
-    //Handles key presses
-    void handle_input();
-
-    //Moves the square
-    void move();
-
-    //Shows the square on the screen
-    void show();
-};
-
-//The timer
-class Timer
-{
-    private:
-    //The clock time when the timer started
-    int startTicks;
-
-    //The ticks stored when the timer was paused
-    int pausedTicks;
-
-    //The timer status
-    bool paused;
-    bool started;
-
-    public:
-    //Initializes variables
-    Timer();
-
-    //The various clock actions
-    void start();
-    void stop();
-    void pause();
-    void unpause();
-
-    //Gets the timer's time
-    int get_ticks();
-
-    //Checks the status of the timer
-    bool is_started();
-    bool is_paused();
-};
-
-bool init_GL()
-{
-    //Set clear color
-    glClearColor( 0, 0, 0, 0 );
-
-    //Set projection
-    glMatrixMode( GL_PROJECTION );
-    glLoadIdentity();
-    glOrtho( 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, -1, 1 );
-
-    //Initialize modelview matrix
-    glMatrixMode( GL_MODELVIEW );
-    glLoadIdentity();
-
-    //If there was any errors
-    if( glGetError() != GL_NO_ERROR )
-    {
-        return false;
-    }
-
-    //If everything initialized
-    return true;
-}
-
-bool init()
-{
-    //Initialize SDL
-    if( SDL_Init( SDL_INIT_EVERYTHING ) < 0 )
-    {
-        return false;
-    }
-
-    //Create Window
-    if( SDL_SetVideoMode( SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_BPP, 0 ) == NULL )
-    {
-        return false;
-    }
-
-    //Initialize OpenGL
-    if( init_GL() == false )
-    {
-        return false;
-    }
-
-    //Set caption
-    // SDL_WM_SetCaption( "OpenGL Test", NULL );
-
-    return true;
-}
-
-void clean_up()
-{
-    //Quit SDL
-    SDL_Quit();
-}
-
-Square::Square()
-{
-    //Initialize offsets
-    x = 0;
-    y = 0;
-
-    //Initialize velocity
-    xVel = 0;
-    yVel = 0;
-}
-
-void Square::handle_input()
-{
-    //If a key was pressed
-    if( event.type == SDL_KEYDOWN )
-    {
-        //Adjust the velocity
-        switch( event.key.keysym.sym )
-        {
-            case SDLK_UP: yVel -= SQUARE_HEIGHT / 2; break;
-            case SDLK_DOWN: yVel += SQUARE_HEIGHT / 2; break;
-            case SDLK_LEFT: xVel -= SQUARE_WIDTH / 2; break;
-            case SDLK_RIGHT: xVel += SQUARE_WIDTH / 2; break;
-        }
-    }
-    //If a key was released
-    else if( event.type == SDL_KEYUP )
-    {
-        //Adjust the velocity
-        switch( event.key.keysym.sym )
-        {
-            case SDLK_UP: yVel += SQUARE_HEIGHT / 2; break;
-            case SDLK_DOWN: yVel -= SQUARE_HEIGHT / 2; break;
-            case SDLK_LEFT: xVel += SQUARE_WIDTH / 2; break;
-            case SDLK_RIGHT: xVel -= SQUARE_WIDTH / 2; break;
-        }
-    }
-}
-
-void Square::move()
-{
-    //Move the square left or right
-    x += xVel;
-
-    //If the square went too far
-    if( ( x < 0 ) || ( x + SQUARE_WIDTH > SCREEN_WIDTH ) )
-    {
-        //Move back
-        x -= xVel;
-    }
-
-    //Move the square up or down
-    y += yVel;
-
-    //If the square went too far
-    if( ( y < 0 ) || ( y + SQUARE_HEIGHT > SCREEN_HEIGHT ) )
-    {
-        //Move back
-        y -= yVel;
-    }
-}
-
-void Square::show()
-{
-    //Move to offset
-    glTranslatef( x, y, 0 );
-
-    //Start quad
-    glBegin( GL_QUADS );
-
-        //Set color to white
-        glColor4f( 1.0, 1.0, 1.0, 1.0 );
-
-        //Draw square
-     glVertex3f( 0,            0,             0 );
-     glVertex3f( SQUARE_WIDTH, 0,             0 );
-     glVertex3f( SQUARE_WIDTH, SQUARE_HEIGHT, 0 );
-     glVertex3f( 0,            SQUARE_HEIGHT, 0 );
-
-    //End quad
-    glEnd();
-
-    //Reset
-    glLoadIdentity();
-}
-
-Timer::Timer()
-{
-    //Initialize the variables
-    startTicks = 0;
-    pausedTicks = 0;
-    paused = false;
-    started = false;
-}
-
-void Timer::start()
-{
-    //Start the timer
-    started = true;
-
-    //Unpause the timer
-    paused = false;
-
-    //Get the current clock time
-    startTicks = SDL_GetTicks();
-}
-
-void Timer::stop()
-{
-    //Stop the timer
-    started = false;
-
-    //Unpause the timer
-    paused = false;
-}
-
-void Timer::pause()
-{
-    //If the timer is running and isn't already paused
-    if( ( started == true ) && ( paused == false ) )
-    {
-        //Pause the timer
-        paused = true;
-
-        //Calculate the paused ticks
-        pausedTicks = SDL_GetTicks() - startTicks;
-    }
-}
-
-void Timer::unpause()
-{
-    //If the timer is paused
-    if( paused == true )
-    {
-        //Unpause the timer
-        paused = false;
-
-        //Reset the starting ticks
-        startTicks = SDL_GetTicks() - pausedTicks;
-
-        //Reset the paused ticks
-        pausedTicks = 0;
-    }
-}
-
-int Timer::get_ticks()
-{
-    //If the timer is running
-    if( started == true )
-    {
-        //If the timer is paused
-        if( paused == true )
-        {
-            //Return the number of ticks when the timer was paused
-            return pausedTicks;
-        }
-        else
-        {
-            //Return the current time minus the start time
-            return SDL_GetTicks() - startTicks;
-        }
-    }
-
-    //If the timer isn't running
-    return 0;
-}
-
-bool Timer::is_started()
-{
-    return started;
-}
-
-bool Timer::is_paused()
-{
-    return paused;
-}
-
-int main( int argc, char *argv[] )
-{
-    //Quit flag
-    bool quit = false;
-
-    //Initialize
-    if( init() == false )
-    {
+#include <SDL2/SDL.h>
+#include <stdio.h>
+#include <math.h>
+#undef main
+int main() {
+    // 初始化SDL
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        printf("SDL初始化失败: %s\n", SDL_GetError());
         return 1;
     }
 
-    //Our square object
-    Square square;
+    // 创建窗口
+    SDL_Window* window = SDL_CreateWindow("SDL Example", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480, SDL_WINDOW_SHOWN);
+    if (!window) {
+        printf("窗口创建失败: %s\n", SDL_GetError());
+        SDL_Quit();
+        return 1;
+    }
 
-    //The frame rate regulator
-    Timer fps;
+    // 创建渲染器
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (!renderer) {
+        printf("渲染器创建失败: %s\n", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
 
- //Wait for user exit
- while( quit == false )
- {
-        //Start the frame timer
-        fps.start();
+    // 清空屏幕为白色
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
 
-        //While there are events to handle
-  while( SDL_PollEvent( &event ) )
-  {
-            //Handle key presses
-            square.handle_input();
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0);
+	int i;
+	for(i = 0;i<1000;i++){
+		SDL_RenderDrawPoint(renderer, i/0.01f, sin(i/0.1f)*10+50);
+	}
+	SDL_RenderDrawLine(renderer, 0, 0, 100, 100);
+	SDL_RenderDrawLine(renderer, 0, 0, 100, 200);
+    // 更新屏幕
+    SDL_RenderPresent(renderer);
 
-   if( event.type == SDL_QUIT )
-   {
+
+    // 主循环处理事件
+    SDL_Event e;
+    bool quit = false;
+    while (!quit) {
+        while (SDL_PollEvent(&e) != 0) {
+            if (e.type == SDL_QUIT) {
                 quit = true;
             }
-  }
-
-     //Move the square
-     square.move();
-
-     //Clear the screen
-     glClear( GL_COLOR_BUFFER_BIT );
-
-     //Show the square
-     square.show();
-
-     //Update screen
-     SDL_GL_SwapBuffers();
-
-        //Cap the frame rate
-        if( fps.get_ticks() < 1000 / FRAMES_PER_SECOND )
-        {
-            SDL_Delay( ( 1000 / FRAMES_PER_SECOND ) - fps.get_ticks() );
         }
- }
+    }
 
- //Clean up
- clean_up();
+    // 释放资源
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 
- return 0;
+    return 0;
 }

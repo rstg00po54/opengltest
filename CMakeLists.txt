@@ -24,10 +24,13 @@ include_directories(SYSTEM library/shader)
 # 添加子项目 ProjectB
 # add_subdirectory(SDLDemo)
 add_subdirectory(project/LearnDemo1)
+add_subdirectory(project/SDLDemo)
 add_subdirectory(library/glad)
 add_subdirectory(library/imgui)
 add_subdirectory(library/stb_image)
 add_subdirectory(library/shader)
+add_subdirectory(project/Trangle)
+add_subdirectory(project/imguiDemo)
 
 
 find_package(glfw3 REQUIRED)

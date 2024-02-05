@@ -137,20 +137,8 @@ static vertices vertices0[] =
 */
 
 
-vertices V0[] = 
-{
-//	 ---- 位置 ----	   		---- 颜色 ----	 	- 纹理坐标 -
-	0.0f,  0.5f, 0.5f,   1.0f, 1.0f, 0.0f,   1.0f, Size_h*3,   // 0
-	0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   0.0f, Size_h*3,   // 1
-	0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 2
-	0.0f,  0.5f, 0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 3
-	0.0f,  0.0f, 0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 4
-	0.0f,  0.0f, 0.0f,   1.0f, 0.0f, 0.0f,   0.0f, 0.0f,   // 5
-	0.5f,  0.0f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 6
-	0.5f,  0.0f, 0.5f,   1.0f, 0.0f, 0.0f,   1.0f, Size_h*3,   // 7
-};
 
-unsigned int indices[36] = {
+unsigned int indices[42] = {
 	// 注意索引从0开始! 
 	// 此例的索引(0,1,2,3)就是顶点数组vertices的下标，
 	// 这样可以由下标代表顶点组合成矩形
@@ -172,29 +160,11 @@ static void error_callback(int error, const char* description)
 	fprintf(stderr, "Error: %s\n", description);
 }
 
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, GLFW_TRUE);
-}
-void getLog(GLint fragment_shader)
-{
-	GLint infoLen = 0;
-		glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &infoLen);
-		if (infoLen)
-		{
-			// 获取编译日志
-			char* buf = (char*) malloc((size_t)infoLen);
-			if (buf)
-			{
-				glGetShaderInfoLog(fragment_shader, infoLen, NULL, buf);
-				printf("GLUtils::LoadShader Could not compile shader :\n%s\n", buf);
-				free(buf);
-			}
-			glDeleteShader(fragment_shader);
-			fragment_shader = 0;
-		}
-}
+// static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+// {
+// 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+// 		glfwSetWindowShouldClose(window, GLFW_TRUE);
+// }
 
 // camera
 glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
@@ -203,6 +173,30 @@ glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    {
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+    }
+    else if (key == GLFW_KEY_A && action == GLFW_PRESS)
+    {
+        printf("Key A pressed!\n");
+    }
+}
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	// yoffset 表示垂直滚动的偏移量，通常用于获取鼠标滚轮的状态
+	printf("Mouse scrolled: %f\n", yoffset);
+}
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+	printf("%s in button %d, action %d, mods %d\n", __func__, button, action, mods);
+    if (button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS)
+    {
+        printf("Mouse scroll button pressed!\n");
+    }
+}
 void processInput(GLFWwindow *window)
 {
 	int flag = 0;
@@ -258,7 +252,7 @@ int main(void)
 	glfwSetErrorCallback(error_callback);
 		int i = 0;
 
-	for(i=6;i<36;i++){
+	for(i=6;i<42;i++){
 		indices[i] = i;
 	} 
 
@@ -275,10 +269,13 @@ int main(void)
 		exit(EXIT_FAILURE);
 	}
  
-	glfwSetKeyCallback(window, key_callback);
+	// glfwSetKeyCallback(window, key_callback);
  
 	glfwMakeContextCurrent(window);
-
+	    // 设置滚轮回调函数
+    glfwSetScrollCallback(window, scroll_callback);
+	glfwSetKeyCallback(window, key_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
 
 
 	IMGUI_CHECKVERSION();
@@ -325,7 +322,16 @@ int main(void)
 	glGenBuffers(1, &EBO);
 	// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
 	glBindVertexArray(VAO);
+/*
+ // 分配足够的空间
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * BUFFER_SIZE, NULL, GL_STATIC_DRAW);
 
+	// 设置第一块数据
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * 3, data1);
+
+	// 设置第二块数据
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(float) * 3, sizeof(float) * 3, data2);
+*/
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices0), vertices0, GL_STATIC_DRAW);
 
@@ -388,7 +394,6 @@ int main(void)
 		int width, height;
 		// mat4x4 m, p, mvp;
 
-
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
@@ -398,11 +403,7 @@ int main(void)
         // 设置 Text 窗口的大小
         // ImGui::SetWindowSize(ImVec2(400, 300));
 
-
-
-
-		processInput(window);
- 
+		// processInput(window);
 		glfwGetFramebufferSize(window, &width, &height);
 		ratio = width / (float) height;
 
@@ -427,12 +428,13 @@ int main(void)
 		model = glm::rotate(model, glm::radians(degrees.z), glm::vec3(0.0f, 0.0f, 1.0f));
 		// model =	glm::scale(model, degrees);
 
-
 		// 创建 view 矩阵
 		view = glm::lookAt(eye, center, up);
 		// view  = glm::translate(view, trans_vec3);//平移
-
+		// 透视投影矩阵
 		projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+		//正交投影矩阵
+		// projection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f);
 		// projection = customPerspectiveMatrix(glm::radians(90.0f), (float)width / (float)height, 0.1f, 100.0f, -0.0f, 0.0f);
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
@@ -444,11 +446,22 @@ int main(void)
 		// glBindVertexArray(VBO);
 		// glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 		// glDrawArrays(GL_TRIANGLES, 0, 3);
+		/*画线*/
 		glLineWidth(3.0f);
 		glUniform1i(glGetUniformLocation(program, "vertexInteger"), 0);
 		glDrawElements(GL_LINES, 6, GL_UNSIGNED_INT, 0);
+
+		/*画正方体*/
 		glUniform1i(glGetUniformLocation(program, "vertexInteger"), 1); 
 		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT,  (void*)(6 * sizeof(unsigned int)));
+
+		/*画正方体*/
+		// glm::vec3 degrees2(5.0f, 0.f, 0.f);
+		model =	glm::translate(model, glm::vec3(5.0f, 0.f, 0.f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
+		glUniform1i(glGetUniformLocation(program, "vertexInteger"), 1); 
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT,  (void*)(6 * sizeof(unsigned int)));
+
 		// glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, (void *)(sizeof(float)*8*6));
 		saveImg(width, height);
 		ImGui::Text("Avg fps: %.3f", ImGui::GetIO().Framerate);
