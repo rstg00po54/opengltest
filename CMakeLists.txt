@@ -16,8 +16,8 @@ message(STATUS "Hello, this is a status message top.${CMAKE_CURRENT_BINARY_DIR}"
 project(MainProject)
 
 # 添加子项目 ProjectA
-# include_directories(SYSTEM ./imgui)
-# include_directories(SYSTEM ./imgui/backends)
+include_directories(SYSTEM ./library/imgui)
+include_directories(SYSTEM ./library/imgui/backends)
 include_directories(SYSTEM library/glad/include/glad)
 include_directories(SYSTEM library/stb_image)
 include_directories(SYSTEM library/shader)
