@@ -10,7 +10,7 @@ find_package(glfw3 REQUIRED)
 add_executable(Trangle  main.cpp)
  
 # link_directories(./EGE20.08/lib/mingw64)
-target_link_libraries(Trangle ${CMAKE_CURRENT_SOURCE_DIR}/EGE20.08/lib/mingw64/libgraphics64.a)
+# target_link_libraries(Trangle ${CMAKE_CURRENT_SOURCE_DIR}/EGE20.08/lib/mingw64/libgraphics64.a)
 
 # target_link_libraries(SDLDemo glfw SDL2 glew32)
 # target_link_libraries(Trangle PRIVATE opengl32 glfw SDL2 glew32)

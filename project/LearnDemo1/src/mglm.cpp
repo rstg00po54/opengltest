@@ -13,10 +13,10 @@ glm::mat4 customPerspectiveMatrix(float fovy, float aspect, float near, float fa
     float t = r / aspect;
 
     return glm::mat4(
-        near / r, 0.0f, u * near / r, 0.0f,
-        0.0f, near / t, v * near / t, 0.0f,
-        0.0f, 0.0f, (far + near) / (near - far), 2.0f * far * near / (near - far),
-        0.0f, 0.0f, -1.0f, 0.0f
+        near / r, 	0.0f, 			u * near / r, 					0.0f,
+        0.0f, 		near / t, 		v * near / t, 					0.0f,
+        0.0f, 		0.0f, 			(far + near) / (near - far), 	2.0f * far * near / (near - far),
+        0.0f, 		0.0f, 			-1.0f, 							0.0f
     );
 }
 

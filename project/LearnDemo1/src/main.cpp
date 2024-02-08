@@ -167,22 +167,75 @@ static void error_callback(int error, const char* description)
 // }
 
 // camera
-glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
+glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  0.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
+
+float lastdeltaX;
+float downX;
+float nowX;
+
+float lastdeltaY;
+float downY;
+float nowY;
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	float cameraSpeed = static_cast<float>(20 * deltaTime * 0.001);
+	int windowWidth, windowHeight;
+	glfwGetWindowSize(window, &windowWidth, &windowHeight);
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
-    else if (key == GLFW_KEY_A && action == GLFW_PRESS)
+    else if (key == GLFW_KEY_W && action == GLFW_PRESS)
     {
+
         printf("Key A pressed!\n");
     }
+	if(action != GLFW_PRESS)
+		return;
+	switch (key)
+	{
+		case GLFW_KEY_W:
+			cameraPos += cameraSpeed * cameraFront;
+			break;
+		case GLFW_KEY_S:
+			cameraPos -= cameraSpeed * cameraFront;
+			break;
+		case GLFW_KEY_A:
+			cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+			break;
+		case GLFW_KEY_D:
+			cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+			break;
+		default:
+			break;
+	}
+}
+void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	// printf("%f %f\n", xpos, ypos);
+	nowX = xpos;
+	nowY = ypos;
+	if(downX)
+	{
+		lastdeltaX = xpos - downX;
+		// downX = xpos;
+		cameraFront.x = sin(glm::radians(lastdeltaX));
+		// cameraFront.x += lastdeltaX;
+		printf("x-=- %f %f\n", lastdeltaX, cameraFront.x);
+	}
+	if(downY)
+	{
+		lastdeltaY = ypos - downY;
+		// downY = ypos;
+		cameraFront.y = sin(glm::radians(lastdeltaY));
+		// cameraFront.x += lastdeltaX;
+		printf("x-=- %f %f\n", lastdeltaY, cameraFront.y);
+	}
 }
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
@@ -196,6 +249,17 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     {
         printf("Mouse scroll button pressed!\n");
     }
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+	{
+		downX = nowX;
+		downY = nowY;
+	}
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+	{
+		downX = 0;
+		downY = 0;
+	}
+	
 }
 void processInput(GLFWwindow *window)
 {
@@ -203,7 +267,7 @@ void processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
-	float cameraSpeed = static_cast<float>(2.5 * deltaTime * 0.001);
+	float cameraSpeed = static_cast<float>(20 * deltaTime * 0.001);
 	// 查询窗口大小
 	int windowWidth, windowHeight;
 	glfwGetWindowSize(window, &windowWidth, &windowHeight);
@@ -273,10 +337,12 @@ int main(void)
  
 	glfwMakeContextCurrent(window);
 	    // 设置滚轮回调函数
-    glfwSetScrollCallback(window, scroll_callback);
+    // glfwSetScrollCallback(window, scroll_callback);
+#if 0
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
-
+	glfwSetCursorPosCallback(window, cursor_pos_callback);
+#endif
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext(); //创建上下文
@@ -385,9 +451,13 @@ int main(void)
 	glm::mat4 projection    = glm::mat4(1.0f);
 
 	// 设置观察者的位置、观察点的位置和相机的上方向
-	glm::vec3 eye 		= glm::vec3(0.0f, 0.0f, 3.0f);
+	glm::vec3 eye 		= glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 center	= glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 up 		= glm::vec3(0.0f, 1.0f, 0.0f);
+// glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
+// glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+// glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+glm::vec4 cus = glm::vec4(-40.0f, 120.0f, 0.0f, 0.0f);
 	while (!glfwWindowShouldClose(window))
 	{
 		float ratio;
@@ -429,23 +499,24 @@ int main(void)
 		// model =	glm::scale(model, degrees);
 
 		// 创建 view 矩阵
-		view = glm::lookAt(eye, center, up);
+		view = glm::lookAt(cameraPos, cameraFront, cameraUp);
 		// view  = glm::translate(view, trans_vec3);//平移
 		// 透视投影矩阵
 		projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
 		//正交投影矩阵
-		// projection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f);
-		// projection = customPerspectiveMatrix(glm::radians(90.0f), (float)width / (float)height, 0.1f, 100.0f, -0.0f, 0.0f);
+		// projection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f);
+		projection = customPerspectiveMatrix((45.0f), (float)width / (float)height, cus.x, cus.y, cus.z, cus.w);
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
-		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &trans[0]);
+		// glm::mat4 trans0 = glm::mat4(1.0f);
 		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		glBindVertexArray(VAO);
 		// glBindVertexArray(VBO);
 		// glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 		// glDrawArrays(GL_TRIANGLES, 0, 3);
+		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &trans[0]);
 		/*画线*/
 		glLineWidth(3.0f);
 		glUniform1i(glGetUniformLocation(program, "vertexInteger"), 0);
@@ -465,24 +536,30 @@ int main(void)
 		// glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, (void *)(sizeof(float)*8*6));
 		saveImg(width, height);
 		ImGui::Text("Avg fps: %.3f", ImGui::GetIO().Framerate);
+		// ImGui::Text("Avg fps: %.3f", ImGui::GetIO().Framerate);
+
 		ImGui::SliderFloat3("Degree", &degrees.x, -180.0f, 180.0f);
-		// ImGui::SliderFloat3("Trans_Axis.xyz", &trans_vec3.x, -10.0, 10.0);
-		ImGui::SliderFloat3("eye.xyz", &eye.x, -100.0, 100.0);
 		ImGui::SameLine();
-		if (ImGui::Button("Reset")) {
-		// 当点击按钮时，设置标志以指示需要重置
-		// resetButtonClicked = true;
-			printf("click reset\n");
-			eye = glm::vec3(0.0f, 0.0f, 3.0f);
+		if (ImGui::Button("Degree")) {
+			printf("click degrees\n");
+			degrees = glm::vec3(0.0f, 0.0f, 0.0f);
 		}
 
-		ImGui::SliderFloat3("center.xyz", &center.x, -10.0, 10.0);
+		ImGui::SliderFloat3("eye.xyz", &cameraPos.x, -30.0, 30.0);
 		ImGui::SameLine();
-		if (ImGui::Button("Reset")) {
-		// 当点击按钮时，设置标志以指示需要重置
-		// resetButtonClicked = true;
-			printf("click reset\n");
-			center = glm::vec3(0.0f);;
+		if (ImGui::Button("Reset0")) {
+			printf("click reset eye\n");
+			cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+		}
+
+		ImGui::SliderFloat4("cus", &cus.x, -500.0f, 500.0f);
+		// cameraPos.z = sqrtf(9-powf(cameraPos.x, 2.0f));
+
+		ImGui::SliderFloat3("center.xyz", &cameraFront.x, -100.0, 100.0);
+		ImGui::SameLine();
+		if (ImGui::Button("Reset1")) {
+			printf("click reset centet\n");
+			cameraFront = glm::vec3(0.0f);;
 		}
 		ImGui::SliderFloat3("up.xyz", &up.x, -10.0, 10.0);
 		// ImGui::SliderFloat3("Translation.xyz", &translation.x, -1.0, 1.0);
