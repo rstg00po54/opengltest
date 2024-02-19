@@ -95,79 +95,16 @@ void drawself(SDL_Renderer* renderer)
 
 
 }
+SDL_Window* window;
 
-int main() {
-    // 初始化SDL
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        printf("SDL初始化失败: %s\n", SDL_GetError());
-        return 1;
-    }
-	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    // 创建窗口
-    SDL_Window* window = SDL_CreateWindow("SDL Example", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480, window_flags);
-    if (!window) {
-        printf("窗口创建失败: %s\n", SDL_GetError());
-        SDL_Quit();
-        return 1;
-    }
-
-    // 创建渲染器
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (!renderer) {
-        printf("渲染器创建失败: %s\n", SDL_GetError());
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 1;
-    }
-//
-
-    SDL_GLContext gl_context = SDL_GL_CreateContext(window);
-    SDL_GL_MakeCurrent(window, gl_context);
-    SDL_GL_SetSwapInterval(1); // Enable vsync
-
-    // Setup Dear ImGui context
-    // 初始化Dear ImGui
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
-    ImGui_ImplOpenGL3_Init("#version 130");
-
-//
-    // 清空屏幕为白色
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    SDL_RenderClear(renderer);
-
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0);
-	// int i;
-	// for(i = 0;i<1000;i++){
-	// 	SDL_RenderDrawPoint(renderer, i/0.01f, sin(i/0.1f)*10+50);
-	// }
-	// SDL_RenderDrawLine(renderer, 0, 0, 100, 100);
-	// SDL_RenderDrawLine(renderer, 0, 0, 100, 200);
-
-
-
-
- // 设置 Dear ImGui 窗口移动标志
-    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
-	float offset = 1.0f;
-	float offsetx = 100.0f;
-	float angle = 15.0f;
-	float angleoffset = 0.0f;
-	int count = 1;
-	int pointcount = 5;
-    // 主循环处理事件
-    SDL_Event e;
-    bool quit = false;
-    while (!quit) {
-        while (SDL_PollEvent(&e) != 0) {
-			ImGui_ImplSDL2_ProcessEvent(&e);
-            if (e.type == SDL_QUIT) {
-                quit = true;
-            }
-        }
-
+void drawC()
+{
+	static float offset = 1.0f;
+	static float offsetx = 100.0f;
+	static float angle = 15.0f;
+	static float angleoffset = 0.0f;
+	static int count = 1;
+	static int pointcount = 5;
         // 开始新的ImGui帧
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame(window);
@@ -220,18 +157,139 @@ int main() {
         glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+int main() {
+    // 初始化SDL
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        printf("SDL初始化失败: %s\n", SDL_GetError());
+        return 1;
+    }
+	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+    // 创建窗口
+    window = SDL_CreateWindow("SDL Example", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480, window_flags);
+    if (!window) {
+        printf("窗口创建失败: %s\n", SDL_GetError());
+        SDL_Quit();
+        return 1;
+    }
+
+    // 创建渲染器
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (!renderer) {
+        printf("渲染器创建失败: %s\n", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+//
+
+    SDL_GLContext gl_context = SDL_GL_CreateContext(window);
+    SDL_GL_MakeCurrent(window, gl_context);
+    SDL_GL_SetSwapInterval(1); // Enable vsync
+
+
+
+    // Setup Dear ImGui context
+    // 初始化Dear ImGui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
+    ImGui_ImplOpenGL3_Init("#version 130");
+
+//
+    // 清空屏幕为白色
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0);
+	// int i;
+	// for(i = 0;i<1000;i++){
+	// 	SDL_RenderDrawPoint(renderer, i/0.01f, sin(i/0.1f)*10+50);
+	// }
+	// SDL_RenderDrawLine(renderer, 0, 0, 100, 100);
+	// SDL_RenderDrawLine(renderer, 0, 0, 100, 200);
+
+
+
+
+ // 设置 Dear ImGui 窗口移动标志
+	ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
+
+	// 主循环处理事件
+	SDL_Event e;
+	bool quit = false;
+
+	ImVec2 v, downV;
+	int mouseDown = 0;
+	while (!quit) {
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplSDL2_NewFrame(window);
+		ImGui::NewFrame();
+		ImGui::SetWindowSize(ImVec2(800, 600));
+		ImGui::SetWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+
+		ImDrawList* draw_list = ImGui::GetWindowDrawList();
+		while (SDL_PollEvent(&e) != 0) {
+			// ImGui_ImplSDL2_ProcessEvent(&e);
+			if (e.type == SDL_QUIT) {
+				quit = true;
+			} else if (e.type == SDL_MOUSEMOTION) { // 鼠标移动事件
+				int x = e.motion.x;
+				int y = e.motion.y;
+				if(mouseDown) {
+					v.x = e.motion.x;
+					v.y = e.motion.y;
+					// SDL_Log("Mouse Moved: X=%d, Y=%d\n", x, y);
+				}
+			} else if (e.type == SDL_MOUSEBUTTONDOWN) { // 鼠标按下事件
+				downV.x = (float)e.motion.x*1.0f+1.0f;
+				downV.y = e.motion.y*1.0f;
+				mouseDown = 1;
+				ImVec2 center = ImGui::GetCursorScreenPos(); // 获取窗口中心点的屏幕坐标
+				SDL_Log("Mouse Button downV: X=%f, Y=%f\n", downV.x, downV.y);
+				SDL_Log("Mouse Button Down: X=%d, Y=%d\n", e.motion.x, e.motion.y);
+				// ImVec2 v;
+				// draw_list->AddCircleFilled(v, 5, IM_COL32(255, 255, 0, 255));
+			} else if (e.type == SDL_MOUSEBUTTONUP) {  // 鼠标抬起事件
+				mouseDown = 0;
+				int x = e.button.x;
+				int y = e.button.y;
+				SDL_Log("Mouse Button Up: X=%d, Y=%d\n", x, y);
+			}
+		}
+		ImVec2 dv,dpoint;
+		if (mouseDown) {
+			dv.x = v.x-downV.x;
+			dv.y = v.y-downV.y;
+			dpoint.x = 50.0f*cosf(dv.x*0.1f)+400;
+			dpoint.y = 50.0f*sinf(dv.x*0.1f)+300;
+			// SDL_Log("dx %f dy %f\n", dv.x, dv.y);
+			SDL_Log("dx %f dy %f\n", dpoint.x, dpoint.y);
+
+			draw_list->AddCircleFilled(dpoint, 5, IM_COL32(255, 255, 0, 255));
+		}
+		draw_list->AddCircleFilled(ImVec2(400, 300), 5, IM_COL32(255, 255, 0, 255));
+		// drawC();
+		ImGui::Render();
+		// glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+		glViewport(0, 0, (int)ImGui::GetIO().DisplaySize.x, (int)ImGui::GetIO().DisplaySize.y);
+		glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 
 		// drawself(renderer);
 		SDL_GL_MakeCurrent(window, gl_context);
 		SDL_GL_SwapWindow(window);
-    	// // 更新屏幕
-    	// SDL_RenderPresent(renderer);
-		        // Rendering
+		// // 更新屏幕
+		// SDL_RenderPresent(renderer);
+		// Rendering
 
 		// ImGui::Render();
 		// ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    }
+	}
 
     // 释放资源
     SDL_DestroyRenderer(renderer);

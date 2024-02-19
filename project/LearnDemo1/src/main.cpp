@@ -168,7 +168,7 @@ static void error_callback(int error, const char* description)
 
 // camera
 glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  0.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f,  0.0f);
 glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -177,6 +177,7 @@ float lastFrame = 0.0f;
 float lastdeltaX;
 float downX;
 float nowX;
+int flagDown;
 
 float lastdeltaY;
 float downY;
@@ -220,21 +221,18 @@ void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 	// printf("%f %f\n", xpos, ypos);
 	nowX = xpos;
 	nowY = ypos;
-	if(downX)
-	{
-		lastdeltaX = xpos - downX;
-		// downX = xpos;
-		cameraFront.x = sin(glm::radians(lastdeltaX));
-		// cameraFront.x += lastdeltaX;
-		printf("x-=- %f %f\n", lastdeltaX, cameraFront.x);
-	}
-	if(downY)
+	if(flagDown)
 	{
 		lastdeltaY = ypos - downY;
+		lastdeltaX = xpos - downX;
 		// downY = ypos;
-		cameraFront.y = sin(glm::radians(lastdeltaY));
+		// cameraFront.y = sin(glm::radians(lastdeltaY));
 		// cameraFront.x += lastdeltaX;
-		printf("x-=- %f %f\n", lastdeltaY, cameraFront.y);
+
+		cameraPos.x = 3.0f*cosf(lastdeltaX*0.1f);
+		cameraPos.y = 0;//1.0f*sinf(lastdeltaY*0.1f);
+		cameraPos.z = 3.0f*sinf(lastdeltaX*0.1f);
+		printf("lastdeltaX = %f\n", lastdeltaX);
 	}
 }
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
@@ -253,11 +251,13 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	{
 		downX = nowX;
 		downY = nowY;
+		flagDown = 1;
 	}
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
 	{
 		downX = 0;
 		downY = 0;
+		flagDown = 0;
 	}
 	
 }
@@ -338,7 +338,7 @@ int main(void)
 	glfwMakeContextCurrent(window);
 	    // 设置滚轮回调函数
     // glfwSetScrollCallback(window, scroll_callback);
-#if 0
+#if 1
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetCursorPosCallback(window, cursor_pos_callback);
@@ -458,6 +458,8 @@ int main(void)
 // glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 // glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 glm::vec4 cus = glm::vec4(-40.0f, 120.0f, 0.0f, 0.0f);
+
+cameraPos.z = -3.0f;
 	while (!glfwWindowShouldClose(window))
 	{
 		float ratio;
@@ -505,7 +507,7 @@ glm::vec4 cus = glm::vec4(-40.0f, 120.0f, 0.0f, 0.0f);
 		projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
 		//正交投影矩阵
 		// projection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f);
-		projection = customPerspectiveMatrix((45.0f), (float)width / (float)height, cus.x, cus.y, cus.z, cus.w);
+		// projection = customPerspectiveMatrix((45.0f), (float)width / (float)height, cus.x, cus.y, cus.z, cus.w);
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
@@ -545,7 +547,7 @@ glm::vec4 cus = glm::vec4(-40.0f, 120.0f, 0.0f, 0.0f);
 			degrees = glm::vec3(0.0f, 0.0f, 0.0f);
 		}
 
-		ImGui::SliderFloat3("eye.xyz", &cameraPos.x, -30.0, 30.0);
+		ImGui::SliderFloat3("cameraPos.xyz", &cameraPos.x, -30.0, 30.0);
 		ImGui::SameLine();
 		if (ImGui::Button("Reset0")) {
 			printf("click reset eye\n");
