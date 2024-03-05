@@ -8,6 +8,8 @@ set(IMGUI_SOURCE_FILES
 ./backends/imgui_impl_opengl2.cpp
 ./backends/imgui_impl_sdl2.cpp
 ./backends/imgui_impl_glut.cpp
+./backends/imgui_impl_sdl2.cpp
+./backends/imgui_impl_sdlrenderer2.cpp
 ./imgui_draw.cpp 
 ./imgui_tables.cpp 
 ./imgui_widgets.cpp

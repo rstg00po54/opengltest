@@ -325,7 +325,9 @@ void processInput(GLFWwindow *window)
 		// printf("Mouse is outside the window\n");
 	}
 }
-
+        // proj_mat = glm.perspective(glm.radians(45.0), self.width/self.height, 0.1, 1000.0)
+        // view_mat = glm.lookAt(glm.vec3(10.0,10.0,10.0), glm.vec3(0.0,0.0,0.0), glm.vec3(0.0, 1.0, 0.0))
+        // self.matrix = proj_mat*view_mat
 void testglm();
 int main(void)
 {
@@ -532,7 +534,7 @@ sp = 0.05f;
 		// 透视投影矩阵
 		projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
 		//正交投影矩阵
-		// projection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f);
+		// projection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f);
 		// projection = customPerspectiveMatrix((45.0f), (float)width / (float)height, cus.x, cus.y, cus.z, cus.w);
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);

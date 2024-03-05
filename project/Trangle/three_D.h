@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #include <math.h>
+#define WIN_WIDTH 800
+#define WIN_HEIGHT 400
 // #ifndef _EGE_H_
 // #error include "three.h" must after include "ege.h" or "graphics.h"
 // #endif
@@ -23,6 +25,7 @@ void setcamerasize(int angle){
 	}
 	double t=asin(1)*2/(360.0/angle);
 	camerasize=1/tan(t);
+	printf("camera size %f\n", camerasize);
 }
 void initwindow(int w,int h,int mod=-1){
 #if 0
@@ -130,7 +133,7 @@ void threeD_putline(Point a,Point b);
 
 
 void putline(Point a,Point b){
-	// printf("%s in\n", __func__);
+	// printf("%s a %f, %f, - %f, %f\n", __func__, a.x,a.y, b.x,b.y);
 	//line(800+(t/sqrt(10)*a.x-1.0/sqrt(10)*a.y)*5,500-(1.0/sqrt(10)*a.x+t/sqrt(10)*a.y+1/sqrt(10)*a.z*(0.5+0.5*t))*5,800+(t/sqrt(10)*b.x-1.0/sqrt(10)*b.y)*5,500-(1.0/sqrt(10)*b.x+t/sqrt(10)*b.y+1/sqrt(10)*b.z*(0.5+0.5*t))*5);
 	
 	a.y=-a.y;
@@ -145,25 +148,33 @@ void putline(Point a,Point b){
 	double x,y,z;
 	x=a.x;
 	y=a.y;
-	a.x=x*cos(txy)-y*sin(txy);a.y=x*sin(txy)+y*cos(txy);
+	a.x=x*cos(txy)-y*sin(txy);
+	a.y=x*sin(txy)+y*cos(txy);
 	x=b.x;
 	y=b.y;
-	b.x=x*cos(txy)-y*sin(txy);b.y=x*sin(txy)+y*cos(txy);
+	b.x=x*cos(txy)-y*sin(txy);
+	b.y=x*sin(txy)+y*cos(txy);
 	
 	
 	x=a.x;
 	z=a.z;
-	a.x=x*cos(txz)-z*sin(txz);a.z=x*sin(txz)+z*cos(txz);
+	a.x=x*cos(txz)-z*sin(txz);
+	a.z=x*sin(txz)+z*cos(txz);
 	x=b.x;
 	z=b.z;
-	b.x=x*cos(txz)-z*sin(txz);b.z=x*sin(txz)+z*cos(txz);
+	b.x=x*cos(txz)-z*sin(txz);
+	b.z=x*sin(txz)+z*cos(txz);
 	
 	y=a.y;
 	z=a.z;
-	a.y=y*cos(tyz)-z*sin(tyz);a.z=y*sin(tyz)+z*cos(tyz);
+	a.y=y*cos(tyz)-z*sin(tyz);
+	a.z=y*sin(tyz)+z*cos(tyz);
 	y=b.y;
 	z=b.z;
-	b.y=y*cos(tyz)-z*sin(tyz);b.z=y*sin(tyz)+z*cos(tyz);
+	b.y=y*cos(tyz)-z*sin(tyz);
+	b.z=y*sin(tyz)+z*cos(tyz);
+
+	// printf("txy = %f, txz = %f, tyz = %f\n", txy, txz, tyz);
 	
 	// printf("%s in\n", __func__);
 	if(a.y<=0||b.y<=0||a.y>=28||b.y>=18)
@@ -174,11 +185,20 @@ void putline(Point a,Point b){
 	// 	500-a.z/a.y*800*camerasize+yl,
 	// 	b.x/b.y*800*camerasize+800+xl,
 	// 	500-b.z/b.y*800*camerasize+yl);
+	int tmx = WIN_WIDTH/2;
+	int tmy = WIN_HEIGHT/2;
+	// printf("draw %f, %f, %f, %f\n", 
+	// 				a.x/a.y*tmx*camerasize+tmx+xl,
+	// 				tmy-a.z/a.y*tmx*camerasize+yl,
+	// 				b.x/b.y*tmx*camerasize+tmx+xl,
+	// 				tmy-b.z/b.y*tmx*camerasize+yl);
+	
+
 	SDL_RenderDrawLine(renderer,
-					a.x/a.y*800*camerasize+800+xl,
-					500-a.z/a.y*800*camerasize+yl,
-					b.x/b.y*800*camerasize+800+xl,
-					500-b.z/b.y*800*camerasize+yl);
+					a.x/a.y*tmx*camerasize+tmx+xl,
+					tmy-a.z/a.y*tmx*camerasize+yl,
+					b.x/b.y*tmx*camerasize+tmx+xl,
+					tmy-b.z/b.y*tmx*camerasize+yl);
 	// printf("%s out\n", __func__);
 }
 void putline(Point a,Point b);
@@ -198,12 +218,13 @@ class threeD_object{
 };
 
 void putobj(threeD_object a){
-	// printf("%s in\n", __func__);
+	// printf("%s %d ++++\n", __func__, a.usepoint);
 	for(int i=0;i<a.usepoint;i++){
 		for(int j=0;j<a.usepoint;j++){
 			putline(a.point[i],a.point[j]);
 		}
 	}
+	// printf("%s %d ----\n", __func__, a.usepoint);
 }
 void putobj(threeD_object a);
 
@@ -231,11 +252,3 @@ threeD_object getcube(double a,double xp,double yp,double zp){
 	tmp.name="cube";
 	return tmp;
 }
-threeD_object newpoint(threeD_object a,double x,double y,double z){
-	a.point[a.usepoint].x=x;
-	a.point[a.usepoint].y=y;
-	a.point[a.usepoint].z=z;
-	a.usepoint++;
-	return a;
-}
-threeD_object newpoint(threeD_object a,double x,double y,double z);
