@@ -1,5 +1,5 @@
 #include <SDL2/SDL.h>
-
+#include <stdio.h>
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 #undef main
@@ -26,6 +26,7 @@ int main(int argc, char* argv[]) {
 
 		SDL_LockTexture(texture, NULL, &pixels, &pitch);
 		Uint32* pixelData = (Uint32*)pixels;
+		printf("%p\n", pixelData);
 		// 绘制一个绿色的矩形
 		for (int y = 100; y < 200; ++y) {
 			for (int x = 100; x < 200; ++x) {
@@ -40,13 +41,13 @@ int main(int argc, char* argv[]) {
 		SDL_RenderClear(renderer);
 		SDL_RenderCopy(renderer, texture, NULL, NULL);
 		SDL_RenderPresent(renderer);
-		}
+	}
 
-		// 清理资源
-		SDL_DestroyTexture(texture);
-		SDL_DestroyRenderer(renderer);
-		SDL_DestroyWindow(window);
-		SDL_Quit();
+	// 清理资源
+	SDL_DestroyTexture(texture);
+	SDL_DestroyRenderer(renderer);
+	SDL_DestroyWindow(window);
+	SDL_Quit();
 
 	return 0;
 }
