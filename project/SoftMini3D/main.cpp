@@ -531,7 +531,7 @@ void device_init(device_t *device, int width, int height, void *fb) {
 	device->max_v = 1.0f;
 	device->width = width;
 	device->height = height;
-	device->background = 0xc0c0c0;
+	device->background = 0x0c473cff;
 	device->foreground = 0;
 	transform_init(&device->transform, width, height);
 	device->render_state = RENDER_STATE_WIREFRAME;
@@ -560,6 +560,7 @@ void device_clear(device_t *device, int mode) {
 		IUINT32 cc = (height - 1 - y) * 230 / (height - 1);
 		cc = (cc << 16) | (cc << 8) | cc;
 		if (mode == 0) cc = device->background;
+		cc = 0x0c473cff;
 		for (x = device->width; x > 0; dst++, x--) dst[0] = cc;
 	}
 	for (y = 0; y < device->height; y++) {
@@ -848,7 +849,7 @@ void init_texture(device_t *device) {
 	for (j = 0; j < 256; j++) {
 		for (i = 0; i < 256; i++) {
 			int x = i / 32, y = j / 32;
-			texture[j][i] = ((x + y) & 1)? 0xffffff : 0x3fbcef;
+			texture[j][i] = ((x + y) & 1)? 0xffffffff : 0xe3c08cff;
 		}
 	}
 	device_set_texture(device, texture, 256 * 4, 256, 256);
