@@ -22,7 +22,9 @@
 // #include <windows.h>
 // #include <tchar.h>
 #include <SDL2/SDL.h>
-
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_sdlrenderer2.h"
 typedef unsigned int IUINT32;
 
 //调试打印开关
@@ -779,10 +781,11 @@ int screen_init(int w, int h, const char *title);	// 屏幕初始化
 #pragma comment(lib, "user32.lib")
 #endif
 
-
+SDL_Window* window;
+// ImGuiIO &io;
 int screen_init(int w, int h, const char *title) {
 	SDL_Init(SDL_INIT_VIDEO);
-	SDL_Window* window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, h, SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, h, SDL_WINDOW_SHOWN);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, w, h);
 	unsigned char **p = &screen_fb;
@@ -790,7 +793,24 @@ int screen_init(int w, int h, const char *title) {
 	SDL_UnlockTexture(texture);
 	return 0;
 }
+ImGuiIO & imgui_init() {
+	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO & io = ImGui::GetIO();
+	(void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsLight();
+
+	// Setup Platform/Renderer backends
+	ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
+	ImGui_ImplSDLRenderer2_Init(renderer);
+	return io;
+}
 //=====================================================================
 // 主程序
 //=====================================================================
@@ -869,6 +889,7 @@ int main(void)
 
 	if (screen_init(800, 600, title)) 
 		return -1;
+	ImGuiIO &io = imgui_init();
 
 	device_init(&device, 800, 600, screen_fb);
 	camera_at_zero(&device, 3, 0, 0);
@@ -882,6 +903,7 @@ int main(void)
 	SDL_Keycode key;
 	while (!quit) {
 		while (SDL_PollEvent(&e) != 0) {
+			ImGui_ImplSDL2_ProcessEvent(&e);
 			if (e.type == SDL_QUIT) {
 				quit = true;
 			}
@@ -889,6 +911,7 @@ int main(void)
 			switch (e.type) {
 				case SDL_MOUSEMOTION:
 					// 处理鼠标移动事件
+					printf("mouse move %d,%d\n", e.motion.x, e.motion.y);
 					break;
 				case SDL_MOUSEBUTTONDOWN:
 					// 处理鼠标按下事件
@@ -913,6 +936,15 @@ int main(void)
 					break;
 			}
 		}
+		// Start the Dear ImGui frame
+		ImGui_ImplSDLRenderer2_NewFrame();
+		ImGui_ImplSDL2_NewFrame();
+		ImGui::NewFrame();
+		ImGui::Begin("Hello, world!");
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+		ImGui::End();
+		// Rend
+
 		// screen_dispatch();
 		device_clear(&device, 1);
 		camera_at_zero(&device, pos, 0, 0);
@@ -975,11 +1007,13 @@ int main(void)
 		// 解锁纹理
 		SDL_UnlockTexture(texture);
 #endif
+		ImGui::Render();
 		// 渲染纹理
 		SDL_RenderClear(renderer);
 		SDL_RenderCopy(renderer, texture, NULL, NULL);
+		ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
 		SDL_RenderPresent(renderer);
-		SDL_Delay(1);
+		// SDL_Delay(30);
 	}
 	return 0;
 }
