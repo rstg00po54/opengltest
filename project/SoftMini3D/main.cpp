@@ -55,10 +55,28 @@ typedef unsigned int IUINT32;
 
 
 
+#define MAX_OUTPUT_SIZE 1000
+
+// 全局变量，用于存储输出结果
+char output[MAX_OUTPUT_SIZE] = {0};
+int output_length = 0;
+
+
 SDL_Texture* texture;
 SDL_Renderer* renderer;
 int pitch;
 
+// 定义一个函数，将字符串追加到全局数组中
+void append_to_output(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+
+    // 在output中追加字符串
+    output_length += vsnprintf(output + output_length, MAX_OUTPUT_SIZE - output_length, format, args);
+
+    va_end(args);
+}
+#define PRINT_POINT(c1) append_to_output(#c1);append_to_output(":%3.2f %3.2f %3.2f\n", c1.x, c1.y, c1.z);
 
 //=====================================================================
 // 渲染设备
@@ -82,6 +100,7 @@ typedef struct {
 #define RENDER_STATE_WIREFRAME      1		// 渲染线框
 #define RENDER_STATE_TEXTURE        2		// 渲染纹理
 #define RENDER_STATE_COLOR          4		// 渲染颜色
+
 
 // 设备初始化，fb为外部帧缓存，非 NULL 将引用外部帧缓存（每行 4字节对齐）
 void device_init(device_t *device, int width, int height, void *fb) {
@@ -165,7 +184,7 @@ void device_pixel(device_t *device, int x, int y, IUINT32 color) {
 
 // 绘制线段
 void device_draw_line(device_t *device, int x1, int y1, int x2, int y2, IUINT32 c) {
-	pr_debug("%d %d, %d %d", x1, y1, x2, y2);
+	// pr_debug("%d %d, %d %d", x1, y1, x2, y2);
 	int x, y, rem = 0;
 	if (x1 == x2 && y1 == y2) {
 		device_pixel(device, x1, y1, c);
@@ -279,17 +298,27 @@ void device_render_trap(device_t *device, trapezoid_t *trap) {
 		if (j >= device->height) break;
 	}
 }
+char buffer_text[1024];
 
+static point_t p1, p2, p3, c1, c2, c3;
+// #define PRINT_POINT(c1) printf(#c1);printf(":%f %f %f\n", c1.x, c1.y, c1.z);
+// #define PRINTF_NAME_VALUE(X) {sprintf(&buffer_text[strlen(buffer_text)-2], #X); sprintf(buffer_text, "   %f %f %f\n", X.x, X.y, X.z);}
 // 根据 render_state 绘制原始三角形
 void device_draw_primitive(device_t *device, const vertex_t *v1, 
 	const vertex_t *v2, const vertex_t *v3) {
-	point_t p1, p2, p3, c1, c2, c3;
-	int render_state = device->render_state;
 
+	int render_state = device->render_state;
+// sprintf(buffer_text, )
 	// 按照 Transform 变化
-	transform_apply(&device->transform, &c1, &v1->pos);
-	transform_apply(&device->transform, &c2, &v2->pos);
-	transform_apply(&device->transform, &c3, &v3->pos);
+	// transform_apply(&device->transform, &c1, &v1->pos);
+	matrix_apply( &c1, &v1->pos, &device->transform.transform);
+	// transform_apply(&device->transform, &c2, &v2->pos);
+	matrix_apply( &c2, &v2->pos, &device->transform.transform);
+	// transform_apply(&device->transform, &c3, &v3->pos);
+	matrix_apply( &c3, &v3->pos, &device->transform.transform);
+
+
+	// printf("%d\n", strlen(buffer_text));
 
 	// 裁剪，注意此处可以完善为具体判断几个点在 cvv内以及同cvv相交平面的坐标比例
 	// 进行进一步精细裁剪，将一个分解为几个完全处在 cvv内的三角形
@@ -301,6 +330,9 @@ void device_draw_primitive(device_t *device, const vertex_t *v1,
 	transform_homogenize(&device->transform, &p1, &c1);
 	transform_homogenize(&device->transform, &p2, &c2);
 	transform_homogenize(&device->transform, &p3, &c3);
+	PRINT_POINT(p1);
+	PRINT_POINT(p2);
+	PRINT_POINT(p3);
 
 	// 纹理或者色彩绘制
 	if (render_state & (RENDER_STATE_TEXTURE | RENDER_STATE_COLOR)) {
@@ -404,13 +436,14 @@ void draw_plane(device_t *device, int a, int b, int c, int d) {
 	p4.tc.u = 1;
 	p4.tc.v = 0;
 	device_draw_primitive(device, &p1, &p2, &p3);
-	device_draw_primitive(device, &p3, &p4, &p1);
+	// device_draw_primitive(device, &p3, &p4, &p1);
 }
 
 void draw_box(device_t *device, float theta) {
 	// pr_debug("in");
 	matrix_t m;
-	matrix_set_rotate(&m, -1, -0.5, 1, theta);
+	matrix_set_rotate(&m, 1, 1, 1, 0);
+	matrix_set_identity(&m);
 	device->transform.world = m;
 	transform_update(&device->transform);
 	draw_plane(device, 0, 1, 2, 3);
@@ -419,11 +452,21 @@ void draw_box(device_t *device, float theta) {
 	draw_plane(device, 1, 5, 6, 2);
 	draw_plane(device, 2, 6, 7, 3);
 	draw_plane(device, 3, 7, 4, 0);
+	// for(int i=0;i<4;i++){
+	// 	for(int j=0;j<4;j++){
+	// 		printf("%d %d = %f\n", i, j, m.m[i][j]);
+	// 	}
+
+	// }
 }
 
 void camera_at_zero(device_t *device, float x, float y, float z) {
-	point_t eye = { x, y, z, 1 }, at = { 0, 0, 0, 1 }, up = { 0, 0, 1, 1 };
-	matrix_set_lookat(&device->transform.view, &eye, &at, &up);
+	// point_t eye = { x, y, z, 1 }, at = { 0, 0, 0, 1 }, up = { 0, 0, 1, 1 };
+	point_t camera  = { 0, 0, -3, 1 };//相机位置eye
+	point_t target  = { 0, 0, 0, 1 };//观察目标 at
+	point_t up  = { 0, 1, 0, 1 };
+	//camera target up
+	matrix_set_lookat(&device->transform.view, &camera, &target, &up);
 	transform_update(&device->transform);
 }
 
@@ -446,7 +489,7 @@ int main(void)
 	int indicator = 0;
 	int kbhit = 0;
 	float alpha = 1;
-	float pos = 3.5;
+	// float pos = 3.5;
 
 	char title[] = "Mini3d (software render tutorial) ";
 		// _T("Left/Right: rotation, Up/Down: forward/backward, Space: switch state");
@@ -465,7 +508,16 @@ int main(void)
 	bool quit = false;
 	SDL_Event e;
 	SDL_Keycode key;
+	vector_t pos;
+	pos.x = 0;
+	pos.y = 0;
+	pos.z = -1;
+	pos.w = 1;
 	while (!quit) {
+		output_length = 0;
+		// printf("\ec");
+		// system("cls");
+		// printf("==============================\n");
 		while (SDL_PollEvent(&e) != 0) {
 			ImGui_ImplSDL2_ProcessEvent(&e);
 			if (e.type == SDL_QUIT) {
@@ -475,7 +527,7 @@ int main(void)
 			switch (e.type) {
 				case SDL_MOUSEMOTION:
 					// 处理鼠标移动事件
-					printf("mouse move %d,%d\n", e.motion.x, e.motion.y);
+					// printf("mouse move %d,%d\n", e.motion.x, e.motion.y);
 					break;
 				case SDL_MOUSEBUTTONDOWN:
 					// 处理鼠标按下事件
@@ -505,31 +557,47 @@ int main(void)
 		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
 		ImGui::Begin("Hello, world!");
+		ImGui::Text(output);
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+
+		// for(int jj = 0;jj<10;jj++)
+		// ImGui::Text("this is first ");
+		ImGui::SliderFloat3("pos", (float *)&pos, -3.0f, 3.0f);
+		ImGui::SameLine();
+		if(ImGui::Button("reset")) {
+			pos.x = pos.y = pos.z = 0;
+			pos.w = 1;
+		}
+		ImGui::SliderFloat("alpha", (float *)&alpha, 0.0f, 5.0f);
+			// point_t p1, p2, p3, c1, c2, c3;
+		// ImGui::SliderFloat3("p1", (float *)&p1, -3.0f, 3.0f);
+		// ImGui::SliderFloat3("p2", (float *)&p2, -3.0f, 3.0f);
+		// ImGui::SliderFloat3("p3", (float *)&p3, -3.0f, 3.0f);
 		ImGui::End();
 		// Rend
 
 		// screen_dispatch();
 		device_clear(&device, 1);
-		camera_at_zero(&device, pos, 0, 0);
-
-		switch (key) {
-			case SDLK_UP:
-				pos -= 0.01f;
-				break;
-			case SDLK_DOWN:
-				pos += 0.01f;
-				break;
-			case SDLK_LEFT:
-				alpha -= 0.01f;
-				break;
-			case SDLK_RIGHT:
-				alpha += 0.01f;
-				break;
+		camera_at_zero(&device, pos.x, pos.y, pos.z);
 		
-			default:
-				break;
-		}
+
+		// switch (key) {
+		// 	case SDLK_UP:
+		// 		pos -= 0.01f;
+		// 		break;
+		// 	case SDLK_DOWN:
+		// 		pos += 0.01f;
+		// 		break;
+		// 	case SDLK_LEFT:
+		// 		alpha -= 0.01f;
+		// 		break;
+		// 	case SDLK_RIGHT:
+		// 		alpha += 0.01f;
+		// 		break;
+		
+		// 	default:
+		// 		break;
+		// }
 
 		if (key == SDLK_SPACE) {
 			key = 0;
@@ -572,12 +640,13 @@ int main(void)
 		SDL_UnlockTexture(texture);
 #endif
 		ImGui::Render();
+		// SDL_Delay(30);
 		// 渲染纹理
 		SDL_RenderClear(renderer);
 		SDL_RenderCopy(renderer, texture, NULL, NULL);
 		ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
 		SDL_RenderPresent(renderer);
-		// SDL_Delay(30);
+		// SDL_Delay(300);
 	}
 	return 0;
 }

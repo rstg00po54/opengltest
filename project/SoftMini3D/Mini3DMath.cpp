@@ -180,6 +180,7 @@ void matrix_set_rotate(matrix_t *m, float x, float y, float z, float theta) {
 }
 
 // 设置摄像机
+//camera target up
 void matrix_set_lookat(matrix_t *m, const vector_t *eye, const vector_t *at, const vector_t *up) {
 	vector_t xaxis, yaxis, zaxis;
 
@@ -207,10 +208,15 @@ void matrix_set_lookat(matrix_t *m, const vector_t *eye, const vector_t *at, con
 	m->m[0][3] = m->m[1][3] = m->m[2][3] = 0.0f;
 	m->m[3][3] = 1.0f;
 }
-
-// D3DXMatrixPerspectiveFovLH
+/*
+reg jiao
+2pi*deg = 360*rad
+角度 deg
+弧度 rad
+*/
+// fovy 角度
 void matrix_set_perspective(matrix_t *m, float fovy, float aspect, float zn, float zf) {
-	float fax = 1.0f / (float)tan(fovy * 0.5f);
+	float fax = 1.0f / (float)tan(2.0f*3.14f*fovy/360.0f);
 	matrix_set_zero(m);
 	m->m[0][0] = (float)(fax / aspect);
 	m->m[1][1] = (float)(fax);
