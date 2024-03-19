@@ -58,6 +58,7 @@ void vector_interp(vector_t *z, const vector_t *x1, const vector_t *x2, float t)
 }
 
 // 矢量归一化
+// 矢量归一化是 该矢量除以它的模，得到的新的矢量是模为1的单位矢量，它与原来的矢量方向相同。
 void vector_normalize(vector_t *v) {
 	float length = vector_length(v);
 	if (length != 0.0f) {
@@ -138,7 +139,7 @@ void matrix_set_zero(matrix_t *m) {
 	m->m[2][0] = m->m[2][1] = m->m[2][2] = m->m[2][3] = 0.0f;
 	m->m[3][0] = m->m[3][1] = m->m[3][2] = m->m[3][3] = 0.0f;
 }
-
+//  缩放 -> 旋转 -> 平移 
 // 平移变换
 void matrix_set_translate(matrix_t *m, float x, float y, float z) {
 	matrix_set_identity(m);
