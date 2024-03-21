@@ -1,4 +1,5 @@
 图形学：观察矩阵/LookUp矩阵的推导
+https://zhuanlan.zhihu.com/p/552252893
 ====================
 
 1\. 矩阵公式背景
@@ -8,17 +9,17 @@
 
 如图在一个世界空间内，有一个摄像机（即观察者）摆放在某个位置，我们可以通过将世界空间的坐标乘上观察矩阵来得世界空间内的物体相对于摄像机的位置，简而言之，就是转换得到摄像机看到的世界。
 
-![](https://pic3.zhimg.com/v2-2ef4047b590ede6097a02fb7db70b44e_b.jpg)
+![](./jpg/v22ef4047b590ede6097a02fb7db70b44e_bjpg.jpg)
 
-![](https://pic3.zhimg.com/80/v2-2ef4047b590ede6097a02fb7db70b44e_720w.webp)
+![](./jpg/v22ef4047b590ede6097a02fb7db70b44e_720wwebp.jpg)
 
 以OpenGL为例，观察空间都有一个特征，就是观察者始终处于坐标系原点，且面向-Z轴，这是为了后续方便计算，以便可以将观察者看到的任何物体变换看成是在观察空间内相对于坐标原点的变换。即在观察空间内，观察者就是原点。
 
 如下图，在世界空间内有一个摄像机，其观察到的物体很简单，仅仅是一个盒体。由于此时摄像机的坐标与旋转在世界空间内是极其复杂的，对后续各种变换的计算十分不利，因此要将世界空间过渡到观察空间。
 
-![](https://pic1.zhimg.com/v2-66e6f01361309ade3d0273e73f774ea0_b.jpg)
+![](./jpg/v266e6f01361309ade3d0273e73f774ea0_bjpg.jpg)
 
-![](https://pic1.zhimg.com/80/v2-66e6f01361309ade3d0273e73f774ea0_720w.webp)
+![](./jpg/v266e6f01361309ade3d0273e73f774ea0_720wwebp.jpg)
 
 世界空间
 
@@ -26,9 +27,9 @@
 
 由上下两图可以看出，摄像机要从世界空间过渡到观察空间，需要进行平移和旋转。而平移和旋转两个变换，就是观察矩阵 View Matrix / LookUp矩阵要做的事情。
 
-![](https://pic1.zhimg.com/v2-2d751ab646b46a6d288c7584be574ecc_b.jpg)
+![](./jpg/v22d751ab646b46a6d288c7584be574ecc_bjpg.jpg)
 
-![](https://pic1.zhimg.com/80/v2-2d751ab646b46a6d288c7584be574ecc_720w.webp)
+![](./jpg/v22d751ab646b46a6d288c7584be574ecc_720wwebp.jpg)
 
 观察空间
 
@@ -49,9 +50,9 @@ M\_{T} = \\left( \\begin{array}{1} 1 & 0 & 0 & -Xw\\\\ 0 & 1 & 0 & -Yw\\\\ 0&0&1
 
 ### 2\. 旋转矩阵
 
-![](https://pic3.zhimg.com/v2-c3b3d166f34b435d23c99703d6af38b2_b.jpg)
+![](./jpg/v2c3b3d166f34b435d23c99703d6af38b2_bjpg.jpg)
 
-![](https://pic3.zhimg.com/80/v2-c3b3d166f34b435d23c99703d6af38b2_720w.webp)
+![](./jpg/v2c3b3d166f34b435d23c99703d6af38b2_720wwebp.jpg)
 
 图一（左） 图二（右）
 
@@ -100,15 +101,11 @@ M\_{View} = M\_{R} \*M\_{T} = \\left( \\begin{array}{1} a\_{x}&a\_{y}&a\_{z}&-a\
 
 LookUp()是OpenGL中提供的一个函数，其作用就是通过传入摄像机位置、目标位置和摄像机的向上向量即可得到观察矩阵。通过上面对观察矩阵的推导便可知道，摄像机的位置和目标位置即可得出摄像机坐标系中的c轴，摄像机向上向量可得到摄像机坐标系的b轴，而a轴可通过c叉乘b可得。[\[1\]](#ref_1)
 
-![](https://pic1.zhimg.com/v2-c273a36afbb6da1f3f03cf5b7f2085bc_b.jpg)
-
-![](data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='460' height='330'></svg>)
+![](./jpg/v2c273a36afbb6da1f3f03cf5b7f2085bc_bjpg.jpg)
 
 所以我们往LookUp函数里传入的数据就是在构建一个摄像机坐标系，以便进一步计算观察矩阵。[\[2\]](#ref_2)
 
-![](https://pic3.zhimg.com/v2-591a3e841dd9a63c5cac07442e59146a_b.jpg)
-
-![](data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='547' height='149'></svg>)
+![](./jpg/v2591a3e841dd9a63c5cac07442e59146a_bjpg.jpg)
 
 LookUp矩阵
 
