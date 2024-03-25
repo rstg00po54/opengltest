@@ -87,6 +87,13 @@ void matrix_sub(matrix_t *c, const matrix_t *a, const matrix_t *b) {
 	}
 }
 
+/*
+00 01 02 03 	00 01 02 03			z00 = a00*b00+a01*b10+a02*b20+a03*b30
+10 11 12 13 	10 11 12 13			z10 = a10*b00+a11*b10+a12*b20+a13*b30
+20 21 22 23 	20 21 22 23
+30 31 32 33 	30 31 32 33
+oij = ai0*b0j+ai1*b1j+
+*/
 // c = a * b
 void matrix_mul(matrix_t *c, const matrix_t *a, const matrix_t *b) {
 	matrix_t z;
@@ -111,13 +118,12 @@ void matrix_scale(matrix_t *c, const matrix_t *a, float f) {
 	}
 }
 
-// y = x * m
-void matrix_apply(vector_t *y, const vector_t *x, const matrix_t *m) {
-	float X = x->x, Y = x->y, Z = x->z, W = x->w;
-	y->x = X * m->m[0][0] + Y * m->m[1][0] + Z * m->m[2][0] + W * m->m[3][0];
-	y->y = X * m->m[0][1] + Y * m->m[1][1] + Z * m->m[2][1] + W * m->m[3][1];
-	y->z = X * m->m[0][2] + Y * m->m[1][2] + Z * m->m[2][2] + W * m->m[3][2];
-	y->w = X * m->m[0][3] + Y * m->m[1][3] + Z * m->m[2][3] + W * m->m[3][3];
+// y = m * x
+void matrix_apply(vector_t *y, const matrix_t *m, const vector_t *x) {
+    y->x = m->m[0][0] * x->x + m->m[0][1] * x->y + m->m[0][2] * x->z + m->m[0][3] * x->w;
+    y->y = m->m[1][0] * x->x + m->m[1][1] * x->y + m->m[1][2] * x->z + m->m[1][3] * x->w;
+    y->z = m->m[2][0] * x->x + m->m[2][1] * x->y + m->m[2][2] * x->z + m->m[2][3] * x->w;
+    y->w = m->m[3][0] * x->x + m->m[3][1] * x->y + m->m[3][2] * x->z + m->m[3][3] * x->w;
 }
 /*
 1 0 0 0
@@ -146,6 +152,9 @@ void matrix_set_translate(matrix_t *m, float x, float y, float z) {
 	m->m[3][0] = x;
 	m->m[3][1] = y;
 	m->m[3][2] = z;
+    // m->m[0][3] = 1.0f;
+    // m->m[1][3] = 1.0f;
+    // m->m[2][3] = 1.0f;
 }
 
 // 缩放变换
