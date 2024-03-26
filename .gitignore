@@ -1,4 +1,4 @@
-build/*
+./build/*
 *.o
 *.exe
 src/main.cpp
@@ -7,3 +7,5 @@ bin/
 lib/
 RubicCube/Debug/
 project/Trangle/EGE20.08/
+build/*
+project/SoftMini3D/build/
