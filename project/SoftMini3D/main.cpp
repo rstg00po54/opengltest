@@ -299,7 +299,6 @@ void device_render_trap(device_t *device, trapezoid_t *trap) {
 }
 char buffer_text[1024];
 
-static point_t p1, p2, p3, c1, c2, c3;
 // #define PRINT_POINT(c1) printf(#c1);printf(":%f %f %f\n", c1.x, c1.y, c1.z);
 // #define PRINTF_NAME_VALUE(X) {sprintf(&buffer_text[strlen(buffer_text)-2], #X); sprintf(buffer_text, "   %f %f %f\n", X.x, X.y, X.z);}
 // 根据 render_state 绘制原始三角形
@@ -307,16 +306,17 @@ void device_draw_triangle(device_t *device,
 	const vertex_t *v1,
 	const vertex_t *v2,
 	const vertex_t *v3) {
+	point_t p1, p2, p3, c1, c2, c3;
 
 	int render_state = device->render_state;
 // sprintf(buffer_text, )
 	// 按照 Transform 变化
 	// transform_apply(&device->transform, &c1, &v1->pos);
-	matrix_apply( &c1, &v1->pos, &device->transform.transform);
+	matrix_apply( &c1, &v1->pos, &device->transform.mvp);
 	// transform_apply(&device->transform, &c2, &v2->pos);
-	matrix_apply( &c2, &v2->pos, &device->transform.transform);
+	matrix_apply( &c2, &v2->pos, &device->transform.mvp);
 	// transform_apply(&device->transform, &c3, &v3->pos);
-	matrix_apply( &c3, &v3->pos, &device->transform.transform);
+	matrix_apply( &c3, &v3->pos, &device->transform.mvp);
 	// printf("+++\n");
 	// PRINT_POINT(v1->pos);
 	// PRINT_POINT(c1);
@@ -476,33 +476,47 @@ void draw_box(device_t *device, float theta) {
 	// 	}
 
 	// }
-{
-	for(int i = 8;i<9;i++) {
+
+
 
 	
-		vertex_t p1 = mesh[i];
-		static point_t p,po;
-		matrix_apply( &p, &p1.pos, &device->transform.transform);
+		// vertex_t p1 = mesh[i];
+		point_t p[2];
+		point_t po[2];
+		matrix_t m_out[2];
+		point_t psrc[][2] = {
+			{{0,0,0,1},{100,0,0,1}},
+			{{0,0,0,1},{0,100,0,1}},
+			{{0,0,0,1},{0,0,100,1}},
 
-		// PRINT_M(device->transform.world);
-		// PRINT_M(device->transform.view);
-		// PRINT_M(device->transform.projection);
-		// PRINT_M(device->transform.transform);
+			{{1,1,0,1},{1,1,-100,1}},
+			{{1,-1,0,1},{1,-1,-100,1}},
 
-		// 归一化
-		transform_homogenize(&device->transform, &po, &p);
-		// PRINT_POINT(p);
-		// PRINT_POINT(po);
+			{{1,0,1,1},{1,-100,1,1}},
+			{{-1,0,1,1},{-1,-100,1,1}},
 
-		printf("% 3.2f % 3.2f % 3.2f % 3.2f\t", p.x, p.y, p.z, p.w);
-		printf("% 3.2f % 3.2f % 3.2f % 3.2f\n", po.x, po.y, po.z, po.w);
-		// SDL_RenderDrawLine(renderer,0,0,po.x, po.y);
-		device_draw_line(device, 0,0,po.x, po.y, 0xffffffff);
+			{{1,1,1,1},{-100,1,1,1}},
+			{{1,-1,1,1},{-100,-1,1,1}}
+			
+			};
+		for(int i = 0;i<9;i++) {
 
-	}
+		
+			// matrix_mul(&m_out[0], &device->transform.projection, &device->transform.mvp);
+			matrix_apply( &p[0], &psrc[i][0], &device->transform.mvp);
+			matrix_apply( &p[1], &psrc[i][1], &device->transform.mvp);
 
+			// 归一化
+			transform_homogenize(&device->transform, &po[0], &p[0]);
+			transform_homogenize(&device->transform, &po[1], &p[1]);
+			// PRINT_POINT(p);
+			// PRINT_POINT(po);
 
-}
+			// printf("% 3.2f % 3.2f % 3.2f % 3.2f\t", p.x, p.y, p.z, p.w);
+			// printf("% 3.2f % 3.2f % 3.2f % 3.2f\n", po.x, po.y, po.z, po.w);
+			// SDL_RenderDrawLine(renderer,0,0,po.x, po.y);
+			device_draw_line(device, po[1].x, po[1].y, po[0].x, po[0].y, 0xffffffff);
+		}
 
 }
 
@@ -534,6 +548,7 @@ int main(void)
 	int indicator = 0;
 	int kbhit = 0;
 	float rotate = 0;
+	float fovy = 45.f;
 	point_t scale = {1, 1, 1};
 	point_t trans = {0, 0, 0};
 	// float pos = 3.5;
@@ -563,28 +578,59 @@ int main(void)
 	point_t camera  = { 0, 0, -3, 1 };//相机位置eye
 	point_t target  = { 0, 0, 0, 1 };//观察目标 at
 	point_t up  = { 0, 1, 0, 1 };
+	int mouse_state;
+	int downX, downY;
+	int dx, dy;
+	float thetax = 0.f,thetay = 0.f;
+	float dthetax,dthetay;
 	while (!quit) {
 		
 		// printf("\ec");
 		// system("cls");
-		printf("==============================\n");
+		// printf("==============================\n");
 		while (SDL_PollEvent(&e) != 0) {
-			ImGui_ImplSDL2_ProcessEvent(&e);
+			bool ret = ImGui_ImplSDL2_ProcessEvent(&e);
+			// printf("ret %d \n", ret);
 			if (e.type == SDL_QUIT) {
 				quit = true;
 			}
+
+			if (io.WantCaptureMouse) {
+				// ImGui正在使用鼠标事件
+				// 在这里添加处理ImGui使用鼠标事件的逻辑
+				printf("use mouse\n");
+			} else {
+				// ImGui没有使用鼠标事件
+				// 在这里添加处理应用程序自身的鼠标事件逻辑
+
 			// printf("event %d\n", event.type);
 			switch (e.type) {
 				case SDL_MOUSEMOTION:
 					// 处理鼠标移动事件
-					// printf("mouse move %d,%d\n", e.motion.x, e.motion.y);
-					// append_to_output("mouse move %d,%d\n", e.motion.x, e.motion.y);
+					if(mouse_state) {
+
+						dx = e.motion.x-downX;
+						dy = e.motion.y-downY;
+						// append_to_output("mouse move %d,%d\n", e.motion.x, e.motion.y);
+						// printf("mouse move %d,%d\n", dx, dy);
+						// float dtheta = dx*0.01f;
+						thetax = -dx*0.01f+dthetax;
+						camera.x = cosf(thetax)*3.0f;
+						camera.z = sinf(thetax)*3.0f;
+						camera.y = cosf(thetax)*3.0f;
+						// printf("theta %f\n", theta);
+					}
 					break;
 				case SDL_MOUSEBUTTONDOWN:
 					// 处理鼠标按下事件
 					printf("mouse down %d %d\n", e.motion.x, e.motion.y);
+					downX = e.motion.x;
+					downY = e.motion.y;
+					mouse_state = 1;
+					dthetax = thetax;
 					break;
 				case SDL_MOUSEBUTTONUP:
+					mouse_state = 0;
 					printf("mouse up\n");
 					// g_touch_button = 0;
 					// 处理鼠标释放事件
@@ -602,6 +648,7 @@ int main(void)
 				default:
 					append_to_output("mouse move\n");
 					break;
+			}
 			}
 		}
 		// append_to_output("mouse move \n");
@@ -625,11 +672,16 @@ int main(void)
 			pos.w = 1;
 		}
 		ImGui::SliderFloat("alpha", (float *)&rotate, 0.0f, 5.0f);
+		ImGui::SliderFloat("fovy", (float *)&fovy, 30.0f, 60.0f);
 			// point_t p1, p2, p3, c1, c2, c3;
-		ImGui::SliderFloat3("camera", (float *)&camera, -3.0f, 3.0f);
-		ImGui::SliderFloat3("scale", (float *)&scale, -3.0f, 3.0f);
+		ImGui::SliderFloat3("camera", (float *)&camera, -20.0f, 0.0f);
+		ImGui::SliderFloat3("scale", (float *)&scale, 0.0f, 3.0f);
 		ImGui::SliderFloat3("trans", (float *)&trans, -3.0f, 3.0f);
 		ImGui::End();
+		if(mouse_state){
+
+
+		}
 		// Rend
 		// camera.x = sqrt(9-powf(camera.y, 2));
 
@@ -640,38 +692,25 @@ int main(void)
 		// transform_update(&device.transform);
 
 		matrix_t m_scale, m_rotate, m_trans, m_out;
+		transform_t *t = &device.transform;
 
-
-		matrix_set_rotate(&device.transform.world, 0, 1, 0, rotate);
-		matrix_set_lookat(&device.transform.view, &camera, &target, &up);
+		matrix_set_rotate(&t->model, 0, 1, 0, rotate);
+		matrix_set_lookat(&t->view, &camera, &target, &up);
 		// transform_update(&device.transform);
 //  缩放 -> 旋转 -> 平移 
-		matrix_set_scale(&m_scale, scale.x, scale.y, scale.z);
-		matrix_set_rotate(&m_rotate, 0, 1, 0, rotate);
-		matrix_set_translate(&m_trans, trans.x, trans.y, trans.z);
+		matrix_set_scale(&t->scale, scale.x, scale.y, scale.z);
+		matrix_set_rotate(&t->rotate, 0, 1, 0, rotate);
+		matrix_set_translate(&t->trans, trans.x, trans.y, trans.z);
 
-{
-	#define PRINT_M_(ts) \
-	printf(#ts"\n");\
-	for(int i = 0;i<4;i++){\
-		printf("%f, %f, %f, %f\n",\
-			ts.m[i][0],\
-			ts.m[i][1],\
-			ts.m[i][2],\
-			ts.m[i][3]);\
-	}
-	PRINT_M_(m_scale);
-	PRINT_M_(m_rotate);
-	PRINT_M_(m_trans);
-
-}
-		// matrix_mul(&m_out, &m_rotate, &m_scale);
-		matrix_mul(&m_out, &m_scale, &m_rotate);
-		matrix_mul(&device.transform.world, &m_trans, &m_out);
+		matrix_mul(&m_out, &t->rotate, &t->scale);
+		// matrix_mul(&m_out, &m_scale, &m_rotate);
+		matrix_mul(&t->model, &t->trans, &m_out);
+		float aspect = (float)800 / ((float)600);
+		matrix_set_perspective(&t->projection, fovy, aspect, 1.0f, 100.0f);
 {
 		vertex_t p1 = mesh[8];
 		static point_t p,pr,po;
-		matrix_apply( &p, &p1.pos, &device.transform.transform);
+		matrix_apply( &p, &p1.pos, &device.transform.mvp);
 		// matrix_apply_r( &pr, &p1.pos, &device.transform.transform);
 
 		// 归一化
@@ -698,36 +737,15 @@ int main(void)
 		ImGui::SliderFloat4("m_rotate", (float *)&m_rotate.m[3], 0.0f, 5.0f);
 
 
-		ImGui::SliderFloat4("trans", (float *)&device.transform.transform.m[0], 0.0f, 5.0f);
-		ImGui::SliderFloat4("trans", (float *)&device.transform.transform.m[1], 0.0f, 5.0f);
-		ImGui::SliderFloat4("trans", (float *)&device.transform.transform.m[2], 0.0f, 5.0f);
-		ImGui::SliderFloat4("trans", (float *)&device.transform.transform.m[3], 0.0f, 5.0f);
+		ImGui::SliderFloat4("trans", (float *)&device.transform.mvp.m[0], 0.0f, 5.0f);
+		ImGui::SliderFloat4("trans", (float *)&device.transform.mvp.m[1], 0.0f, 5.0f);
+		ImGui::SliderFloat4("trans", (float *)&device.transform.mvp.m[2], 0.0f, 5.0f);
+		ImGui::SliderFloat4("trans", (float *)&device.transform.mvp.m[3], 0.0f, 5.0f);
 		ImGui::SliderFloat4("po", (float *)&po, 0.0f, 5.0f);
 		// ImGui::SliderFloat4("pr", (float *)&pr, 0.0f, 5.0f);
 		ImGui::End();
 }
-		// matrix_set_rotate(&m, 0, 1, 0, alpha);
-// matrix_t t;
-// t = device.transform.transform;
-// 		matrix_mul(&device.transform.transform, &m, &t);
 
-		// switch (key) {
-		// 	case SDLK_UP:
-		// 		pos -= 0.01f;
-		// 		break;
-		// 	case SDLK_DOWN:
-		// 		pos += 0.01f;
-		// 		break;
-		// 	case SDLK_LEFT:
-		// 		alpha -= 0.01f;
-		// 		break;
-		// 	case SDLK_RIGHT:
-		// 		alpha += 0.01f;
-		// 		break;
-		
-		// 	default:
-		// 		break;
-		// }
 
 		if (key == SDLK_SPACE) {
 			key = 0;
@@ -740,15 +758,6 @@ int main(void)
 			kbhit = 0;
 		}
 		key = 0;
-		// if (screen_keys[VK_SPACE]) {
-		// 	if (kbhit == 0) {
-		// 		kbhit = 1;
-		// 		if (++indicator >= 3) indicator = 0;
-		// 		device.render_state = states[indicator];
-		// 	}
-		// }	else {
-		// 	kbhit = 0;
-		// }
 
 		// screen_update();
 #if 1
