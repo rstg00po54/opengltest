@@ -1,4 +1,5 @@
 #include "Mini3DGeometryCalc.h"
+#include <stdio.h>
 //=====================================================================
 // 几何计算：顶点、扫描线、边缘、矩形、步长计算
 //=====================================================================
@@ -126,6 +127,7 @@ void trapezoid_edge_interp(trapezoid_t *trap, float y) {
 	float t2 = (y - trap->right.v1.pos.y) / s2;
 	vertex_interp(&trap->left.v, &trap->left.v1, &trap->left.v2, t1);
 	vertex_interp(&trap->right.v, &trap->right.v1, &trap->right.v2, t2);
+	// printf("%s t1 = %f, t2 = %f, y = %f\n", __func__, t1, t2, y);
 }
 
 // 根据左右两边的端点，初始化计算出扫描线的起点和步长
