@@ -96,12 +96,13 @@ typedef struct {
 	int render_state;           // 渲染状态
 	IUINT32 background;         // 背景颜色
 	IUINT32 foreground;         // 线框颜色
+	uint8_t *bmpBuffer;
 }	device_t;
 
 #define RENDER_STATE_WIREFRAME      1		// 渲染线框
 #define RENDER_STATE_TEXTURE        2		// 渲染纹理
 #define RENDER_STATE_COLOR          4		// 渲染颜色
-
+IUINT32 device_texture_read(const device_t *device, float u, float v);
 
 // 设备初始化，fb为外部帧缓存，非 NULL 将引用外部帧缓存（每行 4字节对齐）
 void device_init(device_t *device, int width, int height, void *fb) {
@@ -140,18 +141,7 @@ void device_init(device_t *device, int width, int height, void *fb) {
 
 
 
-// 设置当前纹理
-void device_set_texture(device_t *device, void *bits, long pitch, int w, int h) {
-	char *ptr = (char*)bits;
-	int j;
-	assert(w <= 1024 && h <= 1024);
-	for (j = 0; j < h; ptr += pitch, j++) 	// 重新计算每行纹理的指针
-		device->texture[j] = (IUINT32*)ptr;
-	device->tex_width = w;
-	device->tex_height = h;
-	device->max_u = (float)(w - 1);
-	device->max_v = (float)(h - 1);
-}
+
 
 // 清空 framebuffer 和 zbuffer
 void device_clear(device_t *device, int mode) {
@@ -228,17 +218,7 @@ void device_draw_line(device_t *device, int x1, int y1, int x2, int y2, IUINT32 
 	}
 }
 
-// 根据坐标读取纹理
-IUINT32 device_texture_read(const device_t *device, float u, float v) {
-	int x, y;
-	u = u * device->max_u;
-	v = v * device->max_v;
-	x = (int)(u + 0.5f);
-	y = (int)(v + 0.5f);
-	x = CMID(x, 0, device->tex_width - 1);
-	y = CMID(y, 0, device->tex_height - 1);
-	return device->texture[y][x];
-}
+
 
 
 //=====================================================================
@@ -276,6 +256,8 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 					float v = scanline->v.tc.v * w;
 					IUINT32 cc = device_texture_read(device, u, v);
 					framebuffer[x] = cc;
+					// if(cc == 0)
+					// printf("x = %d\n",x);
 				}
 			}
 		}
@@ -347,17 +329,23 @@ void device_draw_triangle(device_t *device,
 
 	// 裁剪，注意此处可以完善为具体判断几个点在 cvv内以及同cvv相交平面的坐标比例
 	// 进行进一步精细裁剪，将一个分解为几个完全处在 cvv内的三角形
-	// if (transform_check_cvv(&c1) != 0) return;
-	// if (transform_check_cvv(&c2) != 0) return;
-	// if (transform_check_cvv(&c3) != 0) return;
+	// if (transform_check_cvv(&c1) != 0) {
+	// 	return;
+	// } 
+	// if (transform_check_cvv(&c2) != 0) {
+	// 	return;
+	// }
+	// if (transform_check_cvv(&c3) != 0) {
+	// 	return;
+	// }
 
 	// 归一化
 	transform_homogenize(&device->transform, &p1, &c1);
 	transform_homogenize(&device->transform, &p2, &c2);
 	transform_homogenize(&device->transform, &p3, &c3);
-	PRINTF_POINT(p1);
-	PRINTF_POINT(p2);
-	PRINTF_POINT(p3);
+	// PRINTF_POINT(p1);
+	// PRINTF_POINT(p2);
+	// PRINTF_POINT(p3);
 
 	// 纹理或者色彩绘制
 	if (render_state & (RENDER_STATE_TEXTURE | RENDER_STATE_COLOR)) {
@@ -378,7 +366,7 @@ void device_draw_triangle(device_t *device,
 		
 		// 拆分三角形为0-2个梯形，并且返回可用梯形数量
 		n = trapezoid_init_triangle(traps, &t1, &t2, &t3);
-		printf("n=%d\n",n);
+		// printf("n=%d\n",n);
 
 		if (n >= 1) device_render_trap(device, &traps[0]);
 		if (n >= 2) device_render_trap(device, &traps[1]);
@@ -547,18 +535,72 @@ void draw_box(device_t *device, float theta) {
 // 	matrix_set_lookat(&device->transform.view, &camera, &target, &up);
 // 	transform_update(&device->transform);
 // }
+// 根据坐标读取纹理
+IUINT32 device_texture_read(const device_t *device, float u, float v) {
+	int x, y;
+	IUINT32 value;
+	float u0 = 0;
+	float v0 = 0;
+	u0 = u * device->max_u;
+	v0 = v * device->max_v;
+	x = (int)(u0 + 0.5f);
+	y = (int)(v0 + 0.5f);
+	x = CMID(x, 0, device->tex_width - 1);
+	y = CMID(y, 0, device->tex_height - 1);
+	// printf("x/y= %d/%d,u/v = %f/%f\n",x,y,u,v);
+	value = device->texture[y][x];
+	// if(value==0){
 
+	// 	printf("y %d ,x %d, texture[%d] = %p\n", y, x, y,  device->texture[y]);
+	// }
+	return value;
+}
+// 设置当前纹理
+void device_set_texture(device_t *device, void *bits, long pitch, int w, int h) {
+	char *ptr = (char*)bits;
+	int j;
+	assert(w <= 1024 && h <= 1024);
+	for (j = 0; j < h; ptr += pitch, j++) {
+		device->texture[j] = (IUINT32*)ptr;
+		if(j<5)
+		printf("j %d %p\n", j, ptr);
+	} 	// 重新计算每行纹理的指针
+	device->tex_width = w;
+	device->tex_height = h;
+	device->max_u = (float)(w - 1);
+	device->max_v = (float)(h - 1);
+}
+#define TEXTURE_W 300
+#define TEXTURE_H 300
+// 0xe3c08cff 1024=0x400
+/*
+int a[3][2]
+a0	0 0
+a1	0 0
+a2	0 0
+*/
 void init_texture(device_t *device, uint8_t *buffer) {
-	static IUINT32 texture[256][256];
+	static IUINT32 texture[TEXTURE_H][TEXTURE_W];//256*128*4 = 128k
 	int i, j;
-	for (j = 0; j < 256; j++) {
-		for (i = 0; i < 256; i++) {
+	printf("sizeof %d\n", sizeof(IUINT32));
+	for (j = 0; j < TEXTURE_H; j++) {
+		for (i = 0; i < TEXTURE_W; i++) {
 			int x = i / 32, y = j / 32;
-			texture[j][i] = ((x + y) & 1)? 0xffffffff : 0xe3c08cff;
+			texture[j][i] = ((x + y) & 1)? 0xffffffff : 0xe3c08cff;//8*16=128
+			texture[j][i] = SDL_MapRGB(SDL_AllocFormat(SDL_PIXELFORMAT_RGB24), 
+				buffer[j*300*3+i*3], 
+				buffer[j*300*3+i*3+1], 
+				buffer[j*300*3+i*3+2]);
 			// texture[j][i] = buffer[j*256+i];
+			// if(texture[j][i] == 0){
+			// 	printf("error\n");
+			// }
 		}
+		if(j<5)
+			printf("texture[%d] = %p\n", j, texture[j]);
 	}
-	device_set_texture(device, texture, 256 * 4, 256, 256);
+	device_set_texture(device, texture, TEXTURE_W * 4, TEXTURE_W, TEXTURE_H);
+	printf("%s ---\n", __func__);
 }
 #undef main
 int main(void)
@@ -574,11 +616,11 @@ int main(void)
 	// float pos = 3.5;
 	BMP_FILE_HEADER bmpFileHeader_p;
 	BMP_INFO_HEADER bmpInfoHeader_p;
-	 unsigned char *screen_fb;
-	uint8_t *bmpBuffer;
+	unsigned char *screen_fb;
+	// uint8_t *bmpBuffer;
 	// readBmpFromFile("./3d_48.bmp", &bmpFileHeader_p, &bmpInfoHeader_p, &bmpBuffer);
-	// readBmpFromFile("./skin_debug.bmp", &bmpFileHeader_p, &bmpInfoHeader_p, &bmpBuffer);
-	// displayBmpHeader( &bmpFileHeader_p, &bmpInfoHeader_p);
+	readBmpFromFile("./skin_debug.bmp", &bmpFileHeader_p, &bmpInfoHeader_p, &device.bmpBuffer);
+	displayBmpHeader( &bmpFileHeader_p, &bmpInfoHeader_p);
 	char title[] = "Mini3d (software render tutorial) ";
 		// _T("Left/Right: rotation, Up/Down: forward/backward, Space: switch state");
 
@@ -590,7 +632,7 @@ int main(void)
 	device_init(&device, 800, 600, screen_fb);
 	// camera_at_zero(&device, 3, 0, 0);
 
-	init_texture(&device, bmpBuffer);
+	init_texture(&device, device.bmpBuffer);
 	device.render_state = RENDER_STATE_TEXTURE;
 
 	matrix_t m;
@@ -637,7 +679,13 @@ int main(void)
 			switch (e.type) {
 				case SDL_MOUSEWHEEL:
 					printf("x ==-= %d\n",e.wheel.y);
-					r+=e.wheel.y;
+					r+=(e.wheel.y*0.1f);
+						thetax = dx*0.01f+dthetax;
+						thetay = dy*0.01+dthetay;
+
+						camera.y = r*sinf(thetay);
+						camera.x = r*cosf(thetay)*sinf(thetax);
+						camera.z = r*cosf(thetay)*cosf(thetax);
 					break;
 				case SDL_MOUSEMOTION:
 					// 处理鼠标移动事件
@@ -717,7 +765,7 @@ int main(void)
 			pos.x = pos.y = pos.z = 0;
 			pos.w = 1;
 		}
-		ImGui::SliderFloat("alpha", (float *)&rotate, 0.0f, 5.0f);
+		ImGui::SliderFloat("alpha", (float *)&rotate, 0.0f, 360.0f);
 		ImGui::SliderFloat("fovy", (float *)&fovy, 30.0f, 60.0f);
 			// point_t p1, p2, p3, c1, c2, c3;
 		ImGui::SliderFloat3("camera", (float *)&camera, -20.0f, 0.0f);
@@ -743,6 +791,18 @@ int main(void)
 		Uint32 currentTime = SDL_GetTicks();
 
 //  缩放 -> 旋转 -> 平移 
+
+
+
+
+		// screen_update();
+
+		// 锁定纹理以获取像素数据
+		void* pixels;
+		int pitch;
+		SDL_LockTexture(texture, NULL, &pixels, &pitch);
+		Uint32* pixelData = (Uint32*)pixels;
+		// printf("%p\n", pixelData);
 		matrix_set_scale(&t->scale, scale.x, scale.y, scale.z);
 		// matrix_set_rotate(&t->rotate, 0, 1, 0,  currentTime*0.002f);
 		matrix_set_rotate(&t->rotate, 0, 1, 0,  rotate);
@@ -753,33 +813,35 @@ int main(void)
 		matrix_set_perspective(&t->projection, fovy, 800.f/600.f, 1.0f, 100.0f);
 		matrix_set_lookat(&t->view, &camera, &target, &up);
 		transform_update(t);
-
-
-
-		// screen_update();
-#if 1
-		// 锁定纹理以获取像素数据
-		void* pixels;
-		int pitch;
-		SDL_LockTexture(texture, NULL, &pixels, &pitch);
-		// Uint32* pixelData = (Uint32*)pixels;
-		// printf("%p\n", pixelData);
 		draw_box(&device, rotate);
+#if 0
+		matrix_set_scale(&t->scale, scale.x, scale.y, scale.z);
+		// matrix_set_rotate(&t->rotate, 0, 1, 0,  currentTime*0.002f);
+		matrix_set_rotate(&t->rotate, 0, 1, 0,  rotate);
+		matrix_set_translate(&t->trans, trans.x+5, trans.y, trans.z);
+
+		matrix_mul(&m_out, &t->rotate, &t->scale);
+		matrix_mul(&t->model, &t->trans, &m_out);
+		matrix_set_perspective(&t->projection, fovy, 800.f/600.f, 1.0f, 100.0f);
+		matrix_set_lookat(&t->view, &camera, &target, &up);
+		transform_update(t);
+		draw_box(&device, rotate);
+#endif
 		// device_draw_line(&device, 0, 0, 100, 100, device.foreground);
 		// 绘制一个绿色的矩形
-		// for (int y = 100; y < 200; ++y) {
-		// 	for (int x = 100; x < 200; ++x) {
-		// 		int index = y * (pitch / sizeof(Uint32)) + x;
-		// 		// pixelData[index] = SDL_MapRGB(SDL_AllocFormat(SDL_PIXELFORMAT_RGBA8888), 255, y, x);
-		// 		pixelData[index] = SDL_MapRGB(SDL_AllocFormat(SDL_PIXELFORMAT_RGB24), 
-		// 			bmpBuffer[y*300*3+x*3], 
-		// 			bmpBuffer[y*300*3+x*3+1], 
-		// 			bmpBuffer[y*300*3+x*3+2]);//bmpBuffer[y*300*3+x*3];
-		// 	}
-		// }
+		for (int y = 100; y < 200; ++y) {
+			for (int x = 100; x < 200; ++x) {
+				int index = y * (pitch / sizeof(Uint32)) + x;
+				// pixelData[index] = SDL_MapRGB(SDL_AllocFormat(SDL_PIXELFORMAT_RGBA8888), 255, y, x);
+				pixelData[index] = SDL_MapRGB(SDL_AllocFormat(SDL_PIXELFORMAT_RGB24), 
+					device.bmpBuffer[y*300*3+x*3], 
+					device.bmpBuffer[y*300*3+x*3+1], 
+					device.bmpBuffer[y*300*3+x*3+2]);//bmpBuffer[y*300*3+x*3];
+			}
+		}
 		// 解锁纹理
 		SDL_UnlockTexture(texture);
-#endif
+
 		ImGui::Render();
 		// SDL_Delay(30);
 		// 渲染纹理
