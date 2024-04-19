@@ -3,10 +3,10 @@
 #include "Mini3DMath.h"
 
 typedef struct { 
-	matrix_t model;         // 世界坐标变换
+	matrix_t world;         // 世界坐标变换
 	matrix_t view;          // 摄影机坐标变换
 	matrix_t projection;    // 投影变换
-	matrix_t transform;     // transform = world * view * projection
+	matrix_t transform;     // transform = world * view * projection 00
 	float w, h;             // 屏幕大小
 }	transform_t;
 

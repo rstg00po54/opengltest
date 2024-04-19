@@ -77,7 +77,6 @@ void append_to_output(const char *format, ...) {
     va_end(args);
 }
 #define PRINT_POINT(c1) append_to_output(#c1);append_to_output(":%3.2f %3.2f %3.2f\n", c1.x, c1.y, c1.z);
-#define PPRINT_POINT(c1) append_to_output(#c1);append_to_output(":%3.2f %3.2f %3.2f\n", c1->x, c1->y, c1->z);
 
 //=====================================================================
 // 渲染设备
@@ -228,19 +227,6 @@ void device_draw_line(device_t *device, int x1, int y1, int x2, int y2, IUINT32 
 	}
 }
 
-void drawline(device_t *device, point_t pos0, point_t pos1) {
-	vector_t c1, c2, p1, p2;
-	matrix_set_identity(&device->transform.transform);
-
-	matrix_apply( &c1, &device->transform.transform, &pos0);
-	transform_homogenize(&device->transform, &p1, &c1);
-	matrix_apply( &c2, &device->transform.transform, &pos1);
-	transform_homogenize(&device->transform, &p2, &c2);
-	device_draw_line(device, (int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y, device->foreground);
-	// PRINT_POINT(p1);
-	// PRINT_POINT(p2);
-}
-
 // 根据坐标读取纹理
 IUINT32 device_texture_read(const device_t *device, float u, float v) {
 	int x, y;
@@ -314,6 +300,7 @@ void device_render_trap(device_t *device, trapezoid_t *trap) {
 }
 char buffer_text[1024];
 
+static point_t p1, p2, p3, c1, c2, c3;
 // #define PRINT_POINT(c1) printf(#c1);printf(":%f %f %f\n", c1.x, c1.y, c1.z);
 // #define PRINTF_NAME_VALUE(X) {sprintf(&buffer_text[strlen(buffer_text)-2], #X); sprintf(buffer_text, "   %f %f %f\n", X.x, X.y, X.z);}
 // 根据 render_state 绘制原始三角形
@@ -321,31 +308,25 @@ void device_draw_triangle(device_t *device,
 	const vertex_t *v1,
 	const vertex_t *v2,
 	const vertex_t *v3) {
-	point_t p1, p2, p3, c1, c2, c3;
+
 	int render_state = device->render_state;
 // sprintf(buffer_text, )
 	// 按照 Transform 变化
 	// transform_apply(&device->transform, &c1, &v1->pos);
-	matrix_apply( &c1, &device->transform.transform, &v1->pos);
+	matrix_apply( &c1, &v1->pos, &device->transform.transform);
 	// transform_apply(&device->transform, &c2, &v2->pos);
-	matrix_apply( &c2, &device->transform.transform, &v2->pos);
+	matrix_apply( &c2, &v2->pos, &device->transform.transform);
 	// transform_apply(&device->transform, &c3, &v3->pos);
-	matrix_apply( &c3, &device->transform.transform, &v3->pos);
-	// PRINT_POINT(c1);
-	// PRINT_POINT(c2);
-	// PRINT_POINT(c3);
+	matrix_apply( &c3, &v3->pos, &device->transform.transform);
 
 
 	// printf("%d\n", strlen(buffer_text));
 
 	// 裁剪，注意此处可以完善为具体判断几个点在 cvv内以及同cvv相交平面的坐标比例
 	// 进行进一步精细裁剪，将一个分解为几个完全处在 cvv内的三角形
-	if (transform_check_cvv(&c1) != 0)
-		return;
-	if (transform_check_cvv(&c2) != 0)
-		return;
-	if (transform_check_cvv(&c3) != 0)
-		return;
+	if (transform_check_cvv(&c1) != 0) return;
+	if (transform_check_cvv(&c2) != 0) return;
+	if (transform_check_cvv(&c3) != 0) return;
 
 	// 归一化
 	transform_homogenize(&device->transform, &p1, &c1);
@@ -509,9 +490,7 @@ int main(void)
 	int states[] = { RENDER_STATE_TEXTURE, RENDER_STATE_COLOR, RENDER_STATE_WIREFRAME };
 	int indicator = 0;
 	int kbhit = 0;
-	float rotate = 1;
-	point_t scale = {1, 1, 1};
-	point_t trans = {0, 0, 0};
+	float alpha = 1;
 	// float pos = 3.5;
 
 	char title[] = "Mini3d (software render tutorial) ";
@@ -598,112 +577,47 @@ int main(void)
 			pos.x = pos.y = pos.z = 0;
 			pos.w = 1;
 		}
-
-		ImGui::SliderFloat("rotate", (float *)&rotate, 0.0f, 5.0f);
-		ImGui::SliderFloat3("scale", (float *)&scale, 0.0f, 2.0f);
-		ImGui::SliderFloat3("trans", (float *)&trans, 0.0f, 5.0f);
+		ImGui::SliderFloat("alpha", (float *)&alpha, 0.0f, 5.0f);
 			// point_t p1, p2, p3, c1, c2, c3;
 		ImGui::SliderFloat3("camera", (float *)&camera, -3.0f, 3.0f);
 		// ImGui::SliderFloat3("p2", (float *)&p2, -3.0f, 3.0f);
 		// ImGui::SliderFloat3("p3", (float *)&p3, -3.0f, 3.0f);
 		ImGui::End();
 		// Rend
-		camera.x = sqrt(9-powf(camera.z, 2));
+		// camera.x = sqrt(9-powf(camera.y, 2));
 
 		// screen_dispatch();
 		device_clear(&device, 1);
-		matrix_set_perspective(&device.transform.projection, 45, 800.0f/600.0f, 1.0f, 100.0f);
-		// ts->w = (float)width;
-		// ts->h = (float)height;
-		// transform_update(ts);
 	//camera target up
-		matrix_t m_scale, m_rotate, m_trans, m_out;
 		matrix_set_lookat(&device.transform.view, &camera, &target, &up);
 		// transform_update(&device.transform);
-//  缩放 -> 旋转 -> 平移 
-		matrix_set_scale(&m_scale, scale.x, scale.y, scale.z);
-		matrix_set_rotate(&m_rotate, 0, 1, 0, rotate);
-		matrix_set_translate(&m_trans, trans.x, trans.y, trans.z);
 
-		matrix_mul(&m_out, &m_rotate, &m_scale);
-		// matrix_mul(&m_out, &m_scale, &m_rotate);
-		matrix_mul(&device.transform.model, &m_trans, &m_out);
-{
-matrix_t mt1 = {
-1,2,3,4,
-1,2,3,5,
-1,2,3,6,
-1,2,3,7
-};
-matrix_t mt2 = {
-1,2,3,8,
-1,2,3,9,
-1,2,3,10,
-1,2,3,11
-};
-
-
-
-vector_t vout,vi, vin={2,2,2,1};
-matrix_t mto;
-
-// A(BC)=(AB)C
-
-printf("---------\n");
-//mto = mt1*mt2
-// vout = mto*vin = (mt1*mt2)*vin
-matrix_mul(&mto, &mt1, &mt2);
-matrix_apply(&vout, &mto, &vin);
-printf("%f, %f, %f\n", vout.x, vout.y, vout.z);
-
-//vi = mt1*vin
-//vout = mt2*vi = mt2*(mt1*vin)
-matrix_apply(&vi, &mt1, &vin);
-matrix_apply(&vout, &mt2, &vi);
-printf("%f, %f, %f\n", vout.x, vout.y, vout.z);
-
-
-// vout = (mt2*mt1)*vin
-matrix_mul(&mto, &mt2, &mt1);
-matrix_apply(&vout, &mto, &vin);
-printf("%f, %f, %f\n", vout.x, vout.y, vout.z);
-
-// vi = mt2*vin
-// vout = mt1*vi = mt1*(mt2*vin)
-matrix_apply(&vi, &mt2, &vin);
-matrix_apply(&vout, &mt1, &vi);
-printf("%f, %f, %f\n", vout.x, vout.y, vout.z);
-}
-printf("-----1111----\n");
-{
-	matrix_t mt1 = {
-				1,2,3,4,
-				1,2,3,5,
-				1,2,3,6,
-				1,2,3,7
-				};
-	vector_t vout,vi, vin={2,2,2,1};
-	matrix_t mto;
-
-	// A(BC)=(AB)C
-
-	printf("---------\n");
-	//mto = mt1*mt2
-	// vout = mto*vin = (mt1*mt2)*vin
-	matrix_apply(&vout, &mt1, &vin);
-	printf("%f, %f, %f\n", vout.x, vout.y, vout.z);
-}
-
-
-
-
-
-
-
-
-
+		matrix_set_rotate(&device.transform.world, 0, 1, 0, alpha);
 		// device.transform.world = m;
 		transform_update(&device.transform);
+
+		// matrix_set_rotate(&m, 0, 1, 0, alpha);
+// matrix_t t;
+// t = device.transform.transform;
+// 		matrix_mul(&device.transform.transform, &m, &t);
+
+		// switch (key) {
+		// 	case SDLK_UP:
+		// 		pos -= 0.01f;
+		// 		break;
+		// 	case SDLK_DOWN:
+		// 		pos += 0.01f;
+		// 		break;
+		// 	case SDLK_LEFT:
+		// 		alpha -= 0.01f;
+		// 		break;
+		// 	case SDLK_RIGHT:
+		// 		alpha += 0.01f;
+		// 		break;
+		
+		// 	default:
+		// 		break;
+		// }
 
 		if (key == SDLK_SPACE) {
 			key = 0;
@@ -716,6 +630,17 @@ printf("-----1111----\n");
 			kbhit = 0;
 		}
 		key = 0;
+		// if (screen_keys[VK_SPACE]) {
+		// 	if (kbhit == 0) {
+		// 		kbhit = 1;
+		// 		if (++indicator >= 3) indicator = 0;
+		// 		device.render_state = states[indicator];
+		// 	}
+		// }	else {
+		// 	kbhit = 0;
+		// }
+
+		// screen_update();
 #if 1
 		// 锁定纹理以获取像素数据
 		void* pixels;
@@ -723,25 +648,7 @@ printf("-----1111----\n");
 		SDL_LockTexture(texture, NULL, &pixels, &pitch);
 		Uint32* pixelData = (Uint32*)pixels;
 		// printf("%p\n", pixelData);
-		draw_box(&device, rotate);
-
-		point_t pos0 = {0,0,0,1};
-		point_t posx = {10,0,0,1};
-		point_t posy = {0,10,0,1};
-		point_t posz = {0,0,10,1};
-		matrix_set_identity(&device.transform.transform);
-		drawline(&device, pos0, posx);
-		drawline(&device, pos0, posy);
-		drawline(&device, pos0, posz);
-		// matrix_set_identity(&device.transform.transform);
-
-		// matrix_apply( &c1, &pos0, &device.transform.transform);
-		// transform_homogenize(&device.transform, &p1, &c1);
-		// matrix_apply( &c2, &posx, &device.transform.transform);
-		// transform_homogenize(&device.transform, &p2, &c2);
-
-
-		// device_draw_line(&device, (int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y, device.foreground);
+		draw_box(&device, alpha);
 		// device_draw_line(&device, 0, 0, 100, 100, device.foreground);
 		// 绘制一个绿色的矩形
 		// for (int y = 100; y < 200; ++y) {
