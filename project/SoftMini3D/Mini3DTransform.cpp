@@ -18,10 +18,12 @@
 	}\
 
 // 矩阵更新，计算 transform = world * view * projection
+// Vclip=projection*view*model*local
 void transform_update(transform_t *ts) {
 	matrix_t m;
-	matrix_mul(&m, &ts->world, &ts->view);
-	matrix_mul(&ts->transform, &m, &ts->projection);
+	matrix_mul(&m, &ts->view, &ts->world);
+	matrix_mul(&ts->transform, &ts->projection, &m);
+
 	// PRINT_M(ts->world);
 	// PRINT_M(ts->view);
 	// PRINT_M(ts->projection);
@@ -66,3 +68,13 @@ void transform_homogenize(const transform_t *ts, vector_t *y, const vector_t *x)
 	y->w = 1.0f;
 }
 
+/*
+0.75 1 3.03 4
+ 0 - 800	x'
+-1 - 1		x
+x' = (x*(1/w)+1)*800*0.5
+
+ 0 - 600	y'
+-1 - 1 		y
+y' = (y*(1/w)+1)*600*0.5
+*/

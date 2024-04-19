@@ -76,8 +76,7 @@ void append_to_output(const char *format, ...) {
 
     va_end(args);
 }
-#define PRINT_POINT(c1) append_to_output(#c1);append_to_output(":%3.2f %3.2f %3.2f\n", c1.x, c1.y, c1.z);
-
+#define PRINT_POINT(c1) append_to_output(#c1);append_to_output(":%3.2f %3.2f %3.2f %3.f\n", c1.x, c1.y, c1.z, c1.w);
 //=====================================================================
 // 渲染设备
 //=====================================================================
@@ -318,15 +317,22 @@ void device_draw_triangle(device_t *device,
 	matrix_apply( &c2, &v2->pos, &device->transform.transform);
 	// transform_apply(&device->transform, &c3, &v3->pos);
 	matrix_apply( &c3, &v3->pos, &device->transform.transform);
-
+	// printf("+++\n");
+	// PRINT_POINT(v1->pos);
+	// PRINT_POINT(c1);
+	// PRINT_POINT(v2->pos);
+	// PRINT_POINT(c2);
+	// PRINT_POINT(v3->pos);
+	// PRINT_POINT(c3);
+	// printf("---\n");
 
 	// printf("%d\n", strlen(buffer_text));
 
 	// 裁剪，注意此处可以完善为具体判断几个点在 cvv内以及同cvv相交平面的坐标比例
 	// 进行进一步精细裁剪，将一个分解为几个完全处在 cvv内的三角形
-	if (transform_check_cvv(&c1) != 0) return;
-	if (transform_check_cvv(&c2) != 0) return;
-	if (transform_check_cvv(&c3) != 0) return;
+	// if (transform_check_cvv(&c1) != 0) return;
+	// if (transform_check_cvv(&c2) != 0) return;
+	// if (transform_check_cvv(&c3) != 0) return;
 
 	// 归一化
 	transform_homogenize(&device->transform, &p1, &c1);
@@ -412,7 +418,7 @@ ImGuiIO & imgui_init() {
 //=====================================================================
 // 主程序
 //=====================================================================
-vertex_t mesh[8] = {
+vertex_t mesh[] = {
 	//  point_t pos; texcoord_t tc; color_t color; float rhw;
 	{ { -1, -1,  1, 1 }, { 0, 0 }, { 1.0f, 0.2f, 0.2f }, 1 },
 	{ {  1, -1,  1, 1 }, { 0, 1 }, { 0.2f, 1.0f, 0.2f }, 1 },
@@ -422,6 +428,7 @@ vertex_t mesh[8] = {
 	{ {  1, -1, -1, 1 }, { 0, 1 }, { 0.2f, 1.0f, 1.0f }, 1 },
 	{ {  1,  1, -1, 1 }, { 1, 1 }, { 1.0f, 0.3f, 0.3f }, 1 },
 	{ { -1,  1, -1, 1 }, { 1, 0 }, { 0.2f, 1.0f, 0.3f }, 1 },
+	{ {  0,  0,  0, 1 }, { 1, 0 }, { 0.2f, 1.0f, 0.3f }, 1 },
 };
 
 void draw_plane(device_t *device, int a, int b, int c, int d) {
@@ -440,7 +447,15 @@ void draw_plane(device_t *device, int a, int b, int c, int d) {
 	device_draw_triangle(device, &p1, &p2, &p3);
 	device_draw_triangle(device, &p3, &p4, &p1);
 }
-
+#define PRINT_M(ts) \
+	printf(#ts"\n");\
+	for(int i = 0;i<4;i++){\
+		printf("%f, %f, %f, %f\n",\
+			ts.m[i][0],\
+			ts.m[i][1],\
+			ts.m[i][2],\
+			ts.m[i][3]);\
+	}
 void draw_box(device_t *device, float theta) {
 	// pr_debug("in");
 	matrix_t m;
@@ -461,6 +476,34 @@ void draw_box(device_t *device, float theta) {
 	// 	}
 
 	// }
+{
+	for(int i = 8;i<9;i++) {
+
+	
+		vertex_t p1 = mesh[i];
+		static point_t p,po;
+		matrix_apply( &p, &p1.pos, &device->transform.transform);
+
+		// PRINT_M(device->transform.world);
+		// PRINT_M(device->transform.view);
+		// PRINT_M(device->transform.projection);
+		// PRINT_M(device->transform.transform);
+
+		// 归一化
+		transform_homogenize(&device->transform, &po, &p);
+		// PRINT_POINT(p);
+		// PRINT_POINT(po);
+
+		printf("% 3.2f % 3.2f % 3.2f % 3.2f\t", p.x, p.y, p.z, p.w);
+		printf("% 3.2f % 3.2f % 3.2f % 3.2f\n", po.x, po.y, po.z, po.w);
+		// SDL_RenderDrawLine(renderer,0,0,po.x, po.y);
+		device_draw_line(device, 0,0,po.x, po.y, 0xffffffff);
+
+	}
+
+
+}
+
 }
 
 // void camera_at_zero(device_t *device, float x, float y, float z) {
@@ -490,7 +533,9 @@ int main(void)
 	int states[] = { RENDER_STATE_TEXTURE, RENDER_STATE_COLOR, RENDER_STATE_WIREFRAME };
 	int indicator = 0;
 	int kbhit = 0;
-	float alpha = 1;
+	float rotate = 0;
+	point_t scale = {1, 1, 1};
+	point_t trans = {0, 0, 0};
 	// float pos = 3.5;
 
 	char title[] = "Mini3d (software render tutorial) ";
@@ -522,7 +567,7 @@ int main(void)
 		
 		// printf("\ec");
 		// system("cls");
-		// printf("==============================\n");
+		printf("==============================\n");
 		while (SDL_PollEvent(&e) != 0) {
 			ImGui_ImplSDL2_ProcessEvent(&e);
 			if (e.type == SDL_QUIT) {
@@ -565,7 +610,9 @@ int main(void)
 		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
 		ImGui::Begin("Hello, world!");
-		ImGui::Text(output);
+		// ImGui::Text(output);
+
+		// printf("%s", output);
 		output_length = 0;
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
@@ -577,11 +624,11 @@ int main(void)
 			pos.x = pos.y = pos.z = 0;
 			pos.w = 1;
 		}
-		ImGui::SliderFloat("alpha", (float *)&alpha, 0.0f, 5.0f);
+		ImGui::SliderFloat("alpha", (float *)&rotate, 0.0f, 5.0f);
 			// point_t p1, p2, p3, c1, c2, c3;
 		ImGui::SliderFloat3("camera", (float *)&camera, -3.0f, 3.0f);
-		// ImGui::SliderFloat3("p2", (float *)&p2, -3.0f, 3.0f);
-		// ImGui::SliderFloat3("p3", (float *)&p3, -3.0f, 3.0f);
+		ImGui::SliderFloat3("scale", (float *)&scale, -3.0f, 3.0f);
+		ImGui::SliderFloat3("trans", (float *)&trans, -3.0f, 3.0f);
 		ImGui::End();
 		// Rend
 		// camera.x = sqrt(9-powf(camera.y, 2));
@@ -592,10 +639,73 @@ int main(void)
 		matrix_set_lookat(&device.transform.view, &camera, &target, &up);
 		// transform_update(&device.transform);
 
-		matrix_set_rotate(&device.transform.world, 0, 1, 0, alpha);
+		matrix_t m_scale, m_rotate, m_trans, m_out;
+
+
+		matrix_set_rotate(&device.transform.world, 0, 1, 0, rotate);
+		matrix_set_lookat(&device.transform.view, &camera, &target, &up);
+		// transform_update(&device.transform);
+//  缩放 -> 旋转 -> 平移 
+		matrix_set_scale(&m_scale, scale.x, scale.y, scale.z);
+		matrix_set_rotate(&m_rotate, 0, 1, 0, rotate);
+		matrix_set_translate(&m_trans, trans.x, trans.y, trans.z);
+
+{
+	#define PRINT_M_(ts) \
+	printf(#ts"\n");\
+	for(int i = 0;i<4;i++){\
+		printf("%f, %f, %f, %f\n",\
+			ts.m[i][0],\
+			ts.m[i][1],\
+			ts.m[i][2],\
+			ts.m[i][3]);\
+	}
+	PRINT_M_(m_scale);
+	PRINT_M_(m_rotate);
+	PRINT_M_(m_trans);
+
+}
+		// matrix_mul(&m_out, &m_rotate, &m_scale);
+		matrix_mul(&m_out, &m_scale, &m_rotate);
+		matrix_mul(&device.transform.world, &m_trans, &m_out);
+{
+		vertex_t p1 = mesh[8];
+		static point_t p,pr,po;
+		matrix_apply( &p, &p1.pos, &device.transform.transform);
+		// matrix_apply_r( &pr, &p1.pos, &device.transform.transform);
+
+		// 归一化
+		transform_homogenize(&device.transform, &po, &p);
 		// device.transform.world = m;
 		transform_update(&device.transform);
+		ImGui::Begin("trans");
+		ImGui::Text("scale");
+		ImGui::SliderFloat4("m_scale", (float *)&m_scale.m[0], 0.0f, 5.0f);
+		ImGui::SliderFloat4("m_scale", (float *)&m_scale.m[1], 0.0f, 5.0f);
+		ImGui::SliderFloat4("m_scale", (float *)&m_scale.m[2], 0.0f, 5.0f);
+		ImGui::SliderFloat4("m_scale", (float *)&m_scale.m[3], 0.0f, 5.0f);
 
+		ImGui::Text("trans");
+		ImGui::SliderFloat4("m_trans", (float *)&m_trans.m[0], 0.0f, 5.0f);
+		ImGui::SliderFloat4("m_trans", (float *)&m_trans.m[1], 0.0f, 5.0f);
+		ImGui::SliderFloat4("m_trans", (float *)&m_trans.m[2], 0.0f, 5.0f);
+		ImGui::SliderFloat4("m_trans", (float *)&m_trans.m[3], 0.0f, 5.0f);
+
+
+		ImGui::SliderFloat4("m_rotate", (float *)&m_rotate.m[0], 0.0f, 5.0f);
+		ImGui::SliderFloat4("m_rotate", (float *)&m_rotate.m[1], 0.0f, 5.0f);
+		ImGui::SliderFloat4("m_rotate", (float *)&m_rotate.m[2], 0.0f, 5.0f);
+		ImGui::SliderFloat4("m_rotate", (float *)&m_rotate.m[3], 0.0f, 5.0f);
+
+
+		ImGui::SliderFloat4("trans", (float *)&device.transform.transform.m[0], 0.0f, 5.0f);
+		ImGui::SliderFloat4("trans", (float *)&device.transform.transform.m[1], 0.0f, 5.0f);
+		ImGui::SliderFloat4("trans", (float *)&device.transform.transform.m[2], 0.0f, 5.0f);
+		ImGui::SliderFloat4("trans", (float *)&device.transform.transform.m[3], 0.0f, 5.0f);
+		ImGui::SliderFloat4("po", (float *)&po, 0.0f, 5.0f);
+		// ImGui::SliderFloat4("pr", (float *)&pr, 0.0f, 5.0f);
+		ImGui::End();
+}
 		// matrix_set_rotate(&m, 0, 1, 0, alpha);
 // matrix_t t;
 // t = device.transform.transform;
@@ -648,7 +758,7 @@ int main(void)
 		SDL_LockTexture(texture, NULL, &pixels, &pitch);
 		Uint32* pixelData = (Uint32*)pixels;
 		// printf("%p\n", pixelData);
-		draw_box(&device, alpha);
+		draw_box(&device, rotate);
 		// device_draw_line(&device, 0, 0, 100, 100, device.foreground);
 		// 绘制一个绿色的矩形
 		// for (int y = 100; y < 200; ++y) {

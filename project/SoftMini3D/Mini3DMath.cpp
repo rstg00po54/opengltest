@@ -114,11 +114,26 @@ void matrix_scale(matrix_t *c, const matrix_t *a, float f) {
 // y = x * m
 void matrix_apply(vector_t *y, const vector_t *x, const matrix_t *m) {
 	float X = x->x, Y = x->y, Z = x->z, W = x->w;
+#if 0
 	y->x = X * m->m[0][0] + Y * m->m[1][0] + Z * m->m[2][0] + W * m->m[3][0];
 	y->y = X * m->m[0][1] + Y * m->m[1][1] + Z * m->m[2][1] + W * m->m[3][1];
 	y->z = X * m->m[0][2] + Y * m->m[1][2] + Z * m->m[2][2] + W * m->m[3][2];
 	y->w = X * m->m[0][3] + Y * m->m[1][3] + Z * m->m[2][3] + W * m->m[3][3];
+#else
+    y->x = m->m[0][0] * x->x + m->m[0][1] * x->y + m->m[0][2] * x->z + m->m[0][3] * x->w;
+    y->y = m->m[1][0] * x->x + m->m[1][1] * x->y + m->m[1][2] * x->z + m->m[1][3] * x->w;
+    y->z = m->m[2][0] * x->x + m->m[2][1] * x->y + m->m[2][2] * x->z + m->m[2][3] * x->w;
+    y->w = m->m[3][0] * x->x + m->m[3][1] * x->y + m->m[3][2] * x->z + m->m[3][3] * x->w;
+#endif
 }
+// void matrix_apply_r(vector_t *y, const vector_t *x, const matrix_t *m) {
+
+//    y->x = m->m[0][0] * x->x + m->m[0][1] * x->y + m->m[0][2] * x->z + m->m[0][3] * x->w;
+//     y->y = m->m[1][0] * x->x + m->m[1][1] * x->y + m->m[1][2] * x->z + m->m[1][3] * x->w;
+//     y->z = m->m[2][0] * x->x + m->m[2][1] * x->y + m->m[2][2] * x->z + m->m[2][3] * x->w;
+//     y->w = m->m[3][0] * x->x + m->m[3][1] * x->y + m->m[3][2] * x->z + m->m[3][3] * x->w;
+
+// }
 /*
 1 0 0 0
 0 1 0 0
@@ -143,9 +158,9 @@ void matrix_set_zero(matrix_t *m) {
 // 平移变换
 void matrix_set_translate(matrix_t *m, float x, float y, float z) {
 	matrix_set_identity(m);
-	m->m[3][0] = x;
-	m->m[3][1] = y;
-	m->m[3][2] = z;
+	m->m[0][3] = x;
+	m->m[1][3] = y;
+	m->m[2][3] = z;
 }
 
 // 缩放变换
@@ -167,16 +182,16 @@ void matrix_set_rotate(matrix_t *m, float x, float y, float z, float theta) {
 	y = vec.y * qsin;
 	z = vec.z * qsin;
 	m->m[0][0] = 1 - 2 * y * y - 2 * z * z;
-	m->m[1][0] = 2 * x * y - 2 * w * z;
-	m->m[2][0] = 2 * x * z + 2 * w * y;
-	m->m[0][1] = 2 * x * y + 2 * w * z;
+	m->m[0][1] = 2 * x * y - 2 * w * z;
+	m->m[0][2] = 2 * x * z + 2 * w * y;
+	m->m[1][0] = 2 * x * y + 2 * w * z;
 	m->m[1][1] = 1 - 2 * x * x - 2 * z * z;
-	m->m[2][1] = 2 * y * z - 2 * w * x;
-	m->m[0][2] = 2 * x * z - 2 * w * y;
-	m->m[1][2] = 2 * y * z + 2 * w * x;
+	m->m[1][2] = 2 * y * z - 2 * w * x;
+	m->m[2][0] = 2 * x * z - 2 * w * y;
+	m->m[2][1] = 2 * y * z + 2 * w * x;
 	m->m[2][2] = 1 - 2 * x * x - 2 * y * y;
-	m->m[0][3] = m->m[1][3] = m->m[2][3] = 0.0f;
-	m->m[3][0] = m->m[3][1] = m->m[3][2] = 0.0f;	
+	m->m[3][0] = m->m[3][1] = m->m[3][2] = 0.0f;
+	m->m[0][3] = m->m[1][3] = m->m[2][3] = 0.0f;	
 	m->m[3][3] = 1.0f;
 }
 
@@ -192,21 +207,21 @@ void matrix_set_lookat(matrix_t *m, const vector_t *eye, const vector_t *at, con
 	vector_crossproduct(&yaxis, &zaxis, &xaxis);
 
 	m->m[0][0] = xaxis.x;
-	m->m[1][0] = xaxis.y;
-	m->m[2][0] = xaxis.z;
-	m->m[3][0] = -vector_dotproduct(&xaxis, eye);
+	m->m[0][1] = xaxis.y;
+	m->m[0][2] = xaxis.z;
+	m->m[0][3] = -vector_dotproduct(&xaxis, eye);
 
-	m->m[0][1] = yaxis.x;
+	m->m[1][0] = yaxis.x;
 	m->m[1][1] = yaxis.y;
-	m->m[2][1] = yaxis.z;
-	m->m[3][1] = -vector_dotproduct(&yaxis, eye);
+	m->m[1][2] = yaxis.z;
+	m->m[1][3] = -vector_dotproduct(&yaxis, eye);
 
-	m->m[0][2] = zaxis.x;
-	m->m[1][2] = zaxis.y;
+	m->m[2][0] = zaxis.x;
+	m->m[2][1] = zaxis.y;
 	m->m[2][2] = zaxis.z;
-	m->m[3][2] = -vector_dotproduct(&zaxis, eye);
+	m->m[2][3] = -vector_dotproduct(&zaxis, eye);
 	
-	m->m[0][3] = m->m[1][3] = m->m[2][3] = 0.0f;
+	m->m[3][0] = m->m[3][1] = m->m[3][2] = 0.0f;
 	m->m[3][3] = 1.0f;
 }
 /*
@@ -219,10 +234,18 @@ reg jiao
 void matrix_set_perspective(matrix_t *m, float fovy, float aspect, float zn, float zf) {
 	float fax = 1.0f / (float)tan(2.0f*3.14f*fovy/360.0f);
 	matrix_set_zero(m);
+#if 0
+	m->m[0][0] = (float)(fax / (2.0f*zn*aspect));
+	m->m[1][1] = (float)(fax);
+	m->m[2][2] = (zn + zf) / (zn - zf);
+	m->m[3][2] = - 2*zn * zf / (zn - zf);
+	m->m[2][3] = 1;
+#else
 	m->m[0][0] = (float)(fax / aspect);
 	m->m[1][1] = (float)(fax);
 	m->m[2][2] = zf / (zf - zn);
-	m->m[3][2] = - zn * zf / (zf - zn);
-	m->m[2][3] = 1;
+	m->m[2][3] = - zn * zf / (zf - zn);
+	m->m[3][2] = 1;
+#endif
 }
 
