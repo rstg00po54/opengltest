@@ -21,8 +21,8 @@
 // Vclip=projection*view*model*local
 void transform_update(transform_t *ts) {
 	matrix_t m;
-	matrix_mul(&m, &ts->view, &ts->world);
-	matrix_mul(&ts->transform, &ts->projection, &m);
+	matrix_mul(&m, &ts->view, &ts->model);
+	matrix_mul(&ts->mvp, &ts->projection, &m);
 
 	// PRINT_M(ts->world);
 	// PRINT_M(ts->view);
@@ -33,9 +33,9 @@ void transform_update(transform_t *ts) {
 // 初始化，设置屏幕长宽
 void transform_init(transform_t *ts, int width, int height) {
 	float aspect = (float)width / ((float)height);
-	matrix_set_identity(&ts->world);
+	matrix_set_identity(&ts->model);
 	matrix_set_identity(&ts->view);
-	matrix_set_perspective(&ts->projection, 45, aspect, 1.0f, 100.0f);
+	
 	ts->w = (float)width;
 	ts->h = (float)height;
 	transform_update(ts);
@@ -43,7 +43,7 @@ void transform_init(transform_t *ts, int width, int height) {
 
 // 将矢量 x 进行 project 
 void transform_apply(const transform_t *ts, vector_t *y, const vector_t *x) {
-	matrix_apply(y, x, &ts->transform);
+	matrix_apply(y, x, &ts->mvp);
 }
 
 // 检查齐次坐标同 cvv 的边界用于视锥裁剪

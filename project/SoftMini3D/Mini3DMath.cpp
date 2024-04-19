@@ -230,6 +230,7 @@ reg jiao
 角度 deg
 弧度 rad
 */
+void set(matrix_t *m);
 // fovy 角度
 void matrix_set_perspective(matrix_t *m, float fovy, float aspect, float zn, float zf) {
 	float fax = 1.0f / (float)tan(2.0f*3.14f*fovy/360.0f);
@@ -244,8 +245,63 @@ void matrix_set_perspective(matrix_t *m, float fovy, float aspect, float zn, flo
 	m->m[0][0] = (float)(fax / aspect);
 	m->m[1][1] = (float)(fax);
 	m->m[2][2] = zf / (zf - zn);
-	m->m[2][3] = - zn * zf / (zf - zn);
-	m->m[3][2] = 1;
+	m->m[3][2] =  zn * zf / (zf - zn);
+	m->m[2][3] = 1;
 #endif
+	// set(m);
 }
+void set(matrix_t *m) {
 
+	// 定义三个灭点的位置
+	vector_t vp1 = {0.0, 0.0, 10.0};
+	vector_t vp2 = {-10.0, 0.0, 0.0};
+	vector_t vp3 = {0.0, -10.0, 0.0};
+
+	// 定义视点位置和方向
+	vector_t eye = {5.0, 5.0, 5.0};
+	vector_t target = {0.0, 0.0, 0.0};
+	vector_t up = {0.0, 1.0, 0.0};
+
+
+	vector_t xaxis, yaxis, zaxis;
+
+	vector_t view_dir,right,new_up;
+	vector_sub(&view_dir, &target, &eye);
+	vector_normalize(&view_dir);
+
+	vector_crossproduct(&right, &view_dir, &up);
+	vector_normalize(&right);
+
+	vector_crossproduct(&new_up, &right, &view_dir);
+	// 计算视线方向和正交基
+	// vector_t view_dir = normalize(target - eye);
+	// vector_t right = normalize(cross(view_dir, up));
+	// vector_t new_up = cross(right, view_dir);
+
+	// 构建透视投影矩阵
+	// mat4 m->m;
+	// float **m->m = m->m;
+	m->m[0][0] = 2.0 * vector_dotproduct(&right, &vp1);
+	m->m[0][1] = 2.0 * vector_dotproduct(&right, &vp2);
+	m->m[0][2] = 2.0 * vector_dotproduct(&right, &vp3);
+	m->m[0][3] = 0.0;
+
+	m->m[1][0] = 2.0 * vector_dotproduct(&new_up, &vp1);
+	m->m[1][1] = 2.0 * vector_dotproduct(&new_up, &vp2);
+	m->m[1][2] = 2.0 * vector_dotproduct(&new_up, &vp3);
+	m->m[1][3] = 0.0;
+
+	m->m[2][0] = vector_dotproduct(&view_dir, &vp1);
+	m->m[2][1] = vector_dotproduct(&view_dir, &vp2);
+	m->m[2][2] = vector_dotproduct(&view_dir, &vp3);
+	m->m[2][3] = 0.0;
+
+	m->m[3][0] = -vector_dotproduct(&eye, &vp1);
+	m->m[3][1] = -vector_dotproduct(&eye, &vp2);
+	m->m[3][2] = -vector_dotproduct(&eye, &vp3);
+	m->m[3][3] = 1.0;
+
+	// 应用透视投影矩阵到顶点坐标
+	// vec4 transformed_vertex = m->m * vec4(vertex_position, 1.0);
+
+}
