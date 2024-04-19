@@ -78,7 +78,8 @@ void append_to_output(const char *format, ...) {
     va_end(args);
 }
 #define PRINT_POINT(c1) append_to_output(#c1);append_to_output(":%3.2f %3.2f %3.2f %3.f\n", c1.x, c1.y, c1.z, c1.w);
-#define PRINTF_POINT(c1) printf(#c1);printf(":%f %f %f\n", c1.x, c1.y, c1.z);
+// #define PRINTF_POINT(c1) printf(#c1);printf(":% 3.2f % 3.2f % 3.2f % 3.2f\n", c1.x, c1.y, c1.z, c1.w);
+#define PRINTF_POINT(c1) 
 //=====================================================================
 // 渲染设备
 //=====================================================================
@@ -422,6 +423,18 @@ ImGuiIO & imgui_init() {
 	ImGui_ImplSDLRenderer2_Init(renderer);
 	return io;
 }
+
+/*
+
+	 ____
+	/   /|
+	---- |
+	|  | /
+	|  |/
+	----
+
+
+*/
 //=====================================================================
 // 主程序
 //=====================================================================
@@ -438,19 +451,31 @@ vertex_t mesh[] = {
 	{ {  0,  0,  0, 1 }, { 1, 0 }, { 0.2f, 1.0f, 0.3f }, 1 },
 };
 
-void draw_plane(device_t *device, int a, int b, int c, int d) {
+void draw_plane(device_t *device, int a, int b, int c, int d, int f) {
 	vertex_t p1 = mesh[a];
 	vertex_t p2 = mesh[b];
 	vertex_t p3 = mesh[c];
 	vertex_t p4 = mesh[d];
+	float h = 1.f/6;
+	/*
+	v
+	|
+	p2-p3
+	|  |
+	p1-p4-u
+
+	*/
 	p1.tc.u = 0;
-	p1.tc.v = 0;
+	p1.tc.v = h*f;
+
 	p2.tc.u = 0;
-	p2.tc.v = 1;
+	p2.tc.v = (f+1)*h;
+
 	p3.tc.u = 1;
-	p3.tc.v = 1;
+	p3.tc.v = (f+1)*h;
+
 	p4.tc.u = 1;
-	p4.tc.v = 0;
+	p4.tc.v = f*h;
 	device_draw_triangle(device, &p1, &p2, &p3);
 	device_draw_triangle(device, &p3, &p4, &p1);
 }
@@ -471,60 +496,140 @@ void draw_box(device_t *device, float theta) {
 	// matrix_set_rotate(&m, -1, -0.5, 1, theta);
 	// device->transform.world = m;
 	// transform_update(&device->transform);
-	draw_plane(device, 0, 1, 2, 3);
-	draw_plane(device, 7, 6, 5, 4);
-	draw_plane(device, 0, 4, 5, 1);
-	draw_plane(device, 1, 5, 6, 2);
-	draw_plane(device, 2, 6, 7, 3);
-	draw_plane(device, 3, 7, 4, 0);
+	draw_plane(device, 0, 1, 2, 3, 0);
+	draw_plane(device, 7, 6, 5, 4, 1);
+	draw_plane(device, 0, 4, 5, 1, 2);
+	draw_plane(device, 1, 5, 6, 2, 3);
+	draw_plane(device, 2, 6, 7, 3, 4);
+	draw_plane(device, 3, 7, 4, 0, 5);
 	// for(int i=0;i<4;i++){
 	// 	for(int j=0;j<4;j++){
 	// 		printf("%d %d = %f\n", i, j, m.m[i][j]);
 	// 	}
 
 	// }
+#if 0
+	// vertex_t p1 = mesh[i];
+	point_t p[2];
+	point_t po[2];
+	matrix_t m_out[2];
+	point_t psrc[][2] = {
+		{{-100,0,0,1},{100,0,0,1}},
+		// {{0,0,0,1},{0,100,0,1}},
+		// {{0,0,0,1},{0,0,100,1}},
 
+		// {{1,1,0,1},{1,1,-100,1}},
+		// {{1,-1,0,1},{1,-1,-100,1}},
 
+		// {{1,0,1,1},{1,-100,1,1}},
+		// {{-1,0,1,1},{-1,-100,1,1}},
+
+		// {{1,1,1,1},{-100,1,1,1}},
+		// {{1,-1,1,1},{-100,-1,1,1}}
+		
+		};
+	for(int i = 0;i<(sizeof(psrc)/sizeof(psrc[0]));i++) {
 
 	
-		// vertex_t p1 = mesh[i];
-		point_t p[2];
-		point_t po[2];
-		matrix_t m_out[2];
-		point_t psrc[][2] = {
-			{{0,0,0,1},{100,0,0,1}},
-			{{0,0,0,1},{0,100,0,1}},
-			{{0,0,0,1},{0,0,100,1}},
+		// matrix_mul(&m_out[0], &device->transform.projection, &device->transform.mvp);
+		matrix_apply( &p[0], &psrc[i][0], &device->transform.mvp);
+		matrix_apply( &p[1], &psrc[i][1], &device->transform.mvp);
 
-			{{1,1,0,1},{1,1,-100,1}},
-			{{1,-1,0,1},{1,-1,-100,1}},
+		// 归一化
+		transform_homogenize(&device->transform, &po[0], &p[0]);
+		transform_homogenize(&device->transform, &po[1], &p[1]);
+		// PRINT_POINT(p);
+		// PRINT_POINT(po);
 
-			{{1,0,1,1},{1,-100,1,1}},
-			{{-1,0,1,1},{-1,-100,1,1}},
+		// printf("% 3.2f % 3.2f % 3.2f % 3.2f\t", p.x, p.y, p.z, p.w);
+		// printf("% 3.2f % 3.2f % 3.2f % 3.2f\n", po.x, po.y, po.z, po.w);
+		// SDL_RenderDrawLine(renderer,0,0,po.x, po.y);
+		device_draw_line(device, po[1].x, po[1].y, po[0].x, po[0].y, 0xffffffff);
+	}
+#endif
+}
 
-			{{1,1,1,1},{-100,1,1,1}},
-			{{1,-1,1,1},{-100,-1,1,1}}
-			
-			};
-		for(int i = 0;i<9;i++) {
+/*
 
+
+*/
+void drawMyLines(device_t *device) {
+
+	ImGui::Begin("draw_box");
+
+
+	static float x = 1.0f;
+	static float y = 1.0f;
+	// vertex_t p1 = mesh[i];
+	point_t p[2];
+	point_t po1[2];
+	point_t po2[2];
+	matrix_t m_out[2];
+	point_t psrc[][2] = {
+		// {{-100,0,0,1},{100,0,0,1}},
+		// {{0,-100,0,1},{0,100,0,1}},
+		// {{0,0,-100,1},{0,0,100,1}},
+
+		// {{1,1,100,1},{1,1,-100,1}},
+		// {{1,-1,100,1},{1,-1,-100,1}},
+
+		// {{1,1,1,1},{1,-1.5,1,1}},
+		{{-1,100,1,1},{-1,-100,1,1}},
+
+		// {{100,1,1,1},{-100,1,1,1}},
+		// {{100,-1,1,1},{-100,-1,1,1}}
+
+		// {{0,2/3.f,0,1},{-1.732/3.f,-1/3.f,0,1}},
+		// {{0,2/3.f,0,1},{1.732/3.f,-1/3.f,0,1}},
+		// {{-1.732/3.f,-1/3.f,0,1},{1.732/3.f,-1/3.f,0,1}},
 		
-			// matrix_mul(&m_out[0], &device->transform.projection, &device->transform.mvp);
-			matrix_apply( &p[0], &psrc[i][0], &device->transform.mvp);
-			matrix_apply( &p[1], &psrc[i][1], &device->transform.mvp);
+		};
+		// x = psrc[0][0].x;
+		// y = psrc[0][0].y;
+	int len = sizeof(psrc)/sizeof(psrc[0]);
+	for(int i = 0;i<len;i++) {
 
-			// 归一化
-			transform_homogenize(&device->transform, &po[0], &p[0]);
-			transform_homogenize(&device->transform, &po[1], &p[1]);
-			// PRINT_POINT(p);
-			// PRINT_POINT(po);
+		if(i == 0){
 
-			// printf("% 3.2f % 3.2f % 3.2f % 3.2f\t", p.x, p.y, p.z, p.w);
-			// printf("% 3.2f % 3.2f % 3.2f % 3.2f\n", po.x, po.y, po.z, po.w);
-			// SDL_RenderDrawLine(renderer,0,0,po.x, po.y);
-			device_draw_line(device, po[1].x, po[1].y, po[0].x, po[0].y, 0xffffffff);
+			ImGui::SliderFloat("x", (float *)&x, 0.0f, 50.0f);
+			ImGui::SliderFloat("y", (float *)&y, 0.0f, 50.0f);
+			// printf("% 3.2f % 3.2f % 3.2f % 3.2f\t", p[0].x, p[0].y, p[0].z, p[0].w);
+			// printf("% 3.2f % 3.2f % 3.2f % 3.2f\n", po[0].x, po[0].y, po[0].z, po[0].w);
 		}
+		psrc[0][0].y = -y;
+		psrc[0][1].y = y;
 
+		// psrc[1][0].y = -y;
+		// psrc[1][1].y = y;
+		PRINTF_POINT(psrc[0][0]);
+		PRINTF_POINT(psrc[0][1]);
+		PRINTF_POINT(psrc[1][0]);
+		PRINTF_POINT(psrc[1][1]);
+	
+		// matrix_mul(&m_out[0], &device->transform.projection, &device->transform.mvp);
+		matrix_apply( &p[0], &psrc[i][0], &device->transform.mvp);
+		matrix_apply( &p[1], &psrc[i][1], &device->transform.mvp);
+
+		// 归一化
+		transform_home(&device->transform, &po1[0], &po1[1], &p[0], &p[1]);
+
+		transform_homogenize(&device->transform, &po2[0], &p[0]);
+		transform_homogenize(&device->transform, &po2[1], &p[1]);
+		if(i == 0) {
+			ImGui::SliderFloat4("p0", (float *)&p[0], -3.0f, 3.0f);
+			ImGui::SliderFloat4("p1", (float *)&p[1], -3.0f, 3.0f);
+			ImGui::SliderFloat4("po0", (float *)&po1[0], -3.0f, 3.0f);
+			ImGui::SliderFloat4("po1", (float *)&po1[1], -3.0f, 3.0f);
+			ImGui::SliderFloat4("po2", (float *)&po2[0], -3.0f, 3.0f);
+			ImGui::SliderFloat4("po2", (float *)&po2[1], -3.0f, 3.0f);
+		}
+		// PRINT_POINT(p);
+		// PRINT_POINT(po);
+		// SDL_RenderDrawLine(renderer,0,0,po.x, po.y);
+		device_draw_line(device, po1[1].x, po1[1].y, po1[0].x, po1[0].y, 0xffffffff);
+		// device_draw_line(device, po2[1].x, po2[1].y, po2[0].x, po2[0].y, 0xffffffff);
+	}
+	ImGui::End();
 }
 
 // void camera_at_zero(device_t *device, float x, float y, float z) {
@@ -559,7 +664,7 @@ IUINT32 device_texture_read(const device_t *device, float u, float v) {
 void device_set_texture(device_t *device, void *bits, long pitch, int w, int h) {
 	char *ptr = (char*)bits;
 	int j;
-	assert(w <= 1024 && h <= 1024);
+	// assert(w <= 1024 && h <= 1024);
 	for (j = 0; j < h; ptr += pitch, j++) {
 		device->texture[j] = (IUINT32*)ptr;
 		if(j<5)
@@ -571,7 +676,7 @@ void device_set_texture(device_t *device, void *bits, long pitch, int w, int h) 
 	device->max_v = (float)(h - 1);
 }
 #define TEXTURE_W 300
-#define TEXTURE_H 300
+#define TEXTURE_H 1800
 // 0xe3c08cff 1024=0x400
 /*
 int a[3][2]
@@ -586,8 +691,8 @@ void init_texture(device_t *device, uint8_t *buffer) {
 	for (j = 0; j < TEXTURE_H; j++) {
 		for (i = 0; i < TEXTURE_W; i++) {
 			int x = i / 32, y = j / 32;
-			texture[j][i] = ((x + y) & 1)? 0xffffffff : 0xe3c08cff;//8*16=128
-			texture[j][i] = SDL_MapRGB(SDL_AllocFormat(SDL_PIXELFORMAT_RGB24), 
+			// texture[j][i] = ((x + y) & 1)? 0xffffffff : 0xe3c08cff;//8*16=128
+			texture[j][i] = SDL_MapRGB(SDL_AllocFormat(SDL_PIXELFORMAT_RGBA8888), 
 				buffer[j*300*3+i*3], 
 				buffer[j*300*3+i*3+1], 
 				buffer[j*300*3+i*3+2]);
@@ -611,14 +716,14 @@ int main(void)
 	int kbhit = 0;
 	float rotate = 0;
 	float fovy = 45.f;
-	point_t scale = {0.5f, 0.5f, 0.5f};
+	point_t scale = {1.f, 1.f, 1.f};
 	point_t trans = {0, 0, 0};
 	// float pos = 3.5;
 	BMP_FILE_HEADER bmpFileHeader_p;
 	BMP_INFO_HEADER bmpInfoHeader_p;
 	unsigned char *screen_fb;
 	// uint8_t *bmpBuffer;
-	// readBmpFromFile("./3d_48.bmp", &bmpFileHeader_p, &bmpInfoHeader_p, &bmpBuffer);
+	// readBmpFromFile("./skin_debug.bmp", &bmpFileHeader_p, &bmpInfoHeader_p, &bmpBuffer);
 	readBmpFromFile("./skin_debug.bmp", &bmpFileHeader_p, &bmpInfoHeader_p, &device.bmpBuffer);
 	displayBmpHeader( &bmpFileHeader_p, &bmpInfoHeader_p);
 	char title[] = "Mini3d (software render tutorial) ";
@@ -644,12 +749,12 @@ int main(void)
 	pos.y = 0;
 	pos.z = -1;
 	pos.w = 1;
-	point_t camera  = { 0, 0, -3, 1 };//相机位置eye
+	point_t camera  = { 0, 0, 3, 1 };//相机位置eye
 	point_t target  = { 0, 0, 0, 1 };//观察目标 at
 	point_t up  = { 0, 1, 0, 1 };
 	int mouse_state = 0;
 	int downX, downY;
-	int dx, dy;
+	int dx = 0, dy = 0;
 	float thetax = 0.f,thetay = 0.f;
 	float dthetax,dthetay;
 	float r = 3.f;
@@ -657,8 +762,8 @@ int main(void)
 	// return 0;
 	while (!quit) {
 		
-		// printf("\ec");
-		// system("cls");
+		printf("\ec");
+		system("cls");
 		printf("==============================\n");
 		while (SDL_PollEvent(&e) != 0) {
 			bool ret = ImGui_ImplSDL2_ProcessEvent(&e);
@@ -670,7 +775,7 @@ int main(void)
 			if (io.WantCaptureMouse) {
 				// ImGui正在使用鼠标事件
 				// 在这里添加处理ImGui使用鼠标事件的逻辑
-				printf("use mouse\n");
+				// printf("use mouse\n");
 			} else {
 				// ImGui没有使用鼠标事件
 				// 在这里添加处理应用程序自身的鼠标事件逻辑
@@ -678,14 +783,15 @@ int main(void)
 			// printf("event %d\n", event.type);
 			switch (e.type) {
 				case SDL_MOUSEWHEEL:
-					printf("x ==-= %d\n",e.wheel.y);
+					// printf("x ==-= %d\n",e.wheel.y);
 					r+=(e.wheel.y*0.1f);
-						thetax = dx*0.01f+dthetax;
-						thetay = dy*0.01+dthetay;
+						// thetax = dx*0.01f+thetax;
+						// thetay = dy*0.01+thetay;
 
 						camera.y = r*sinf(thetay);
 						camera.x = r*cosf(thetay)*sinf(thetax);
 						camera.z = r*cosf(thetay)*cosf(thetax);
+						// printf("thetax %f/%f\n", thetax, thetay);
 					break;
 				case SDL_MOUSEMOTION:
 					// 处理鼠标移动事件
@@ -694,13 +800,14 @@ int main(void)
 						dx = e.motion.x-downX;
 						dy = e.motion.y-downY;
 
-						thetax = dx*0.01f+dthetax;
-						thetay = dy*0.01+dthetay;
+						thetax = dx*0.002f+dthetax;
+						thetay = dy*0.002f+dthetay;
 
 						camera.y = r*sinf(thetay);
 						camera.x = r*cosf(thetay)*sinf(thetax);
 						camera.z = r*cosf(thetay)*cosf(thetax);
 
+						// printf("mouse move %d %d, theta % 3.2f/% 3.2f\n", e.motion.x, e.motion.y, thetax, thetay);
 					}
 					break;
 				case SDL_MOUSEBUTTONDOWN:
@@ -765,11 +872,17 @@ int main(void)
 			pos.x = pos.y = pos.z = 0;
 			pos.w = 1;
 		}
-		ImGui::SliderFloat("alpha", (float *)&rotate, 0.0f, 360.0f);
+		ImGui::SliderFloat("rotate", (float *)&rotate, 0.0f, 360.0f);
 		ImGui::SliderFloat("fovy", (float *)&fovy, 30.0f, 60.0f);
 			// point_t p1, p2, p3, c1, c2, c3;
 		ImGui::SliderFloat3("camera", (float *)&camera, -20.0f, 0.0f);
-		ImGui::SliderFloat3("scale", (float *)&scale, 0.0f, 3.0f);
+		ImGui::SameLine();
+		if(ImGui::Button("reset")) {
+			camera.x = camera.y = 0;
+			camera.w = 1;
+			camera.z = 3;
+		}
+		ImGui::SliderFloat3("scale", (float *)&scale, 0.2f, 2.0f);
 		ImGui::SliderFloat3("trans", (float *)&trans, -3.0f, 3.0f);
 		ImGui::End();
 		if(mouse_state){
@@ -804,41 +917,70 @@ int main(void)
 		Uint32* pixelData = (Uint32*)pixels;
 		// printf("%p\n", pixelData);
 		matrix_set_scale(&t->scale, scale.x, scale.y, scale.z);
-		// matrix_set_rotate(&t->rotate, 0, 1, 0,  currentTime*0.002f);
+		// matrix_set_rotate(&t->rotate, 0, 1, 0,  currentTime*0.02f);
 		matrix_set_rotate(&t->rotate, 0, 1, 0,  rotate);
 		matrix_set_translate(&t->trans, trans.x, trans.y, trans.z);
 
-		matrix_mul(&m_out, &t->rotate, &t->scale);
-		matrix_mul(&t->model, &t->trans, &m_out);
+		// matrix_mul(&m_out, &t->rotate, &t->scale);
+		// matrix_mul(&t->model, &t->trans, &m_out);
 		matrix_set_perspective(&t->projection, fovy, 800.f/600.f, 1.0f, 100.0f);
 		matrix_set_lookat(&t->view, &camera, &target, &up);
 		transform_update(t);
 		draw_box(&device, rotate);
-#if 0
+// #define DRAW_1CUBE
+// #define DRAW_2CUBE
+#ifdef DRAW_1CUBE
 		matrix_set_scale(&t->scale, scale.x, scale.y, scale.z);
-		// matrix_set_rotate(&t->rotate, 0, 1, 0,  currentTime*0.002f);
 		matrix_set_rotate(&t->rotate, 0, 1, 0,  rotate);
+		// matrix_set_rotate(&t->rotate, 0, 1, 0,  currentTime*0.02f);
 		matrix_set_translate(&t->trans, trans.x+5, trans.y, trans.z);
 
-		matrix_mul(&m_out, &t->rotate, &t->scale);
-		matrix_mul(&t->model, &t->trans, &m_out);
+		// matrix_mul(&m_out, &t->rotate, &t->scale);
+		// matrix_mul(&t->model, &t->trans, &m_out);
+		// matrix_set_perspective(&t->projection, fovy, 800.f/600.f, 1.0f, 100.0f);
+		// matrix_set_lookat(&t->view, &camera, &target, &up);
+		transform_update(t);
+		draw_box(&device, rotate);
+#endif
+
+#ifdef DRAW_2CUBE
+		matrix_set_scale(&t->scale, scale.x, scale.y, scale.z);
+		// matrix_set_rotate(&t->rotate, 0, 1, 0,  rotate);
+		matrix_set_rotate(&t->rotate, 0, 1, 0,  currentTime*0.02f);
+		matrix_set_translate(&t->trans, trans.x-5, trans.y, trans.z);
+
+		matrix_mul(&m_out, &t->trans, &t->scale);
+		matrix_mul(&t->model, &t->rotate, &m_out);
 		matrix_set_perspective(&t->projection, fovy, 800.f/600.f, 1.0f, 100.0f);
 		matrix_set_lookat(&t->view, &camera, &target, &up);
 		transform_update(t);
 		draw_box(&device, rotate);
 #endif
+
+
+
+		matrix_set_translate(&t->trans, trans.x, trans.y, trans.z);
+		transform_update(t);
+		drawMyLines(&device);
+
+
+
 		// device_draw_line(&device, 0, 0, 100, 100, device.foreground);
-		// 绘制一个绿色的矩形
-		for (int y = 100; y < 200; ++y) {
-			for (int x = 100; x < 200; ++x) {
+		// 绘制一个绿色的矩形 800*600 pitch = 3200 = 800*4
+		for (int y = 0; y < 600; ++y) {
+			for (int x = 0; x < 100; ++x) {
 				int index = y * (pitch / sizeof(Uint32)) + x;
+				int offset = y*300*3*3+x*3*3;
 				// pixelData[index] = SDL_MapRGB(SDL_AllocFormat(SDL_PIXELFORMAT_RGBA8888), 255, y, x);
-				pixelData[index] = SDL_MapRGB(SDL_AllocFormat(SDL_PIXELFORMAT_RGB24), 
-					device.bmpBuffer[y*300*3+x*3], 
-					device.bmpBuffer[y*300*3+x*3+1], 
-					device.bmpBuffer[y*300*3+x*3+2]);//bmpBuffer[y*300*3+x*3];
+				pixelData[y*800+x] = SDL_MapRGB(SDL_AllocFormat(SDL_PIXELFORMAT_RGBA8888), //SDL_PIXELFORMAT_RGBA8888
+					device.bmpBuffer[offset], 
+					device.bmpBuffer[offset+1], 
+					device.bmpBuffer[offset+2]);//bmpBuffer[y*300*3+x*3];
 			}
 		}
+
+
+				// printf("index = %d\n", pitch);
 		// 解锁纹理
 		SDL_UnlockTexture(texture);
 

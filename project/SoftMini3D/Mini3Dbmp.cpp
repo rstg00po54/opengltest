@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <cstdlib>
 #include <string.h>
+
 void saveBmpDataToFile_colorTBL(uint8_t * data_p,uint32_t pixelW,uint32_t pixelH,uint32_t pixelS,uint8_t * colorTbl,uint32_t colorTblSize,char * path)
 {
     if(colorTblSize==0) {printf("error! colorTblSize could not be zero!!!\n");return;};
@@ -102,9 +103,9 @@ void logBmpDataInfo(BMP_DATA * bmp_data_p)
 {
     displayBmpHeader(&(bmp_data_p)->bmpFileHeader,&(bmp_data_p)->bmpInfoHeader);
 }
-void readBmpFromFile(char* path,BMP_FILE_HEADER * bmpFileHeader_p,BMP_INFO_HEADER * bmpInfoHeader_p,uint8_t ** dataPtr)
+void readBmpFromFile(std::string path,BMP_FILE_HEADER * bmpFileHeader_p,BMP_INFO_HEADER * bmpInfoHeader_p,uint8_t ** dataPtr)
 {
-    FILE * fp = fopen(path,"rb");
+    FILE * fp = fopen(path.c_str(),"rb");
 	if(fp == NULL){
 		printf("read fail\n");
 		return;
@@ -167,8 +168,11 @@ void readBmpFromFile(char* path,BMP_FILE_HEADER * bmpFileHeader_p,BMP_INFO_HEADE
     *dataPtr=(uint8_t *)malloc(colorTableSize);
     for(uint32_t i=0;i<bmpInfoHeader_p->biHeight;i++)
     {
-        fread((*dataPtr) + (bmpInfoHeader_p->biHeight-i-1)*bmpInfoHeader_p->biWidth*channel,sizeof(uint8_t),bmpInfoHeader_p->biWidth*channel,fp);
-    }
+		int ch_width = bmpInfoHeader_p->biWidth*channel;
+		int dy = bmpInfoHeader_p->biHeight-i-1;
+        fread((*dataPtr) + dy*ch_width,sizeof(uint8_t),ch_width,fp);
+		// printf("copy to line %d, %d\n", dy, ch_width);
+	}
     }
     fclose(fp);
 }
