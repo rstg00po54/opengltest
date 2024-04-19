@@ -171,10 +171,20 @@ void matrix_set_scale(matrix_t *m, float x, float y, float z) {
 	m->m[2][2] = z;
 }
 
+/*
+jiao/360 = hu/2pi
+hu = jiao*2pi/360
+弧度=角度×π÷180
+角度=弧度×180÷π
+   double angle_deg = 45; // 角度值
+   double angle_rad = angle_deg * (M_PI / 180); // 转换为弧度值
+*/
 // 旋转矩阵
-void matrix_set_rotate(matrix_t *m, float x, float y, float z, float theta) {
-	float qsin = (float)sin(theta * 0.5f);
-	float qcos = (float)cos(theta * 0.5f);
+void matrix_set_rotate(matrix_t *m, float x, float y, float z, float angle_deg) {
+	float angle_rad = angle_deg * (M_PI / 180);
+	float qsin = (float)sin(angle_rad * 0.5f);
+	float qcos = (float)cos(angle_rad * 0.5f);
+	
 	vector_t vec = { x, y, z, 1.0f };
 	float w = qcos;
 	vector_normalize(&vec);
