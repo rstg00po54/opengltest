@@ -8,7 +8,7 @@ typedef struct { float r, g, b; } color_t;
 typedef struct { float u, v; } texcoord_t;
 typedef struct { point_t pos; texcoord_t tc; color_t color; float rhw; } vertex_t;
 
-typedef struct { vertex_t v, v1, v2; } edge_t;
+typedef struct { vertex_t v, v1, v2; } edge_t;//v1 v2是两个顶点
 typedef struct { float top, bottom; edge_t left, right; } trapezoid_t;
 typedef struct { vertex_t v, step; int x, y, w; } scanline_t;
 

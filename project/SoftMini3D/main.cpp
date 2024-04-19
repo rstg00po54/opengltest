@@ -31,6 +31,7 @@ typedef unsigned int IUINT32;
 #include "Mini3DMath.h"
 #include "Mini3DTransform.h"
 #include "Mini3DGeometryCalc.h"
+#include "Mini3Dbmp.h"
 //调试打印开关
 #define __DEBUG
  
@@ -77,6 +78,7 @@ void append_to_output(const char *format, ...) {
     va_end(args);
 }
 #define PRINT_POINT(c1) append_to_output(#c1);append_to_output(":%3.2f %3.2f %3.2f %3.f\n", c1.x, c1.y, c1.z, c1.w);
+#define PRINTF_POINT(c1) printf(#c1);printf(":%f %f %f\n", c1.x, c1.y, c1.z);
 //=====================================================================
 // 渲染设备
 //=====================================================================
@@ -281,13 +283,28 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 		if (x >= width) break;
 	}
 }
-
+/*
+lv2   rv2
+-------
+\     |
+ \    |
+lv\---| rv
+   \  |
+    \ |
+	 \
+lv1   rv1
+*/
 // 主渲染函数
 void device_render_trap(device_t *device, trapezoid_t *trap) {
 	scanline_t scanline;
 	int j, top, bottom;
 	top = (int)(trap->top + 0.5f);
 	bottom = (int)(trap->bottom + 0.5f);
+// PRINTF_POINT(trap->right.v1.pos);
+// PRINTF_POINT(trap->right.v2.pos);
+// PRINTF_POINT(trap->left.v1.pos);
+// PRINTF_POINT(trap->left.v2.pos);
+
 	for (j = top; j < bottom; j++) {
 		if (j >= 0 && j < device->height) {
 			trapezoid_edge_interp(trap, (float)j + 0.5f);
@@ -338,9 +355,9 @@ void device_draw_triangle(device_t *device,
 	transform_homogenize(&device->transform, &p1, &c1);
 	transform_homogenize(&device->transform, &p2, &c2);
 	transform_homogenize(&device->transform, &p3, &c3);
-	PRINT_POINT(p1);
-	PRINT_POINT(p2);
-	PRINT_POINT(p3);
+	PRINTF_POINT(p1);
+	PRINTF_POINT(p2);
+	PRINTF_POINT(p3);
 
 	// 纹理或者色彩绘制
 	if (render_state & (RENDER_STATE_TEXTURE | RENDER_STATE_COLOR)) {
@@ -361,6 +378,7 @@ void device_draw_triangle(device_t *device,
 		
 		// 拆分三角形为0-2个梯形，并且返回可用梯形数量
 		n = trapezoid_init_triangle(traps, &t1, &t2, &t3);
+		printf("n=%d\n",n);
 
 		if (n >= 1) device_render_trap(device, &traps[0]);
 		if (n >= 2) device_render_trap(device, &traps[1]);
@@ -380,21 +398,22 @@ void device_draw_triangle(device_t *device,
 int screen_w, screen_h, screen_exit = 0;
 int screen_mx = 0, screen_my = 0, screen_mb = 0;
 int screen_keys[512];	// 当前键盘按下状态
-unsigned char *screen_fb = NULL;		// frame buffer
+// unsigned char *screen_fb = NULL;		// frame buffer
 long screen_pitch = 0;
 
-int screen_init(int w, int h, const char *title);	// 屏幕初始化
+// int screen_init(int w, int h, const char *title, unsigned char **screen_fb);	// 屏幕初始化
 
 SDL_Window* window;
 // ImGuiIO &io;
-int screen_init(int w, int h, const char *title) {
+int screen_init(int w, int h, const char *title, unsigned char **screen_fb) {
 	SDL_Init(SDL_INIT_VIDEO);
 	window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, h, SDL_WINDOW_SHOWN);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, w, h);
-	unsigned char **p = &screen_fb;
-	SDL_LockTexture(texture, NULL, (void **)p, &pitch);
+	// unsigned char **p = &screen_fb;
+	SDL_LockTexture(texture, NULL, (void **)screen_fb, &pitch);
 	SDL_UnlockTexture(texture);
+	printf("buffer %p\n", *screen_fb);
 	return 0;
 }
 ImGuiIO & imgui_init() {
@@ -529,13 +548,14 @@ void draw_box(device_t *device, float theta) {
 // 	transform_update(&device->transform);
 // }
 
-void init_texture(device_t *device) {
+void init_texture(device_t *device, uint8_t *buffer) {
 	static IUINT32 texture[256][256];
 	int i, j;
 	for (j = 0; j < 256; j++) {
 		for (i = 0; i < 256; i++) {
 			int x = i / 32, y = j / 32;
 			texture[j][i] = ((x + y) & 1)? 0xffffffff : 0xe3c08cff;
+			// texture[j][i] = buffer[j*256+i];
 		}
 	}
 	device_set_texture(device, texture, 256 * 4, 256, 256);
@@ -549,21 +569,28 @@ int main(void)
 	int kbhit = 0;
 	float rotate = 0;
 	float fovy = 45.f;
-	point_t scale = {1, 1, 1};
+	point_t scale = {0.5f, 0.5f, 0.5f};
 	point_t trans = {0, 0, 0};
 	// float pos = 3.5;
-
+	BMP_FILE_HEADER bmpFileHeader_p;
+	BMP_INFO_HEADER bmpInfoHeader_p;
+	 unsigned char *screen_fb;
+	uint8_t *bmpBuffer;
+	// readBmpFromFile("./3d_48.bmp", &bmpFileHeader_p, &bmpInfoHeader_p, &bmpBuffer);
+	// readBmpFromFile("./skin_debug.bmp", &bmpFileHeader_p, &bmpInfoHeader_p, &bmpBuffer);
+	// displayBmpHeader( &bmpFileHeader_p, &bmpInfoHeader_p);
 	char title[] = "Mini3d (software render tutorial) ";
 		// _T("Left/Right: rotation, Up/Down: forward/backward, Space: switch state");
 
-	if (screen_init(800, 600, title)) 
+	if (screen_init(800, 600, title, &screen_fb)) 
 		return -1;
+	printf("buffer %p\n", screen_fb);
 	ImGuiIO &io = imgui_init();
 
 	device_init(&device, 800, 600, screen_fb);
 	// camera_at_zero(&device, 3, 0, 0);
 
-	init_texture(&device);
+	init_texture(&device, bmpBuffer);
 	device.render_state = RENDER_STATE_TEXTURE;
 
 	matrix_t m;
@@ -578,16 +605,19 @@ int main(void)
 	point_t camera  = { 0, 0, -3, 1 };//相机位置eye
 	point_t target  = { 0, 0, 0, 1 };//观察目标 at
 	point_t up  = { 0, 1, 0, 1 };
-	int mouse_state;
+	int mouse_state = 0;
 	int downX, downY;
 	int dx, dy;
 	float thetax = 0.f,thetay = 0.f;
 	float dthetax,dthetay;
+	float r = 3.f;
+
+	// return 0;
 	while (!quit) {
 		
 		// printf("\ec");
 		// system("cls");
-		// printf("==============================\n");
+		printf("==============================\n");
 		while (SDL_PollEvent(&e) != 0) {
 			bool ret = ImGui_ImplSDL2_ProcessEvent(&e);
 			// printf("ret %d \n", ret);
@@ -605,20 +635,24 @@ int main(void)
 
 			// printf("event %d\n", event.type);
 			switch (e.type) {
+				case SDL_MOUSEWHEEL:
+					printf("x ==-= %d\n",e.wheel.y);
+					r+=e.wheel.y;
+					break;
 				case SDL_MOUSEMOTION:
 					// 处理鼠标移动事件
 					if(mouse_state) {
-
+						// float r = 3.f;
 						dx = e.motion.x-downX;
 						dy = e.motion.y-downY;
-						// append_to_output("mouse move %d,%d\n", e.motion.x, e.motion.y);
-						// printf("mouse move %d,%d\n", dx, dy);
-						// float dtheta = dx*0.01f;
-						thetax = -dx*0.01f+dthetax;
-						camera.x = cosf(thetax)*3.0f;
-						camera.z = sinf(thetax)*3.0f;
-						camera.y = cosf(thetax)*3.0f;
-						// printf("theta %f\n", theta);
+
+						thetax = dx*0.01f+dthetax;
+						thetay = dy*0.01+dthetay;
+
+						camera.y = r*sinf(thetay);
+						camera.x = r*cosf(thetay)*sinf(thetax);
+						camera.z = r*cosf(thetay)*cosf(thetax);
+
 					}
 					break;
 				case SDL_MOUSEBUTTONDOWN:
@@ -628,6 +662,7 @@ int main(void)
 					downY = e.motion.y;
 					mouse_state = 1;
 					dthetax = thetax;
+					dthetay = thetay;
 					break;
 				case SDL_MOUSEBUTTONUP:
 					mouse_state = 0;
@@ -651,6 +686,17 @@ int main(void)
 			}
 			}
 		}
+		if (key == SDLK_SPACE) {
+			key = 0;
+			if (kbhit == 0) {
+				kbhit = 1;
+				if (++indicator >= 3) indicator = 0;
+				device.render_state = states[indicator];
+			}
+		} else {
+			kbhit = 0;
+		}
+		key = 0;
 		// append_to_output("mouse move \n");
 		// Start the Dear ImGui frame
 		ImGui_ImplSDLRenderer2_NewFrame();
@@ -694,70 +740,21 @@ int main(void)
 		matrix_t m_scale, m_rotate, m_trans, m_out;
 		transform_t *t = &device.transform;
 
-		matrix_set_rotate(&t->model, 0, 1, 0, rotate);
-		matrix_set_lookat(&t->view, &camera, &target, &up);
-		// transform_update(&device.transform);
+		Uint32 currentTime = SDL_GetTicks();
+
 //  缩放 -> 旋转 -> 平移 
 		matrix_set_scale(&t->scale, scale.x, scale.y, scale.z);
-		matrix_set_rotate(&t->rotate, 0, 1, 0, rotate);
+		// matrix_set_rotate(&t->rotate, 0, 1, 0,  currentTime*0.002f);
+		matrix_set_rotate(&t->rotate, 0, 1, 0,  rotate);
 		matrix_set_translate(&t->trans, trans.x, trans.y, trans.z);
 
 		matrix_mul(&m_out, &t->rotate, &t->scale);
-		// matrix_mul(&m_out, &m_scale, &m_rotate);
 		matrix_mul(&t->model, &t->trans, &m_out);
-		float aspect = (float)800 / ((float)600);
-		matrix_set_perspective(&t->projection, fovy, aspect, 1.0f, 100.0f);
-{
-		vertex_t p1 = mesh[8];
-		static point_t p,pr,po;
-		matrix_apply( &p, &p1.pos, &device.transform.mvp);
-		// matrix_apply_r( &pr, &p1.pos, &device.transform.transform);
-
-		// 归一化
-		transform_homogenize(&device.transform, &po, &p);
-		// device.transform.world = m;
-		transform_update(&device.transform);
-		ImGui::Begin("trans");
-		ImGui::Text("scale");
-		ImGui::SliderFloat4("m_scale", (float *)&m_scale.m[0], 0.0f, 5.0f);
-		ImGui::SliderFloat4("m_scale", (float *)&m_scale.m[1], 0.0f, 5.0f);
-		ImGui::SliderFloat4("m_scale", (float *)&m_scale.m[2], 0.0f, 5.0f);
-		ImGui::SliderFloat4("m_scale", (float *)&m_scale.m[3], 0.0f, 5.0f);
-
-		ImGui::Text("trans");
-		ImGui::SliderFloat4("m_trans", (float *)&m_trans.m[0], 0.0f, 5.0f);
-		ImGui::SliderFloat4("m_trans", (float *)&m_trans.m[1], 0.0f, 5.0f);
-		ImGui::SliderFloat4("m_trans", (float *)&m_trans.m[2], 0.0f, 5.0f);
-		ImGui::SliderFloat4("m_trans", (float *)&m_trans.m[3], 0.0f, 5.0f);
+		matrix_set_perspective(&t->projection, fovy, 800.f/600.f, 1.0f, 100.0f);
+		matrix_set_lookat(&t->view, &camera, &target, &up);
+		transform_update(t);
 
 
-		ImGui::SliderFloat4("m_rotate", (float *)&m_rotate.m[0], 0.0f, 5.0f);
-		ImGui::SliderFloat4("m_rotate", (float *)&m_rotate.m[1], 0.0f, 5.0f);
-		ImGui::SliderFloat4("m_rotate", (float *)&m_rotate.m[2], 0.0f, 5.0f);
-		ImGui::SliderFloat4("m_rotate", (float *)&m_rotate.m[3], 0.0f, 5.0f);
-
-
-		ImGui::SliderFloat4("trans", (float *)&device.transform.mvp.m[0], 0.0f, 5.0f);
-		ImGui::SliderFloat4("trans", (float *)&device.transform.mvp.m[1], 0.0f, 5.0f);
-		ImGui::SliderFloat4("trans", (float *)&device.transform.mvp.m[2], 0.0f, 5.0f);
-		ImGui::SliderFloat4("trans", (float *)&device.transform.mvp.m[3], 0.0f, 5.0f);
-		ImGui::SliderFloat4("po", (float *)&po, 0.0f, 5.0f);
-		// ImGui::SliderFloat4("pr", (float *)&pr, 0.0f, 5.0f);
-		ImGui::End();
-}
-
-
-		if (key == SDLK_SPACE) {
-			key = 0;
-			if (kbhit == 0) {
-				kbhit = 1;
-				if (++indicator >= 3) indicator = 0;
-				device.render_state = states[indicator];
-			}
-		} else {
-			kbhit = 0;
-		}
-		key = 0;
 
 		// screen_update();
 #if 1
@@ -765,7 +762,7 @@ int main(void)
 		void* pixels;
 		int pitch;
 		SDL_LockTexture(texture, NULL, &pixels, &pitch);
-		Uint32* pixelData = (Uint32*)pixels;
+		// Uint32* pixelData = (Uint32*)pixels;
 		// printf("%p\n", pixelData);
 		draw_box(&device, rotate);
 		// device_draw_line(&device, 0, 0, 100, 100, device.foreground);
@@ -773,7 +770,11 @@ int main(void)
 		// for (int y = 100; y < 200; ++y) {
 		// 	for (int x = 100; x < 200; ++x) {
 		// 		int index = y * (pitch / sizeof(Uint32)) + x;
-		// 		pixelData[index] = SDL_MapRGB(SDL_AllocFormat(SDL_PIXELFORMAT_RGBA8888), 255, y, x);
+		// 		// pixelData[index] = SDL_MapRGB(SDL_AllocFormat(SDL_PIXELFORMAT_RGBA8888), 255, y, x);
+		// 		pixelData[index] = SDL_MapRGB(SDL_AllocFormat(SDL_PIXELFORMAT_RGB24), 
+		// 			bmpBuffer[y*300*3+x*3], 
+		// 			bmpBuffer[y*300*3+x*3+1], 
+		// 			bmpBuffer[y*300*3+x*3+2]);//bmpBuffer[y*300*3+x*3];
 		// 	}
 		// }
 		// 解锁纹理
