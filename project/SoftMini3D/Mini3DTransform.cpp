@@ -111,8 +111,8 @@ void transform_home(const transform_t *ts, vector_t *pout0, vector_t *pout1, vec
 
 	float rhw0 = 1.0f /abs(pin0->w);
 	float rhw1 = 1.0f /abs(pin1->w);
-PRINTF_POINT((*pin0));
-PRINTF_POINT((*pin1));
+// PRINTF_POINT((*pin0));
+// PRINTF_POINT((*pin1));
 
 	pin0->x *= rhw0;
 	pin0->y *= rhw0;
@@ -123,8 +123,8 @@ PRINTF_POINT((*pin1));
 	pin1->y *= rhw1;
 	pin1->z *= rhw1;
 	pin1->w *= rhw1;
-PRINTF_POINT((*pin0));
-PRINTF_POINT((*pin1));
+// PRINTF_POINT((*pin0));
+// PRINTF_POINT((*pin1));
 	// if(pin0->z == pin1->z) {
 	// 	printf("%f/%f =\n", pin0->z, pin1->z);
 	// }else if(abs(pin0->z) > 1.f) {
@@ -265,9 +265,9 @@ PRINTF_POINT((*pin1));
 // 	out1 = *pin1;
 // }
 
-	PRINTF_POINT(out0);
-	PRINTF_POINT(out1);
-	printf("k = %f, m = %f\n", k, m);
+	// PRINTF_POINT(out0);
+	// PRINTF_POINT(out1);
+	// printf("k = %f, m = %f\n", k, m);
 	// *y0 = out0;
 	// *y1 = out1;
 	pout0->x = (out0.x+1)*ts->w*0.5f;//400
@@ -278,8 +278,8 @@ PRINTF_POINT((*pin1));
 	pout0->y = 600 - pout0->y;
 	pout1->y = 600 - pout1->y;
 
-	printf("% 3.2f/% 3.2f\n", pout0->x, pout0->y);
-	printf("% 3.2f/% 3.2f\n", pout1->x, pout1->y);
+	// printf("% 3.2f/% 3.2f\n", pout0->x, pout0->y);
+	// printf("% 3.2f/% 3.2f\n", pout1->x, pout1->y);
 
 
 }

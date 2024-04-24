@@ -762,9 +762,9 @@ int main(void)
 	// return 0;
 	while (!quit) {
 		
-		printf("\ec");
-		system("cls");
-		printf("==============================\n");
+		// printf("\ec");
+		// system("cls");
+		// printf("==============================\n");
 		while (SDL_PollEvent(&e) != 0) {
 			bool ret = ImGui_ImplSDL2_ProcessEvent(&e);
 			// printf("ret %d \n", ret);
