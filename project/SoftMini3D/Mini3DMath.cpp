@@ -245,8 +245,8 @@ void set(matrix_t *m);
 void matrix_set_perspective(matrix_t *m, float fovy, float aspect, float zn, float zf) {
 	float fax = 1.0f / (float)tan(2.0f*3.14f*fovy/360.0f);
 	matrix_set_zero(m);
-#if 0
-	m->m[0][0] = (float)(fax / (2.0f*zn*aspect));
+#if 1
+	m->m[0][0] = (float)(fax / (aspect));
 	m->m[1][1] = (float)(fax);
 	m->m[2][2] = (zn + zf) / (zn - zf);
 	m->m[3][2] = - 2*zn * zf / (zn - zf);
