@@ -19,5 +19,7 @@ void matrix_apply(vector_t *y, const vector_t *x, const matrix_t *m);
 void matrix_set_scale(matrix_t *m, float x, float y, float z);
 void matrix_set_translate(matrix_t *m, float x, float y, float z);
 
+
+void matrix_set_zero(matrix_t *m);
 // void matrix_apply_r(vector_t *y, const vector_t *x, const matrix_t *m);
 #endif

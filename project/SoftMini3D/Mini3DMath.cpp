@@ -207,29 +207,33 @@ void matrix_set_rotate(matrix_t *m, float x, float y, float z, float angle_deg) 
 
 // 设置摄像机
 //camera target up
-void matrix_set_lookat(matrix_t *m, const vector_t *eye, const vector_t *at, const vector_t *up) {
+void matrix_set_lookat(matrix_t *m, 
+				const vector_t *camera, 
+				const vector_t *target, 
+				const vector_t *up) {
 	vector_t xaxis, yaxis, zaxis;
 
-	vector_sub(&zaxis, at, eye);
+	vector_sub(&zaxis, target, camera);//z -> f
 	vector_normalize(&zaxis);
-	vector_crossproduct(&xaxis, up, &zaxis);
+	// vector_crossproduct(&xaxis, &zaxis, up);
+	vector_crossproduct(&xaxis, &zaxis, up);//x -> l
 	vector_normalize(&xaxis);
-	vector_crossproduct(&yaxis, &zaxis, &xaxis);
+	vector_crossproduct(&yaxis, &xaxis, &zaxis);//y -> u
 
 	m->m[0][0] = xaxis.x;
 	m->m[0][1] = xaxis.y;
 	m->m[0][2] = xaxis.z;
-	m->m[0][3] = -vector_dotproduct(&xaxis, eye);
+	m->m[0][3] = -vector_dotproduct(&xaxis, camera);
 
 	m->m[1][0] = yaxis.x;
 	m->m[1][1] = yaxis.y;
 	m->m[1][2] = yaxis.z;
-	m->m[1][3] = -vector_dotproduct(&yaxis, eye);
+	m->m[1][3] = -vector_dotproduct(&yaxis, camera);
 
 	m->m[2][0] = zaxis.x;
 	m->m[2][1] = zaxis.y;
 	m->m[2][2] = zaxis.z;
-	m->m[2][3] = -vector_dotproduct(&zaxis, eye);
+	m->m[2][3] = -vector_dotproduct(&zaxis, camera);
 	
 	m->m[3][0] = m->m[3][1] = m->m[3][2] = 0.0f;
 	m->m[3][3] = 1.0f;
@@ -249,8 +253,8 @@ void matrix_set_perspective(matrix_t *m, float fovy, float aspect, float zn, flo
 	m->m[0][0] = (float)(fax / (aspect));
 	m->m[1][1] = (float)(fax);
 	m->m[2][2] = (zn + zf) / (zn - zf);
-	m->m[3][2] = - 2*zn * zf / (zn - zf);
-	m->m[2][3] = 1;
+	m->m[2][3] = - 2*zn * zf / (zn - zf);
+	m->m[3][2] = 1;
 #else
 	m->m[0][0] = (float)(fax / aspect);
 	m->m[1][1] = (float)(fax);

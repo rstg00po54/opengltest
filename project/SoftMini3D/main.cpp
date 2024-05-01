@@ -482,6 +482,10 @@ void draw_box(device_t *device, float theta) {
 	// matrix_set_rotate(&m, -1, -0.5, 1, theta);
 	// device->transform.world = m;
 	// transform_update(&device->transform);
+	point_t p = {0,0,0,1}, p2;
+
+	matrix_apply(&p2, &p, &device->transform.model);
+	ImGui::SliderFloat3("正方体中心", (float *)&p2, -3.0f, 3.0f);
 	draw_plane(device, 0, 1, 2, 3, 4);
 	draw_plane(device, 7, 6, 5, 4, 5);
 	draw_plane(device, 0, 4, 5, 1, 2);
@@ -637,11 +641,14 @@ int main(void)
 	printf("buffer %p\n", screen_fb);
 	ImGuiIO &io = imgui_init();
 
+	ImFont* font = io.Fonts->AddFontFromFileTTF(
+		"c:\\Windows\\Fonts\\simsun.ttc", 16.0f, NULL, io.Fonts->GetGlyphRangesChineseFull());
+
 	device_init(&device, SCREEN_W, SCREEN_H, screen_fb);
 	// camera_at_zero(&device, 3, 0, 0);
 
 	init_texture(&device, device.bmpBuffer);
-	device.render_state = RENDER_STATE_TEXTURE;
+	device.render_state = RENDER_STATE_WIREFRAME;
 
 	matrix_t m;
 	bool quit = false;
@@ -692,7 +699,7 @@ int main(void)
 						// thetay = dy*0.01+thetay;
 
 						camera.y = r*sinf(thetay);
-						camera.x = r*cosf(thetay)*sinf(thetax);
+						camera.x = -r*cosf(thetay)*sinf(thetax);
 						camera.z = r*cosf(thetay)*cosf(thetax);
 						// printf("thetax %f/%f\n", thetax, thetay);
 					break;
@@ -712,10 +719,11 @@ int main(void)
 							thetay = -1.57;
 
 						camera.y = r*sinf(thetay);
-						camera.x = r*cosf(thetay)*sinf(thetax);
+						camera.x = -r*cosf(thetay)*sinf(thetax);
 						camera.z = r*cosf(thetay)*cosf(thetax);
+						float ra = sqrtf(pow(camera.x, 2.f)+pow(camera.y, 2.f)+pow(camera.z, 2.f));
 
-						printf("mouse move %d %d, theta % 3.2f/% 3.2f\n", e.motion.x, e.motion.y, thetax, thetay);
+						printf("mouse move %d %d, theta % 3.2f/% 3.2f, ra %3.2f\n", e.motion.x, e.motion.y, thetax, thetay, ra);
 					}
 					break;
 				case SDL_MOUSEBUTTONDOWN:
@@ -771,7 +779,7 @@ int main(void)
 		// printf("%s", output);
 		output_length = 0;
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-
+		ImGui::Text("中文集");
 		// for(int jj = 0;jj<10;jj++)
 		// ImGui::Text("this is first ");
 		ImGui::SliderFloat3("pos", (float *)&pos, -3.0f, 3.0f);
@@ -783,15 +791,20 @@ int main(void)
 		ImGui::SliderFloat("rotate", (float *)&rotate, 0.0f, 360.0f);
 		ImGui::SliderFloat("fovy", (float *)&fovy, 30.0f, 60.0f);
 			// point_t p1, p2, p3, c1, c2, c3;
-		ImGui::SliderFloat3("camera", (float *)&camera, -3.0f, 3.0f);
+		ImGui::SliderFloat3("camera", (float *)&camera, -10.0f, 10.0f);
 		ImGui::SameLine();
-		if(ImGui::Button("reset")) {
+		if(ImGui::Button("reset1")) {
 			camera.x = camera.y = 0;
 			camera.w = 1;
 			camera.z = 3;
+			thetay = dthetax = 0.f;
+			thetax = dthetay = 0.f;
+			printf("camera reset\n");
+		}else{
+			
 		}
 
-		ImGui::SliderFloat3("target", (float *)&target, -3.f, 3.0f);
+		ImGui::SliderFloat3("target", (float *)&target, -10.f, 10.0f);
 		ImGui::SliderFloat3("scale", (float *)&scale, 0.2f, 2.0f);
 		ImGui::SliderFloat3("trans", (float *)&trans, -3.0f, 3.0f);
 		ImGui::End();
@@ -805,7 +818,7 @@ int main(void)
 		// screen_dispatch();
 		device_clear(&device, 1);
 	//camera target up
-		matrix_set_lookat(&device.transform.view, &camera, &target, &up);
+		// matrix_set_lookat(&device.transform.view, &camera, &target, &up);
 		// transform_update(&device.transform);
 
 		matrix_t m_scale, m_rotate, m_trans, m_out;
@@ -827,22 +840,29 @@ int main(void)
 		Uint32* pixelData = (Uint32*)pixels;
 		// printf("%p\n", pixelData);
 		matrix_set_scale(&t->scale, scale.x, scale.y, scale.z);
-		// matrix_set_rotate(&t->rotate, 0, 1, 0,  currentTime*0.02f);
+		matrix_set_rotate(&t->rotate, 0, 1, 0,  currentTime*0.04f);
 		matrix_set_rotate(&t->rotate, 0, 1, 0,  rotate);
-		matrix_set_translate(&t->trans, trans.x, trans.y, trans.z);
+		// matrix_set_translate(&t->trans, trans.x, trans.y, trans.z);
 
 		// matrix_mul(&m_out, &t->rotate, &t->scale);
 		// matrix_mul(&t->model, &t->trans, &m_out);
 		matrix_set_perspective(&t->projection, fovy, device.aspect_ratio, 1.0f, 100.0f);
 		matrix_set_lookat(&t->view, &camera, &target, &up);
 		transform_update(t);
+#if 0
 		draw_box(&device, rotate);
+#endif
 // #define DRAW_1CUBE
 // #define DRAW_2CUBE
 #ifdef DRAW_1CUBE
 		matrix_set_scale(&t->scale, scale.x, scale.y, scale.z);
 		matrix_set_rotate(&t->rotate, 0, 1, 0,  rotate);
-		// matrix_set_rotate(&t->rotate, 0, 1, 0,  currentTime*0.02f);
+
+		if(currentTime*0.02f<90.f)
+			matrix_set_rotate(&t->rotate, 0, 1, 0,  currentTime*0.02f);
+		else
+			matrix_set_rotate(&t->rotate, 0, 1, 0,  90.f);
+		
 		matrix_set_translate(&t->trans, trans.x+5, trans.y, trans.z);
 
 		// matrix_mul(&m_out, &t->rotate, &t->scale);

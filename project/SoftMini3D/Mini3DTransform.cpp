@@ -23,8 +23,11 @@ void transform_update(transform_t *ts) {
 	matrix_t m;
 
 
-	matrix_mul(&m, &ts->rotate, &ts->scale);
-	matrix_mul(&ts->model, &ts->trans, &m);
+	// matrix_mul(&m, &ts->rotate, &ts->scale);
+	// matrix_mul(&ts->model, &ts->trans, &m);
+
+	matrix_mul(&m, &ts->trans, &ts->scale);
+	matrix_mul(&ts->model, &ts->rotate, &m);
 
 	matrix_mul(&m, &ts->view, &ts->model);
 	matrix_mul(&ts->mvp, &ts->projection, &m);
@@ -109,8 +112,8 @@ void transform_home(const transform_t *ts, vector_t *pout0, vector_t *pout1, vec
 	float m = 0;
 	vector_t out0,out1;
 
-	float rhw0 = 1.0f /abs(pin0->w);
-	float rhw1 = 1.0f /abs(pin1->w);
+	float rhw0 = 1.0f /(pin0->w);
+	float rhw1 = 1.0f /(pin1->w);
 // PRINTF_POINT((*pin0));
 // PRINTF_POINT((*pin1));
 
