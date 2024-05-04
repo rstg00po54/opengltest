@@ -219,9 +219,9 @@ void drawMyLines(device_t *device) {
 	// point_t po2[2];
 	matrix_t m_out[2];
 	point_t psrc[][2] = {
-		{{0,0,0,1},{1,0,0,1}},
-		{{0,0,0,1},{0,1,0,1}},
-		{{0,0,0,1},{0,0,1,1}},
+		{{0,0,0,1},{10,0,0,1}},
+		{{0,0,0,1},{0,10,0,1}},
+		{{0,0,0,1},{0,0,10,1}},
 
 		{{0.5f,0,0,1},{0.5f,0,1,1}},
 
@@ -241,14 +241,15 @@ void drawMyLines(device_t *device) {
         p[0] = calcM(psrc[i][0],device);
         p[1] = calcM(psrc[i][1],device);
 
-#if 1
+#if 0
 		matrix_apply( &p[0], &psrc[i][0], &device->transform.mvp);
 		matrix_apply( &p[1], &psrc[i][1], &device->transform.mvp);
         transform_homogenize(&device->transform, &phome[0], &p[0]);
         transform_homogenize(&device->transform, &phome[1], &p[1]);
-#else
 
-        transform_home0(&device->transform,&phome[0], &phome[1], &p[0], &p[1]);
+#else
+		transform_Normalization(&device->transform,&phome[0], &phome[1], &p[0], &p[1]);
+
 #endif
         float rhw = 1.0f / p[1].w;
         p[1].x = p[1].x*rhw;
@@ -264,6 +265,6 @@ void drawMyLines(device_t *device) {
 		int c[] = {0xff,0xff00,0xff0000,0,0};
 		device_draw_line(device, phome[0].x, phome[0].y, phome[1].x, phome[1].y, c[i>3?3:i]);
 	}
-	drawTestLines(device);
+	// drawTestLines(device);
 	ImGui::End();
 }

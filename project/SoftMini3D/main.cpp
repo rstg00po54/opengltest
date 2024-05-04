@@ -437,7 +437,7 @@ vertex_t mesh[] = {
 	{ {  0,  0,  0, 1 }, { 1, 0 }, { 0.2f, 1.0f, 0.3f }, 1 },
 };
 
-void draw_plane(device_t *device, int a, int b, int c, int d, int f) {
+void draw_plane(device_t *device, int a, int b, int c, int d, int count) {
 	vertex_t p1 = mesh[a];
 	vertex_t p2 = mesh[b];
 	vertex_t p3 = mesh[c];
@@ -450,18 +450,28 @@ void draw_plane(device_t *device, int a, int b, int c, int d, int f) {
 	|  |
 	p1-p4-u
 
+	p01 p11
+	p00 p10
+
 	*/
-	p1.tc.u = 0;
-	p1.tc.v = h*f;
+	float u[2],v[2];
 
-	p2.tc.u = 0;
-	p2.tc.v = (f+1)*h;
+	u[0] = 0;
+	u[1] = 1.f/3;
+	v[0] = count*h;
+	v[1] = count*h+1.f/18;
 
-	p3.tc.u = 1;
-	p3.tc.v = (f+1)*h;
+	p1.tc.u = u[0];
+	p1.tc.v = v[0];
 
-	p4.tc.u = 1;
-	p4.tc.v = f*h;
+	p2.tc.u = u[0];
+	p2.tc.v = v[1];
+
+	p3.tc.u = u[1];
+	p3.tc.v = v[1];
+
+	p4.tc.u = u[1];
+	p4.tc.v = v[0];
 	device_draw_triangle(device, &p1, &p2, &p3);
 	device_draw_triangle(device, &p3, &p4, &p1);
 }
@@ -489,9 +499,9 @@ void draw_box(device_t *device, float theta) {
 	draw_plane(device, 0, 1, 2, 3, 4);
 	draw_plane(device, 7, 6, 5, 4, 5);
 	draw_plane(device, 0, 4, 5, 1, 2);
-	draw_plane(device, 1, 5, 6, 2, 0);
+	draw_plane(device, 1, 5, 6, 2, 1);
 	draw_plane(device, 2, 6, 7, 3, 3);
-	draw_plane(device, 3, 7, 4, 0, 1);
+	draw_plane(device, 3, 7, 4, 0, 0);
 	// for(int i=0;i<4;i++){
 	// 	for(int j=0;j<4;j++){
 	// 		printf("%d %d = %f\n", i, j, m.m[i][j]);
@@ -659,7 +669,7 @@ int main(void)
 	pos.y = 0;
 	pos.z = -1;
 	pos.w = 1;
-	point_t camera  = { 0, 0, 3, 1 };//相机位置eye
+	point_t camera  = { 0, 0, 10, 1 };//相机位置eye
 	point_t target  = { 0, 0, 0, 1 };//观察目标 at
 	point_t up  = { 0, 1, 0, 1 };
 	int mouse_state = 0;
@@ -667,7 +677,7 @@ int main(void)
 	int dx = 0, dy = 0;
 	float thetax = 0.f,thetay = 0.f;
 	float dthetax,dthetay;
-	float r = 3.f;
+	float r = camera.z;
 
 	// return 0;
 	while (!quit) {
@@ -807,7 +817,7 @@ int main(void)
 		ImGui::SliderFloat3("target", (float *)&target, -10.f, 10.0f);
 		ImGui::SliderFloat3("scale", (float *)&scale, 0.2f, 2.0f);
 		ImGui::SliderFloat3("trans", (float *)&trans, -3.0f, 3.0f);
-		ImGui::End();
+
 		if(mouse_state){
 
 
@@ -828,64 +838,75 @@ int main(void)
 
 //  缩放 -> 旋转 -> 平移 
 
-
-
-
-		// screen_update();
-
 		// 锁定纹理以获取像素数据
 		void* pixels;
 		int pitch;
 		SDL_LockTexture(texture, NULL, &pixels, &pitch);
 		Uint32* pixelData = (Uint32*)pixels;
 		// printf("%p\n", pixelData);
-		matrix_set_scale(&t->scale, scale.x, scale.y, scale.z);
+		matrix_set_scale(&t->scale, scale.x/2, scale.y/2, scale.z/2);
 		matrix_set_rotate(&t->rotate, 0, 1, 0,  currentTime*0.04f);
 		matrix_set_rotate(&t->rotate, 0, 1, 0,  rotate);
-		// matrix_set_translate(&t->trans, trans.x, trans.y, trans.z);
-
-		// matrix_mul(&m_out, &t->rotate, &t->scale);
-		// matrix_mul(&t->model, &t->trans, &m_out);
 		matrix_set_perspective(&t->projection, fovy, device.aspect_ratio, 1.0f, 100.0f);
 		matrix_set_lookat(&t->view, &camera, &target, &up);
 		transform_update(t);
-#if 0
-		draw_box(&device, rotate);
-#endif
-// #define DRAW_1CUBE
-// #define DRAW_2CUBE
+
+
+
+
+#define DRAW_1CUBE
 #ifdef DRAW_1CUBE
-		matrix_set_scale(&t->scale, scale.x, scale.y, scale.z);
-		matrix_set_rotate(&t->rotate, 0, 1, 0,  rotate);
-
-		if(currentTime*0.02f<90.f)
-			matrix_set_rotate(&t->rotate, 0, 1, 0,  currentTime*0.02f);
-		else
-			matrix_set_rotate(&t->rotate, 0, 1, 0,  90.f);
+		float rotate_box = 0.f;;
+		static int rrr = 0;
+		static int time0 = 0.f;
+		static float cube1_r = 0.f;
+		float sp = 0.06f;
+		if(ImGui::Button("旋转")) {
+			rrr = 1;
+			time0 = currentTime;//ms
+			// printf("click rotate,time0 %d\n", time0);
+		}
+		// printf("time %d\n", currentTime);
+		matrix_set_translate(&t->trans, trans.x, trans.y, trans.z);
+		matrix_set_rotate(&t->rotate, 0, 1, 0, cube1_r);
+		if(rrr){
+			uint32_t diff = currentTime - time0;
+			// printf("diff %d\n", diff);
+			if((diff*sp)<90.f){
+				matrix_set_rotate(&t->rotate, 0, 1, 0, cube1_r+diff*sp);
+			}
+			else{
+				cube1_r = cube1_r+90.f;
+				matrix_set_rotate(&t->rotate, 0, 1, 0, cube1_r);
+				rrr = 0;
+			}
+		}
 		
-		matrix_set_translate(&t->trans, trans.x+5, trans.y, trans.z);
-
-		// matrix_mul(&m_out, &t->rotate, &t->scale);
-		// matrix_mul(&t->model, &t->trans, &m_out);
-		// matrix_set_perspective(&t->projection, fovy, device.aspect_ratio, 1.0f, 100.0f);
-		// matrix_set_lookat(&t->view, &camera, &target, &up);
 		transform_update(t);
 		draw_box(&device, rotate);
 #endif
 
-#ifdef DRAW_2CUBE
-		matrix_set_scale(&t->scale, scale.x, scale.y, scale.z);
-		// matrix_set_rotate(&t->rotate, 0, 1, 0,  rotate);
-		matrix_set_rotate(&t->rotate, 0, 1, 0,  currentTime*0.02f);
-		matrix_set_translate(&t->trans, trans.x-5, trans.y, trans.z);
 
-		matrix_mul(&m_out, &t->trans, &t->scale);
-		matrix_mul(&t->model, &t->rotate, &m_out);
-		matrix_set_perspective(&t->projection, fovy, device.aspect_ratio, 1.0f, 100.0f);
-		matrix_set_lookat(&t->view, &camera, &target, &up);
+
+		matrix_set_translate(&t->trans, trans.x+1, trans.y, trans.z);
+		transform_update(t);
+		draw_box(&device, rotate);	
+
+		matrix_set_translate(&t->trans, trans.x-1, trans.y, trans.z);
 		transform_update(t);
 		draw_box(&device, rotate);
-#endif
+
+
+		matrix_set_translate(&t->trans, trans.x, trans.y, trans.z-1);
+		transform_update(t);
+		draw_box(&device, rotate);	
+
+		matrix_set_translate(&t->trans, trans.x, trans.y, trans.z+1);
+		transform_update(t);
+		draw_box(&device, rotate);
+
+
+
 
 
 
@@ -910,7 +931,7 @@ int main(void)
 				// printf("0x%x, x %d, y %d\n", pixelData[y*device.width+x],x,y);
 			}
 		}
-
+		ImGui::End();
 
 				// printf("index = %d\n", pitch);
 		// 解锁纹理
