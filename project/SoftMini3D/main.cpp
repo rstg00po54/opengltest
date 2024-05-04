@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
+#include <string.h> //strrchr()函数所需头文件
 
 // #include <windows.h>
 // #include <tchar.h>
@@ -32,13 +33,14 @@
 #include "Mini3DTransform.h"
 #include "Mini3DGeometryCalc.h"
 #include "Mini3Dbmp.h"
+#include "Mini3DDevice.h"
 #include "Mini3D.h"
+#include "Mini3DRender.h"
 //调试打印开关
 #define __DEBUG
  
 #ifdef __DEBUG
 
-#include <string.h> //strrchr()函数所需头文件
 
 #define MYFILE(x) strrchr(x,'/')?strrchr(x,'/')+1:x
 // windows:
@@ -65,6 +67,7 @@
 char output[MAX_OUTPUT_SIZE] = {0};
 int output_length = 0;
 
+char buffer_text[1024];
 
 SDL_Texture* texture;
 SDL_Renderer* renderer;
@@ -85,286 +88,14 @@ void append_to_output(const char *format, ...) {
 #define PRINTF_POINT(c1) 
 
 
-#define RENDER_STATE_WIREFRAME      1		// 渲染线框
-#define RENDER_STATE_TEXTURE        2		// 渲染纹理
-#define RENDER_STATE_COLOR          4		// 渲染颜色
+
 IUINT32 device_texture_read(const device_t *device, float u, float v);
 
-// 设备初始化，fb为外部帧缓存，非 NULL 将引用外部帧缓存（每行 4字节对齐）
-void device_init(device_t *device, int width, int height, void *fb) {
-	int need = sizeof(void*) * (height * 2 + 1024) + width * height * 8;
-	char *ptr = (char*)malloc(need + 64);
-	char *framebuf, *zbuf;
-	int j;
-	assert(ptr);
-	device->aspect_ratio = width*1.f/height;
-	device->framebuffer = (IUINT32**)ptr;
-	device->zbuffer = (float**)(ptr + sizeof(void*) * height);
-	ptr += sizeof(void*) * height * 2;
-	device->texture = (IUINT32**)ptr;
-	ptr += sizeof(void*) * 1024;
-	framebuf = (char*)ptr;
-	zbuf = (char*)ptr + width * height * 4;
-	ptr += width * height * 8;
-	if (fb != NULL) framebuf = (char*)fb;
-	for (j = 0; j < height; j++) {
-		device->framebuffer[j] = (IUINT32*)(framebuf + width * 4 * j);
-		device->zbuffer[j] = (float*)(zbuf + width * 4 * j);
-	}
-	device->texture[0] = (IUINT32*)ptr;
-	device->texture[1] = (IUINT32*)(ptr + 16);
-	memset(device->texture[0], 0, 64);
-	device->tex_width = 2;
-	device->tex_height = 2;
-	device->max_u = 1.0f;
-	device->max_v = 1.0f;
-	device->width = width;
-	device->height = height;
-	device->background = 0x0c473cff;
-	device->foreground = 0;
-	transform_init(&device->transform, width, height);
-	device->render_state = RENDER_STATE_WIREFRAME;
-}
 
 
 
 
 
-// 清空 framebuffer 和 zbuffer
-void device_clear(device_t *device, int mode) {
-	int y, x, height = device->height;
-	for (y = 0; y < device->height; y++) {
-		IUINT32 *dst = device->framebuffer[y];
-		IUINT32 cc = (height - 1 - y) * 230 / (height - 1);
-		cc = (cc << 16) | (cc << 8) | cc;
-		if (mode == 0) cc = device->background;
-		cc = 0x0c473c;
-		for (x = device->width; x > 0; dst++, x--) dst[0] = cc;
-	}
-	for (y = 0; y < device->height; y++) {
-		float *dst = device->zbuffer[y];
-		for (x = device->width; x > 0; dst++, x--) dst[0] = 0.0f;
-	}
-}
-
-// 画点
-void device_pixel(device_t *device, int x, int y, IUINT32 color) {
-	void* pixels;
-	// pr_debug("in");
-	// SDL_LockTexture(texture, NULL, &pixels, &pitch);
-	Uint32* pixelData = (Uint32*)pixels;
-	if (((IUINT32)x) < (IUINT32)device->width && ((IUINT32)y) < (IUINT32)device->height) {
-		device->framebuffer[y][x] = color;
-		// pixelData[y][x] = color;
-	}
-	// SDL_UnlockTexture(texture);
-}
-
-// 绘制线段
-void device_draw_line(device_t *device, int x1, int y1, int x2, int y2, IUINT32 c) {
-	// pr_debug("%d %d, %d %d", x1, y1, x2, y2);
-	int x, y, rem = 0;
-	if (x1 == x2 && y1 == y2) {
-		device_pixel(device, x1, y1, c);
-	}	else if (x1 == x2) {
-		int inc = (y1 <= y2)? 1 : -1;
-		for (y = y1; y != y2; y += inc) device_pixel(device, x1, y, c);
-		device_pixel(device, x2, y2, c);
-	}	else if (y1 == y2) {
-		int inc = (x1 <= x2)? 1 : -1;
-		for (x = x1; x != x2; x += inc) device_pixel(device, x, y1, c);
-		device_pixel(device, x2, y2, c);
-	}	else {
-		int dx = (x1 < x2)? x2 - x1 : x1 - x2;
-		int dy = (y1 < y2)? y2 - y1 : y1 - y2;
-		if (dx >= dy) {
-			if (x2 < x1) x = x1, y = y1, x1 = x2, y1 = y2, x2 = x, y2 = y;
-			for (x = x1, y = y1; x <= x2; x++) {
-				device_pixel(device, x, y, c);
-				rem += dy;
-				if (rem >= dx) {
-					rem -= dx;
-					y += (y2 >= y1)? 1 : -1;
-					device_pixel(device, x, y, c);
-				}
-			}
-			device_pixel(device, x2, y2, c);
-		}	else {
-			if (y2 < y1) x = x1, y = y1, x1 = x2, y1 = y2, x2 = x, y2 = y;
-			for (x = x1, y = y1; y <= y2; y++) {
-				device_pixel(device, x, y, c);
-				rem += dx;
-				if (rem >= dy) {
-					rem -= dy;
-					x += (x2 >= x1)? 1 : -1;
-					device_pixel(device, x, y, c);
-				}
-			}
-			device_pixel(device, x2, y2, c);
-		}
-	}
-}
-
-
-
-
-//=====================================================================
-// 渲染实现
-//=====================================================================
-
-// 绘制扫描线
-void device_draw_scanline(device_t *device, scanline_t *scanline) {
-	IUINT32 *framebuffer = device->framebuffer[scanline->y];
-	float *zbuffer = device->zbuffer[scanline->y];
-	int x = scanline->x;
-	int w = scanline->w;
-	int width = device->width;
-	int render_state = device->render_state;
-	for (; w > 0; x++, w--) {
-		if (x >= 0 && x < width) {
-			float rhw = scanline->v.rhw;
-			if (rhw >= zbuffer[x]) {	
-				float w = 1.0f / rhw;
-				zbuffer[x] = rhw;
-				if (render_state & RENDER_STATE_COLOR) {
-					float r = scanline->v.color.r * w;
-					float g = scanline->v.color.g * w;
-					float b = scanline->v.color.b * w;
-					int R = (int)(r * 255.0f);
-					int G = (int)(g * 255.0f);
-					int B = (int)(b * 255.0f);
-					R = CMID(R, 0, 255);
-					G = CMID(G, 0, 255);
-					B = CMID(B, 0, 255);
-					framebuffer[x] = (R << 16) | (G << 8) | (B);
-				}
-				if (render_state & RENDER_STATE_TEXTURE) {
-					float u = scanline->v.tc.u * w;
-					float v = scanline->v.tc.v * w;
-					IUINT32 cc = device_texture_read(device, u, v);
-					framebuffer[x] = cc;
-					// if(cc == 0)
-					// printf("x = %d\n",x);
-				}
-			}
-		}
-		vertex_add(&scanline->v, &scanline->step);
-		if (x >= width) break;
-	}
-}
-/*
-lv2   rv2
--------
-\     |
- \    |
-lv\---| rv
-   \  |
-    \ |
-	 \
-lv1   rv1
-*/
-// 主渲染函数
-void device_render_trap(device_t *device, trapezoid_t *trap) {
-	scanline_t scanline;
-	int j, top, bottom;
-	top = (int)(trap->top + 0.5f);
-	bottom = (int)(trap->bottom + 0.5f);
-// PRINTF_POINT(trap->right.v1.pos);
-// PRINTF_POINT(trap->right.v2.pos);
-// PRINTF_POINT(trap->left.v1.pos);
-// PRINTF_POINT(trap->left.v2.pos);
-
-	for (j = top; j < bottom; j++) {
-		if (j >= 0 && j < device->height) {
-			trapezoid_edge_interp(trap, (float)j + 0.5f);
-			trapezoid_init_scan_line(trap, &scanline, j);
-			device_draw_scanline(device, &scanline);
-		}
-		if (j >= device->height) break;
-	}
-}
-char buffer_text[1024];
-
-// #define PRINT_POINT(c1) printf(#c1);printf(":%f %f %f\n", c1.x, c1.y, c1.z);
-// #define PRINTF_NAME_VALUE(X) {sprintf(&buffer_text[strlen(buffer_text)-2], #X); sprintf(buffer_text, "   %f %f %f\n", X.x, X.y, X.z);}
-// 根据 render_state 绘制原始三角形
-void device_draw_triangle(device_t *device,
-	const vertex_t *v1,
-	const vertex_t *v2,
-	const vertex_t *v3) {
-	point_t p1, p2, p3, c1, c2, c3;
-
-	int render_state = device->render_state;
-// sprintf(buffer_text, )
-	// 按照 Transform 变化
-	// transform_apply(&device->transform, &c1, &v1->pos);
-	matrix_apply( &c1, &v1->pos, &device->transform.mvp);
-	// transform_apply(&device->transform, &c2, &v2->pos);
-	matrix_apply( &c2, &v2->pos, &device->transform.mvp);
-	// transform_apply(&device->transform, &c3, &v3->pos);
-	matrix_apply( &c3, &v3->pos, &device->transform.mvp);
-	// printf("+++\n");
-	// PRINT_POINT(v1->pos);
-	// PRINT_POINT(c1);
-	// PRINT_POINT(v2->pos);
-	// PRINT_POINT(c2);
-	// PRINT_POINT(v3->pos);
-	// PRINT_POINT(c3);
-	// printf("---\n");
-
-	// printf("%d\n", strlen(buffer_text));
-
-	// 裁剪，注意此处可以完善为具体判断几个点在 cvv内以及同cvv相交平面的坐标比例
-	// 进行进一步精细裁剪，将一个分解为几个完全处在 cvv内的三角形
-	// if (transform_check_cvv(&c1) != 0) {
-	// 	return;
-	// } 
-	// if (transform_check_cvv(&c2) != 0) {
-	// 	return;
-	// }
-	// if (transform_check_cvv(&c3) != 0) {
-	// 	return;
-	// }
-
-	// 归一化
-	transform_homogenize(&device->transform, &p1, &c1);
-	transform_homogenize(&device->transform, &p2, &c2);
-	transform_homogenize(&device->transform, &p3, &c3);
-	// PRINTF_POINT(p1);
-	// PRINTF_POINT(p2);
-	// PRINTF_POINT(p3);
-
-	// 纹理或者色彩绘制
-	if (render_state & (RENDER_STATE_TEXTURE | RENDER_STATE_COLOR)) {
-		vertex_t t1 = *v1, t2 = *v2, t3 = *v3;
-		trapezoid_t traps[2];
-		int n;
-
-		t1.pos = p1; 
-		t2.pos = p2;
-		t3.pos = p3;
-		t1.pos.w = c1.w;
-		t2.pos.w = c2.w;
-		t3.pos.w = c3.w;
-		
-		vertex_rhw_init(&t1);	// 初始化 w
-		vertex_rhw_init(&t2);	// 初始化 w
-		vertex_rhw_init(&t3);	// 初始化 w
-		
-		// 拆分三角形为0-2个梯形，并且返回可用梯形数量
-		n = trapezoid_init_triangle(traps, &t1, &t2, &t3);
-		// printf("n=%d\n",n);
-
-		if (n >= 1) device_render_trap(device, &traps[0]);
-		if (n >= 2) device_render_trap(device, &traps[1]);
-	}
-
-	if (render_state & RENDER_STATE_WIREFRAME) {		// 线框绘制
-		device_draw_line(device, (int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y, device->foreground);
-		device_draw_line(device, (int)p1.x, (int)p1.y, (int)p3.x, (int)p3.y, device->foreground);
-		device_draw_line(device, (int)p3.x, (int)p3.y, (int)p2.x, (int)p2.y, device->foreground);
-	}
-}
 
 
 //=====================================================================
@@ -558,25 +289,7 @@ void draw_box(device_t *device, float theta) {
 // 	transform_update(&device->transform);
 // }
 // 根据坐标读取纹理
-IUINT32 device_texture_read(const device_t *device, float u, float v) {
-	int x, y;
-	IUINT32 value;
-	float u0 = 0;
-	float v0 = 0;
-	u0 = u * device->max_u;
-	v0 = v * device->max_v;
-	x = (int)(u0 + 0.5f);
-	y = (int)(v0 + 0.5f);
-	x = CMID(x, 0, device->tex_width - 1);
-	y = CMID(y, 0, device->tex_height - 1);
-	// printf("x/y= %d/%d,u/v = %f/%f\n",x,y,u,v);
-	value = device->texture[y][x];
-	// if(value==0){
 
-	// 	printf("y %d ,x %d, texture[%d] = %p\n", y, x, y,  device->texture[y]);
-	// }
-	return value;
-}
 // 设置当前纹理
 void device_set_texture(device_t *device, void *bits, long pitch, int w, int h) {
 	char *ptr = (char*)bits;
@@ -652,7 +365,7 @@ int main(void)
 	ImGuiIO &io = imgui_init();
 
 	ImFont* font = io.Fonts->AddFontFromFileTTF(
-		"c:\\Windows\\Fonts\\simsun.ttc", 16.0f, NULL, io.Fonts->GetGlyphRangesChineseFull());
+		"simsun.ttc", 16.0f, NULL, io.Fonts->GetGlyphRangesChineseFull());
 
 	device_init(&device, SCREEN_W, SCREEN_H, screen_fb);
 	// camera_at_zero(&device, 3, 0, 0);
@@ -700,71 +413,71 @@ int main(void)
 				// ImGui没有使用鼠标事件
 				// 在这里添加处理应用程序自身的鼠标事件逻辑
 
-			// printf("event %d\n", event.type);
-			switch (e.type) {
-				case SDL_MOUSEWHEEL:
-					// printf("x ==-= %d\n",e.wheel.y);
-					r+=(e.wheel.y*0.1f);
-						// thetax = dx*0.01f+thetax;
-						// thetay = dy*0.01+thetay;
+				// printf("event %d\n", event.type);
+				switch (e.type) {
+					case SDL_MOUSEWHEEL:
+						// printf("x ==-= %d\n",e.wheel.y);
+						r+=(e.wheel.y*0.1f);
+							// thetax = dx*0.01f+thetax;
+							// thetay = dy*0.01+thetay;
 
-						camera.y = r*sinf(thetay);
-						camera.x = -r*cosf(thetay)*sinf(thetax);
-						camera.z = r*cosf(thetay)*cosf(thetax);
-						// printf("thetax %f/%f\n", thetax, thetay);
-					break;
-				case SDL_MOUSEMOTION:
-					// 处理鼠标移动事件
-					if(mouse_state) {
-						// float r = 3.f;
-						dx = e.motion.x-downX;
-						dy = e.motion.y-downY;
+							camera.y = r*sinf(thetay);
+							camera.x = -r*cosf(thetay)*sinf(thetax);
+							camera.z = r*cosf(thetay)*cosf(thetax);
+							// printf("thetax %f/%f\n", thetax, thetay);
+						break;
+					case SDL_MOUSEMOTION:
+						// 处理鼠标移动事件
+						if(mouse_state) {
+							// float r = 3.f;
+							dx = e.motion.x-downX;
+							dy = e.motion.y-downY;
 
-						thetax = dx*0.01f+dthetax;
-						thetay = dy*0.01f+dthetay;
+							thetax = dx*0.01f+dthetax;
+							thetay = dy*0.01f+dthetay;
 
-						if(thetay>1.57)
-							thetay = 1.57;
-						if(thetay<-1.57)
-							thetay = -1.57;
+							if(thetay>1.57)
+								thetay = 1.57;
+							if(thetay<-1.57)
+								thetay = -1.57;
 
-						camera.y = r*sinf(thetay);
-						camera.x = -r*cosf(thetay)*sinf(thetax);
-						camera.z = r*cosf(thetay)*cosf(thetax);
-						float ra = sqrtf(pow(camera.x, 2.f)+pow(camera.y, 2.f)+pow(camera.z, 2.f));
+							camera.y = r*sinf(thetay);
+							camera.x = -r*cosf(thetay)*sinf(thetax);
+							camera.z = r*cosf(thetay)*cosf(thetax);
+							float ra = sqrtf(pow(camera.x, 2.f)+pow(camera.y, 2.f)+pow(camera.z, 2.f));
 
-						printf("mouse move %d %d, theta % 3.2f/% 3.2f, ra %3.2f\n", e.motion.x, e.motion.y, thetax, thetay, ra);
-					}
-					break;
-				case SDL_MOUSEBUTTONDOWN:
-					// 处理鼠标按下事件
-					printf("mouse down %d %d\n", e.motion.x, e.motion.y);
-					downX = e.motion.x;
-					downY = e.motion.y;
-					mouse_state = 1;
-					dthetax = thetax;
-					dthetay = thetay;
-					break;
-				case SDL_MOUSEBUTTONUP:
-					mouse_state = 0;
-					printf("mouse up\n");
-					// g_touch_button = 0;
-					// 处理鼠标释放事件
-					break;
-				case SDL_KEYDOWN:
-					// 按下键盘按键
-					printf("Key pressed: %d\n", e.key.keysym.sym);
-					// key_code = event.key.keysym.sym;
-					break;
-				case SDL_KEYUP:
-					// 松开键盘按键
-					printf("Key released: %d\n", e.key.keysym.sym);
-					key = e.key.keysym.sym;
-					break;
-				default:
-					append_to_output("mouse move\n");
-					break;
-			}
+							printf("mouse move %d %d, theta % 3.2f/% 3.2f, ra %3.2f\n", e.motion.x, e.motion.y, thetax, thetay, ra);
+						}
+						break;
+					case SDL_MOUSEBUTTONDOWN:
+						// 处理鼠标按下事件
+						printf("mouse down %d %d\n", e.motion.x, e.motion.y);
+						downX = e.motion.x;
+						downY = e.motion.y;
+						mouse_state = 1;
+						dthetax = thetax;
+						dthetay = thetay;
+						break;
+					case SDL_MOUSEBUTTONUP:
+						mouse_state = 0;
+						printf("mouse up\n");
+						// g_touch_button = 0;
+						// 处理鼠标释放事件
+						break;
+					case SDL_KEYDOWN:
+						// 按下键盘按键
+						printf("Key pressed: %d\n", e.key.keysym.sym);
+						// key_code = event.key.keysym.sym;
+						break;
+					case SDL_KEYUP:
+						// 松开键盘按键
+						printf("Key released: %d\n", e.key.keysym.sym);
+						key = e.key.keysym.sym;
+						break;
+					default:
+						append_to_output("mouse move\n");
+						break;
+				}
 			}
 		}
 		if (key == SDLK_SPACE) {
@@ -868,7 +581,7 @@ int main(void)
 		}
 		// printf("time %d\n", currentTime);
 		matrix_set_translate(&t->trans, trans.x, trans.y, trans.z);
-		matrix_set_rotate(&t->rotate, 0, 1, 0, cube1_r);
+		// matrix_set_rotate(&t->rotate, 0, 1, 0, cube1_r);
 		if(rrr){
 			uint32_t diff = currentTime - time0;
 			// printf("diff %d\n", diff);
@@ -880,6 +593,8 @@ int main(void)
 				matrix_set_rotate(&t->rotate, 0, 1, 0, cube1_r);
 				rrr = 0;
 			}
+		}else{
+			matrix_set_rotate(&t->rotate, 0, 1, 0, cube1_r);
 		}
 		
 		transform_update(t);

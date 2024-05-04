@@ -23,5 +23,10 @@ typedef struct {
 	uint8_t *bmpBuffer;
 	float aspect_ratio;
 }	device_t;
+
+#define RENDER_STATE_WIREFRAME      1		// 渲染线框
+#define RENDER_STATE_TEXTURE        2		// 渲染纹理
+#define RENDER_STATE_COLOR          4		// 渲染颜色
+
 void device_draw_line(device_t *device, int x1, int y1, int x2, int y2, IUINT32 c);
 #endif

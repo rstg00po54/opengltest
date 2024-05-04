@@ -2,7 +2,7 @@
 #define __Mini3DGeometryCalc__
 
 #include "Mini3DMath.h"
-#include "Mini3DGeometryCalc.h"
+// #include "Mini3DGeometryCalc.h"
 
 typedef struct { float r, g, b; } color_t;
 typedef struct { float u, v; } texcoord_t;
