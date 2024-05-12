@@ -18,7 +18,7 @@ void matrix_set_lookat(matrix_t *m, const vector_t *eye, const vector_t *at, con
 void matrix_apply(vector_t *y, const vector_t *x, const matrix_t *m);
 void matrix_set_scale(matrix_t *m, float x, float y, float z);
 void matrix_set_translate(matrix_t *m, float x, float y, float z);
-
+void matrix_set_Quaternion(matrix_t *m, vector_t quat);
 
 void matrix_set_zero(matrix_t *m);
 // void matrix_apply_r(vector_t *y, const vector_t *x, const matrix_t *m);
