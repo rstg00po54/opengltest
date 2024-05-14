@@ -288,7 +288,7 @@ int main(void)
 							// thetay = dy*0.01+thetay;
 
 							camera.y = r*sinf(thetay);
-							camera.x = r*cosf(thetay)*sinf(thetax);
+							camera.x = -r*cosf(thetay)*sinf(thetax);
 							camera.z = r*cosf(thetay)*cosf(thetax);
 							// printf("thetax %f/%f\n", thetax, thetay);
 						break;
@@ -308,7 +308,7 @@ int main(void)
 								thetay = -1.57;
 
 							camera.y = r*sinf(thetay);
-							camera.x = r*cosf(thetay)*sinf(thetax);
+							camera.x = -r*cosf(thetay)*sinf(thetax);
 							camera.z = r*cosf(thetay)*cosf(thetax);
 							float ra = sqrtf(pow(camera.x, 2.f)+pow(camera.y, 2.f)+pow(camera.z, 2.f));
 

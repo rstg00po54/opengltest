@@ -90,8 +90,8 @@ p1 -3.932 0.733 7.189 6.189
 void transform_homogenize(const transform_t *ts, vector_t *y, const vector_t *x) {
 	float rhw = 1.0f / x->w;
 	y->x = (x->x * rhw + 1.0f) * ts->w * 0.5f;
-	y->y = (1.0f + x->y * rhw) * ts->h * 0.5f;
-	// y->y = (1.0f - x->y * rhw) * ts->h * 0.5f;
+	// y->y = (1.0f + x->y * rhw) * ts->h * 0.5f;
+	y->y = (1.0f - x->y * rhw) * ts->h * 0.5f;
 	y->z = x->z * rhw;
 	y->w = 1.0f;
 }
@@ -279,8 +279,8 @@ void transform_home(const transform_t *ts, vector_t *pout0, vector_t *pout1, vec
 	pout1->x = (out1.x+1)*ts->w*0.5f;
 	pout1->y = (out1.y+1)*ts->h*0.5f;
 
-	// pout0->y = 600 - pout0->y;
-	// pout1->y = 600 - pout1->y;
+	pout0->y = 600 - pout0->y;
+	pout1->y = 600 - pout1->y;
 
 	// printf("% 3.2f/% 3.2f\n", pout0->x, pout0->y);
 	// printf("% 3.2f/% 3.2f\n", pout1->x, pout1->y);
