@@ -157,14 +157,48 @@ static point_t quat_rotate(float x, float y, float z, point_t src, float angle) 
 	point_t o = quat_mux(v, quat1);
 	return o;
 }
+
+
+static void rotate_x(matrix_t *m, matrix_t *s,float angle){
+	matrix_t r;
+	float alpha = angle * (M_PI / 180);
+	matrix_set_identity(&r);
+	r.m[1][1] = cosf(alpha);
+	r.m[1][2] = -sinf(alpha);
+	r.m[2][1] = sinf(alpha);
+	r.m[2][2] = cosf(alpha);
+	matrix_mul(m, &r, s);
+}
+static void rotate_y(matrix_t *m, matrix_t *s,float angle){
+	matrix_t r;
+	float alpha = angle * (M_PI / 180);
+	matrix_set_identity(&r);
+	r.m[0][0] = cosf(alpha);
+	r.m[0][2] = sinf(alpha);
+	r.m[2][0] = -sinf(alpha);
+	r.m[2][2] = cosf(alpha);
+	matrix_mul(m, &r, s);
+}
+static void rotate_z(matrix_t *m, matrix_t *s,float angle){
+	matrix_t r;
+	float alpha = angle * (M_PI / 180);
+	matrix_set_identity(&r);
+	r.m[0][0] = cosf(alpha);
+	r.m[0][1] = -sinf(alpha);
+	r.m[1][0] = sinf(alpha);
+	r.m[1][1] = cosf(alpha);
+	matrix_mul(m, &r, s);
+}
+
 class Cube{	
 public:
 	vector_t position;
 	vector_t src_pos;
 	vector_t angle;
+	matrix_t rotate;
 };
 Cube c[3][3][3];
-
+static matrix_t matrix_rotate;
 void init_cube() {
 	int i,j,k;
 	for(i = 0;i<3;i++){
@@ -177,9 +211,10 @@ void init_cube() {
 				c0->src_pos.x = i-1;
 				c0->src_pos.y = j-1;
 				c0->src_pos.z = k-1;
+				matrix_set_identity(&c0->rotate);
 			}
-			}
-			}
+		}
+	}
 }
 void draw_cube(device_t *device) {
 
@@ -238,25 +273,6 @@ void draw_cube(device_t *device) {
 			key = 255;
 	}
 
-	// if(key) {
-	// 	diffTime = currentTime - downTime;
-	// 	float drgee = 0.05f*diffTime;
-	// 	// printf("diffTime %d, drgee %3.2f\n", diffTime, drgee);
-	// 	if(drgee < 90.f){
-	// 		// garc.y = drgee;
-	// 		curDrgee = garc.y+drgee;
-	// 	}else{
-	// 		garc.y += 90.f;
-	// 		key = 0;
-	// 		curDrgee = garc.y;
-	// 		printf("key %3.2f\n", garc.y);
-	// 	}
-	// }else{
-	// 	curDrgee = garc.y;
-	// }
-
-	// matrix_set_rotate(&t->rotate, 0, 1, 0, garc0.x);
-
 
 	static int value[10] = {0};
 	ImGui::SliderInt4("int", value, 0, 5);
@@ -289,9 +305,9 @@ void draw_cube(device_t *device) {
 	point_t ro0 = {0.f, 0.f, 0.f,0.f};
 
 	point_t p;
-	for(i = 2;i<3;i++){
-		for(j = 2;j<3;j++){
-			for(k = 2;k<3;k++){
+	for(i = 0;i<3;i++){
+		for(j = 0;j<3;j++){
+			for(k = 0;k<3;k++){
 				// c[i+1][j+1][k+1].position.x = i+1;
 				// c[i+1][j+1][k+1].position.y = j+1;
 				// c[i+1][j+1][k+1].position.z = k+1;
@@ -305,95 +321,36 @@ void draw_cube(device_t *device) {
 					printf("U now %3.2f/%3.2f/%3.2f\n", cube->position.x, cube->position.y, cube->position.z);
 					printf("rotate %3.2f/%3.2f/%3.2f\n", cube->angle.x, cube->angle.y, cube->angle.z);
 				}
-				// cube->angle.x = cube->angle.y = cube->angle.z = 0.f;
-				// cube->position.x = 10.f;
-				// printf("U %3.2f/%3.2f/%3.2f\n", cube->position.x, cube->position.y, cube->position.z);
-				point_t p2;
-				if(key == 'T'){
-					point_t point;
-					point.x = 0.f;
-					quat = quat_rotate(0,1,0,cube->src_pos, 90.f);
-					// 1,(0,0,0) 不旋转
-					// q = (cos a/2, u*sin a/2)
-					// quat.w = 1;
-					// quat.x = 0;
-					// quat.y = 0;
-					// quat.z = 0;
-					printf("quat  %3.2f/%3.2f/%3.2f/%3.2f\n", quat.x, quat.y, quat.z, quat.w);
-				}else{
-					// quat.w = 1;
-					// quat.x = 0;
-					// quat.y = 0;
-					// quat.z = 0;
-				}
 
-#if 0
-				matrix_set_Quaternion(&t->rotate, quat);
-				matrix_set_translate(&t->trans, cube->src_pos.x, cube->src_pos.y, cube->src_pos.z);
-				transform_update(t);
-				draw_box(device);
-#else
+
+				static float rx = 0.f;
+				matrix_t m;
+				matrix_set_identity(&m);
+				// matrix_rotate
 				if(key == 'U'){
-					printf("------\n");
-					printf("%d, %d, %d\n",i,j,k);
-
-
 					if(cube->position.y > 0.5f){
-
-						cube->angle.y = 90.f+cube->angle.y;
-						printf("rotate %3.2f/%3.2f/%3.2f\n", cube->angle.x, cube->angle.y, cube->angle.z);
-
-					}else{
-						printf("U: %f is not 1.f\n", cube->position.y);
+						rotate_y(&m, &cube->rotate, 90.f);
+						cube->rotate = m;
 					}
-
 				}
 				if(key == 'F'){
-					printf("------\n");
-					printf("%d, %d, %d\n",i,j,k);
-					// printf("++ F: %f/%f/%f\n", p.x, p.y, p.z);
-					matrix_apply(&p2, &cube->position, &device->transform.model);
-					// printf("F %p/%p/%p\n", &cube->position.x, &cube->position.y, &cube->position.z);
-					printf("F %3.2f/%3.2f/%3.2f\n", cube->position.x, cube->position.y, cube->position.z);
-					printf("now %3.f/%3.2f/%3.2f\n", p2.x, p2.y, p2.z);
 					if(cube->position.z > 0.5f){
-						cube->angle.z = 90.f+cube->angle.z;
+						rotate_z(&m, &cube->rotate, 90.f);
+						cube->rotate = m;
 					}
-					printf("rotate %3.2f/%3.2f/%3.2f\n", cube->angle.x, cube->angle.y, cube->angle.z);
-
-				}else{
-					// printf("else\n");
 				}
+				t->rotate = cube->rotate;
+				// oltoquat(&quat, cube->angle);
+				// matrix_set_Quaternion(&t->rotate, quat);
 
-				oltoquat(&quat, cube->angle);
-				matrix_set_Quaternion(&t->rotate, quat);
 				matrix_set_translate(&t->trans, cube->src_pos.x, cube->src_pos.y, cube->src_pos.z);
 				transform_update(t);
-				p = draw_box(device);	
-					// matrix_apply(&p2, &p, &device->transform.model);
-				// SDL_Delay(100);
-
-				if(key == 'U'){
-					// if(cube->position.y == 2.f){
+				p = draw_box(device);
+				// SDL_Delay(500);
+				if(key != 255){
 					printf("++ %f/%f/%f\n", p.x, p.y, p.z);
-					// printf("U %p/%p/%p\n", &cube->position.x, &cube->position.y, &cube->position.z);
-					cube->position.x = (p.x);
-					cube->position.y = (p.y);
-					cube->position.z = (p.z);
-					printf("U %3.2f/%3.2f/%3.2f\n", cube->position.x, cube->position.y, cube->position.z);
-					// }
-
-					// printf("test %d\n", (int)(-1.f+0.3f));
-				}	
-				if(key == 'F'){
-					// if(cube->position.z == 2.f){
-					cube->position.x = (p.x);
-					cube->position.y = (p.y);
-					cube->position.z = (p.z);
-
+					cube->position = p;
 				}
-
-#endif
 			}
 		}
 	}

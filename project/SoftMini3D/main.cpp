@@ -256,7 +256,7 @@ int main(void)
 	// camera_at_zero(&device, 3, 0, 0);
 
 	init_texture(&device, device.bmpBuffer);
-	device.render_state = RENDER_STATE_TEXTURE;
+
 
 	matrix_t m;
 	bool quit = false;
@@ -368,7 +368,7 @@ int main(void)
 			if (kbhit == 0) {
 				kbhit = 1;
 				if (++indicator >= 3) indicator = 0;
-				device.render_state = states[indicator];
+				// device.render_state = states[indicator];
 			}
 		} else {
 			kbhit = 0;
@@ -414,6 +414,15 @@ int main(void)
 		ImGui::SliderFloat3("scale", (float *)&scale, 0.2f, 2.0f);
 		ImGui::SliderFloat3("trans", (float *)&trans, -3.0f, 3.0f);
 
+		char *items[] = {"渲染纹理", "渲染颜色","渲染线框"};
+		static int curIndex = 0;
+
+		ImGui::Combo("mode", &curIndex, items, 3);
+		ImGui::Text("cur %d", curIndex);
+// #define RENDER_STATE_WIREFRAME      1		// 渲染线框
+// #define RENDER_STATE_TEXTURE        2		// 渲染纹理
+// #define RENDER_STATE_COLOR          4		// 渲染颜色
+		device.render_state = states[curIndex];
 		if(mouse_state){
 
 

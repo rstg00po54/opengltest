@@ -39,7 +39,7 @@ void device_init(device_t *device, int width, int height, void *fb) {
 	device->background = 0x0c473cff;
 	device->foreground = 0;
 	transform_init(&device->transform, width, height);
-	device->render_state = RENDER_STATE_TEXTURE;
+	device->render_state = RENDER_STATE_WIREFRAME;
 }
 
 

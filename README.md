@@ -225,3 +225,4 @@ https://github.com/Quanwei1992/GAMES101
 https://github.com/typr7/Pathtracer https://www.bilibili.com/video/BV1qK411Y743/?spm_id_from=333.999.0.0&vd_source=991cb76a01bf0d38d378aae33e48d572
 
 pacman -S mingw-w64-x86_64-toolchain mingw-w64-x86_64-opencv mingw-w64-x86_64-pkg-config mingw-w64-x86_64-qt5-base  mingw-w64-x86_64-icu
+https://github.com/ZETAAAAAAAAAAA/KC-BRDF 作者：高考宝典 https://www.bilibili.com/read/cv16068462/ 出处：bilibili
