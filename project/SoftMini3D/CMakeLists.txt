@@ -5,6 +5,10 @@ set(CMAKE_CXX_STANDARD 14)
 project(SoftMini3D)
 # include_directories(SYSTEM ../include/)
 include_directories(SYSTEM .)
+include_directories(SYSTEM ./math/)
+include_directories(SYSTEM ./draw/)
+include_directories(SYSTEM ./render/)
+include_directories(SYSTEM ./device/)
 find_package(glfw3 REQUIRED)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/skin_debug.bmp ${CMAKE_CURRENT_BINARY_DIR}/../../bin/skin_debug.bmp COPYONLY)
@@ -12,14 +16,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/simsun.ttc ${CMAKE_CURRENT_BINARY_DIR
  
 add_executable(SoftMini3D 
     main.cpp 
-    Mini3DMath.cpp 
-    Mini3DTransform.cpp 
-    Mini3DGeometryCalc.cpp 
+    math/Mini3DMath.cpp 
+    math/Mini3DTransform.cpp 
+    math/Mini3DGeometryCalc.cpp 
     Mini3Dbmp.cpp 
-    Mini3DCalcLines.cpp
-    Mini3DDevice.cpp
-    Mini3DRender.cpp
-    Mini3DDrawCube.cpp
+    draw/Mini3DCalcLines.cpp
+    device/Mini3DDevice.cpp
+    render/Mini3DRender.cpp
+    draw/Mini3DDrawCube.cpp
 )
  
 # target_link_libraries(SDLDemo glfw SDL2 glew32)
