@@ -1,6 +1,6 @@
 #ifndef __Mini3DGeometryCalc__
 #define __Mini3DGeometryCalc__
-
+#include "Mini3D.h"
 #include "Mini3DMath.h"
 // #include "Mini3DGeometryCalc.h"
 

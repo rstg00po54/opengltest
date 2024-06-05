@@ -233,6 +233,7 @@ void draw_cube(device_t *device) {
 	// garc0.x = 2.f;
 	// printf("tesg %d\n", testg);
 	// testg = 21;
+	device->module = 0;
 
 	ImGui::Begin("cube");
 	if(ImGui::Button("U\n")) {

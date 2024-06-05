@@ -59,7 +59,7 @@ int trapezoid_init_triangle(trapezoid_t *trap, const vertex_t *p1,
 	const vertex_t *p2, const vertex_t *p3) {
 	const vertex_t *p;
 	float k, x;
-
+// p1.y<p2.y<p3.y
 	if (p1->pos.y > p2->pos.y) p = p1, p1 = p2, p2 = p;
 	if (p1->pos.y > p3->pos.y) p = p1, p1 = p3, p3 = p;
 	if (p2->pos.y > p3->pos.y) p = p2, p2 = p3, p3 = p;
@@ -67,13 +67,14 @@ int trapezoid_init_triangle(trapezoid_t *trap, const vertex_t *p1,
 	if (p1->pos.x == p2->pos.x && p1->pos.x == p3->pos.x) return 0;
 
 	if (p1->pos.y == p2->pos.y) {	// triangle down
-		if (p1->pos.x > p2->pos.x) p = p1, p1 = p2, p2 = p;
+		if (p1->pos.x > p2->pos.x) p = p1, p1 = p2, p2 = p;//p1.x < p2.x
 		trap[0].top = p1->pos.y;
 		trap[0].bottom = p3->pos.y;
 		trap[0].left.v1 = *p1;
 		trap[0].left.v2 = *p3;
 		trap[0].right.v1 = *p2;
 		trap[0].right.v2 = *p3;
+		ImGui::Text("1 trap down");
 		return (trap[0].top < trap[0].bottom)? 1 : 0;
 	}
 
@@ -85,6 +86,7 @@ int trapezoid_init_triangle(trapezoid_t *trap, const vertex_t *p1,
 		trap[0].left.v2 = *p2;
 		trap[0].right.v1 = *p1;
 		trap[0].right.v2 = *p3;
+		ImGui::Text("1 trap up");
 		return (trap[0].top < trap[0].bottom)? 1 : 0;
 	}
 

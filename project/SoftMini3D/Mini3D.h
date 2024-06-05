@@ -2,6 +2,9 @@
 #define __MINI3D_H__
 #include "Mini3DTransform.h"
 #include <stdint.h>
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 typedef unsigned int IUINT32;
 //=====================================================================
 // 渲染设备
@@ -22,6 +25,9 @@ typedef struct {
 	IUINT32 foreground;         // 线框颜色
 	uint8_t *bmpBuffer;
 	float aspect_ratio;
+	int module;
+	int rgb;
+	ImVec4 color;
 }	device_t;
 
 #define RENDER_STATE_WIREFRAME      1		// 渲染线框

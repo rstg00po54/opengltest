@@ -37,6 +37,7 @@
 #include "Mini3D.h"
 #include "Mini3DRender.h"
 #include "Mini3DDrawCube.h"
+#include "Mini3DDrawPanel.h"
 //调试打印开关
 #define __DEBUG
  
@@ -239,7 +240,8 @@ int main(void)
 	unsigned char *screen_fb;
 	// uint8_t *bmpBuffer;
 	// readBmpFromFile("./skin_debug.bmp", &bmpFileHeader_p, &bmpInfoHeader_p, &bmpBuffer);
-	readBmpFromFile("./skin_debug.bmp", &bmpFileHeader_p, &bmpInfoHeader_p, &device.bmpBuffer);
+	readBmpFromFile("./ts0.bmp", &bmpFileHeader_p, &bmpInfoHeader_p, &device.bmpBuffer);
+	// readBmpFromFile("./skin_debug.bmp", &bmpFileHeader_p, &bmpInfoHeader_p, &device.bmpBuffer);
 	displayBmpHeader( &bmpFileHeader_p, &bmpInfoHeader_p);
 	char title[] = "Mini3d (software render tutorial) ";
 		// _T("Left/Right: rotation, Up/Down: forward/backward, Space: switch state");
@@ -274,6 +276,7 @@ int main(void)
 	float r = camera.z;
 
 	init_cube();
+ ImVec4 color = ImVec4(0.5f, 0.5f, 0.5f, 0.5f); // Initial color
 
 	// return 0;
 	while (!quit) {
@@ -418,7 +421,13 @@ int main(void)
 		static int curIndex = 0;
 
 		ImGui::Combo("mode", &curIndex, items, 3);
-		ImGui::Text("cur %d", curIndex);
+
+
+		ImGui::ColorEdit4("Color Picker", (float *)&color);
+		int value = ((int)(color.x * 255)<<16)|((int)(color.y * 255)<<8)|((int)(color.z * 255)<<0);
+		device.color = color;
+		ImGui::Text("cur %3.2f/%3.2f/%3.2f/%x", color.x, color.y, color.z, value);
+
 // #define RENDER_STATE_WIREFRAME      1		// 渲染线框
 // #define RENDER_STATE_TEXTURE        2		// 渲染纹理
 // #define RENDER_STATE_COLOR          4		// 渲染颜色
@@ -490,11 +499,12 @@ int main(void)
 		
 		ImGui::SliderFloat("rotate_box", (float *)&rotate_box, -10.f, 10.0f);
 #endif
-		draw_cube(&device);
+		// draw_cube(&device);
+		draw_panel(&device);
 
 		matrix_set_translate(&t->trans, trans.x, trans.y, trans.z);
 		transform_update(t);
-		drawMyLines(&device);
+		// drawMyLines(&device);
 
 		// device_draw_line(&device, 0, 0, 100, 100, device.foreground);
 		// 绘制一个绿色的矩形 800*600 pitch = 3200 = 800*4

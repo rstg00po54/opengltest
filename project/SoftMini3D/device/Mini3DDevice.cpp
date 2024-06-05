@@ -75,6 +75,16 @@ void device_pixel(device_t *device, int x, int y, IUINT32 color) {
 	// SDL_UnlockTexture(texture);
 }
 
+void device_point(device_t *device, int x, int y, IUINT32 color) {
+	int i,j;
+	for(i=-1;i<3;i++){
+		for(j=-1;j<3;j++){
+			device_pixel(device, x+i, y+j, color);
+
+		}
+	}
+
+}
 
 // 绘制线段
 void device_draw_line(device_t *device, int x1, int y1, int x2, int y2, IUINT32 c) {
@@ -132,9 +142,20 @@ IUINT32 device_texture_read(const device_t *device, float u, float v) {
 	x = CMID(x, 0, device->tex_width - 1);
 	y = CMID(y, 0, device->tex_height - 1);
 	// printf("x/y= %d/%d,u/v = %f/%f\n",x,y,u,v);
-	value = device->texture[y][x];
+	if(device->module == 0) {
+		value = device->texture[y][x];
+	}else if(device->module == 1) {
+		ImVec4 color = device->color;
+		// value = 0x11111111;
+		value = ((int)(color.x * 255)<<16)|((int)(color.y * 255)<<8)|((int)(color.z * 255)<<0);
+		// printf("value 0x%x\n", value);
+	}else if(device->module == 2) {
+		ImVec4 color = device->color;
+		value = 0x5b5b5b;
+		// value = ((int)(color.x * 255)<<16)|((int)(color.y * 255)<<8)|((int)(color.z * 255)<<0);
+		// printf("value 0x%x\n", value);
+	}
 	// if(value==0){
-
 	// 	printf("y %d ,x %d, texture[%d] = %p\n", y, x, y,  device->texture[y]);
 	// }
 	return value;
@@ -169,7 +190,17 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 				if (render_state & RENDER_STATE_TEXTURE) {
 					float u = scanline->v.tc.u * w;
 					float v = scanline->v.tc.v * w;
-					IUINT32 cc = device_texture_read(device, u, v);
+					IUINT32 cc;
+					if(device->module != 2) {
+						cc = device_texture_read(device, u, v);
+
+					}else{
+						int z = zbuffer[x]*255.0f*5;
+						cc = z|(z<<8)|(z<<16);
+
+					}
+
+					// framebuffer[x] = z|(z<<8)|(z<<16);
 					framebuffer[x] = cc;
 					// if(cc == 0)
 					// printf("x = %d\n",x);

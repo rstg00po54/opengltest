@@ -165,7 +165,7 @@ void readBmpFromFile(std::string path,BMP_FILE_HEADER * bmpFileHeader_p,BMP_INFO
     printf("bfType: %d %d [%c%c] \n",bfType&0xff,bfType>>8,bfType&0xff,bfType>>8);
     uint32_t channel = bmpInfoHeader_p->biBitCount>>3;
     uint32_t dataSize=bmpInfoHeader_p->biSizeImage;
-    *dataPtr=(uint8_t *)malloc(colorTableSize);
+    *dataPtr=(uint8_t *)malloc(dataSize);
     for(uint32_t i=0;i<bmpInfoHeader_p->biHeight;i++)
     {
 		int ch_width = bmpInfoHeader_p->biWidth*channel;
