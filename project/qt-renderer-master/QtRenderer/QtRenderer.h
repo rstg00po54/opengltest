@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtWidgets/QMainWindow>
-#include "ui_QtRenderer.h"
+#include "uic/ui_QtRenderer.h"
 #include "Renderer.h"
 #include <QKeyEvent>
 #include <QTimer>

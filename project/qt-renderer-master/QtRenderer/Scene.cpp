@@ -2,7 +2,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-
+#include <memory>
 
 int Scene::addModel(string path, string texp, string norp) {
     //Model tempm;
@@ -16,7 +16,7 @@ int Scene::addModel(string path, string texp, string norp) {
     shared_ptr<Texture> np;
     if (norp != "") np = make_shared<Texture>(norp.c_str());
 
-    cout << scene->mNumMeshes;
+    //cout << scene->mNumMeshes;
 
     for (int i = 0; i < scene->mNumMeshes; i++) {
 
@@ -58,6 +58,7 @@ int Scene::addModel(string path, string texp, string norp) {
                 models.back().indexBuffer.push_back(index);
             }
         }
+
         if (sp && !sp->isEmpty()) {
             models.back().textures[0] = sp;
         }

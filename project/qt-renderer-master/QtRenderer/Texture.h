@@ -1,7 +1,7 @@
 #pragma once
 #define DEBUG
-#include<Eigen/eigen>
-#include<string>
+#include <eigen3/Eigen/eigen>
+#include <string>
 #include <iostream>
 
 using namespace std;

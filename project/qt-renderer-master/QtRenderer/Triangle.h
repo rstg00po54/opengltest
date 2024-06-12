@@ -1,5 +1,5 @@
 #pragma once
-#include <Eigen/Eigen>
+#include <eigen3/Eigen/Eigen>
 #include <vector>
 #include "Texture.h"
 #include "Model.h"

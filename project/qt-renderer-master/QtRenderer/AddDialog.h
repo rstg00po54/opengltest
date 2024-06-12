@@ -2,7 +2,7 @@
 
 #include <QDialog>
 #include <QFileDialog>
-#include "ui_AddDialog.h"
+#include "uic/ui_AddDialog.h"
 
 class AddDialog : public QDialog {
 	Q_OBJECT

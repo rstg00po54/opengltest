@@ -1,7 +1,8 @@
 #pragma once
 #include <vector>
-#include <Eigen/eigen>
+#include <eigen3/Eigen/eigen>
 #include "Texture.h"
+#include <boost/make_shared.hpp>
 
 #define MAX_TEXTURES 3
 

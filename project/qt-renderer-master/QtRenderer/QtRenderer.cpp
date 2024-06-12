@@ -1,5 +1,5 @@
 #include "QtRenderer.h"
-#include <Eigen/Eigen>
+#include <Eigen3/Eigen/Eigen>
 #include <QDebug>
 #include <QMessageBox>
 QtRenderer::QtRenderer(QWidget *parent)

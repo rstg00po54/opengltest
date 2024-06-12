@@ -2,7 +2,7 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <tuple>
-#include <Eigen/Eigen>
+#include <eigen3/Eigen/Eigen>
 #include "Triangle.h"
 #include <iostream>
 #include "Model.h"

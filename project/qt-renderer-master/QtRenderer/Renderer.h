@@ -7,6 +7,7 @@
 #include <thread>
 #include <mutex>
 #include <QDebug>
+#include <condition_variable>
 
 #define WIDTH 800
 #define HEIGHT 600

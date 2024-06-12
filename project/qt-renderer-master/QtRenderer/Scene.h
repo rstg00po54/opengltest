@@ -1,7 +1,7 @@
 #pragma once
 #define _USE_MATH_DEFINES
 #include <cmath>
-#include <Eigen/eigen>
+#include <eigen3/Eigen/eigen>
 #include "Model.h"
 
 struct Light {

@@ -26,8 +26,12 @@ AddDialog::AddDialog(QWidget* parent) : QDialog(parent) {
 
 void AddDialog::selectModel() {
 	model = fd->getOpenFileName(this, u8"Ñ¡ÔñÄ£ÐÍ", "./", "*.obj");
-	if(model.isEmpty()) ui.modelFile->setText("-");
-	else ui.modelFile->setText(QFileInfo(model).baseName());
+	if(model.isEmpty()){
+		ui.modelFile->setText("-");
+	}else{
+		ui.modelFile->setText(QFileInfo(model).baseName());
+		//printf("select %s\n", QFileInfo(model).baseName().toStdString().c_str());
+	} 
 }
 
 void AddDialog::selectNormal() {
