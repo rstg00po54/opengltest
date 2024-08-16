@@ -2,7 +2,8 @@
 #include <vector>
 #include <eigen3/Eigen/eigen>
 #include "Texture.h"
-#include <boost/make_shared.hpp>
+#include <memory>
+// #include <boost/make_shared.hpp>
 
 #define MAX_TEXTURES 3
 

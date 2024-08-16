@@ -1,35 +1,36 @@
 #pragma once
 
-#include <QDialog>
-#include <QFileDialog>
-#include "uic/ui_AddDialog.h"
+// #include <QDialog>
+// #include <QFileDialog>
+// #include "uic/ui_AddDialog.h"
+#include <iostream>
 
-class AddDialog : public QDialog {
-	Q_OBJECT
+class AddDialog  {
+	// Q_OBJECT
 
 public:
-	AddDialog(QWidget* parent = nullptr);
+	AddDialog();
 	~AddDialog() = default;
 	void load() {
-		ui.modelFile->setText("-");
-		ui.normalFile->setText("-");
-		ui.textureFile->setText("-");
-		model.clear();
-		normal.clear();
-		texture.clear();
+		// ui.modelFile->setText("-");
+		// ui.normalFile->setText("-");
+		// ui.textureFile->setText("-");
+		// model.clear();
+		// normal.clear();
+		// texture.clear();
 
-		show();
+		// show();
 	}
-signals:
-	void modelLoaded(QString& m, QString& t, QString& n);
+// signals:
+	void modelLoaded(std::string& m, std::string& t, std::string& n);
 
-private slots:
+// private slots:
 	void selectModel();
 	void selectNormal();
 	void selectTexture();
 private:
-	Ui::AddDialog ui;
-	QFileDialog* fd;
+	// Ui::AddDialog ui;
+	// QFileDialog* fd;
 
-	QString model, normal, texture;
+	std::string model, normal, texture;
 };

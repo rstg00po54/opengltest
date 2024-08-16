@@ -6,6 +6,9 @@ project(SoftMini3D)
 # include_directories(SYSTEM ../include/)
 include_directories(SYSTEM .)
 find_package(glfw3 REQUIRED)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/skin_debug.bmp ${CMAKE_CURRENT_BINARY_DIR}/../../bin/skin_debug.bmp COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/simsun.ttc ${CMAKE_CURRENT_BINARY_DIR}/../../bin/simsun.ttc COPYONLY)
  
 add_executable(SoftMini3D 
     main.cpp 
