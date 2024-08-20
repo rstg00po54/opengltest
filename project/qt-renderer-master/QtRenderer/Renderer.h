@@ -35,11 +35,11 @@ public:
 		this->index = index;
 		return true;
 	}
+	unsigned char * renderThread();
+	Scene scene;
 private:
 	Rasterizer rasterizer;
-	Scene scene;
 
-	void renderThread();
 	std::thread rt;
 
 	int index;
@@ -61,7 +61,7 @@ protected:
 	// void keyPressEvent(QKeyEvent* event) override;
 
 	// void mousePressEvent(QMouseEvent* event) override {
-	// 	// ????????????��??
+	// 	// 记录鼠标点击的初始位置
 	// 	if (event->button() == Qt::MouseButton::LeftButton || event->button() == Qt::MouseButton::RightButton) {
 	// 		dragPosition = event->globalPos();
 	// 		originCamera = scene.mainCamera;
@@ -69,16 +69,16 @@ protected:
 	// }
 
 	// void mouseMoveEvent(QMouseEvent* event) override {
-	// 	// ???????????????????????
+	// 	// 如果按下了鼠标左键，则开始拖动
 	// 	if (event->buttons() & Qt::LeftButton) {
 	// 		QPoint p = event->globalPos() - dragPosition;
 
-	// 		//???????
+	// 		//平移回原点
 	// 		Eigen::Vector4f pos = Scene::translateMatrix(-originCamera.position - originCamera.front * cameraR) * Eigen::Vector4f{ originCamera.position[0], originCamera.position[1], originCamera.position[2] , 1 };
-	// 		//???
+	// 		//旋转
 	// 		Eigen::Matrix4f rotate = Scene::rotateMatrix(float(p.x()) / width() * 180, { 0, 1, 0 }) * Scene::rotateMatrix(float(p.y()) / height() * 180, originCamera.top.cross(originCamera.front).normalized()) ;
 	// 		pos = rotate * pos;
-	// 		//????��??
+	// 		//平移回位置
 	// 		pos = Scene::translateMatrix(originCamera.position + originCamera.front * cameraR) * pos;
 			
 	// 		Eigen::Vector3f front = (originCamera.position + originCamera.front * cameraR - pos.head<3>()).normalized();

@@ -29,4 +29,4 @@ add_executable(qtrender
     QtRenderer/Texture.cpp
 )
 
-target_link_libraries(qtrender Assimp)
+target_link_libraries(qtrender Assimp SDL2)

@@ -8,20 +8,21 @@ Renderer::Renderer()
     // setFixedSize(WIDTH, HEIGHT);
     // setFocusPolicy(Qt::StrongFocus);
 
-    scene.setCamera(Eigen::Vector3f{ 0,1,0.3 }.normalized(), Eigen::Vector3f{ 0,-0.3,1 }.normalized(), { 0,5,-5 });
+    scene.setCamera(Eigen::Vector3f{ 0,1,0.3 }.normalized(), Eigen::Vector3f{ 0,-0.3,1 }.normalized(), { 0, 20, -20 });
     scene.setPerspective(60, float(HEIGHT) / WIDTH, 0.1f, 50.f);
 
-    scene.addLight(Eigen::Vector3f(20, 20, 20), 500);
-    scene.addLight(Eigen::Vector3f(-20, 20, 0), 500);
+    scene.addLight(Eigen::Vector3f(20, 10, 20), 500);
+    scene.addLight(Eigen::Vector3f(-20, 20, 20), 500);
 
     rendering = true;
-    rt = std::thread(&Renderer::renderThread, this);
+    printf("creat render\n");
+    // rt = std::thread(&Renderer::renderThread, this);
 }
 
 Renderer::~Renderer()
 {
     rendering = false;
-    rt.join();
+    // rt.join();
 }
 
 // void Renderer::keyPressEvent(QKeyEvent* event) {
@@ -60,17 +61,39 @@ Renderer::~Renderer()
 //     this->setPixmap(QPixmap::fromImage(img));
 //     */
 // }
-
-void Renderer::renderThread() {
+int frame;
+unsigned char * Renderer::renderThread() {
     pause = false; resumed = false;
     int seg = 1000 / FPSLimit;
     // qint64 start = QDateTime::currentDateTime().toMSecsSinceEpoch();
-    while (rendering) {
+    // while (rendering) {
 
         // qint64 t = QDateTime::currentDateTime().toMSecsSinceEpoch();
 
         // if (t - start > seg) {
             rasterizer.render(&scene);
+            unsigned char * buffer = rasterizer.getFrame();
+            // if(frame == 0)
+            // {
+            //     frame = 1;
+            //      FILE *file;
+                 
+            //     file = fopen("binary_file.bin", "wb"); // 以二进制写入模式打开文件
+            
+            //     if (file == NULL) {
+            //         printf("Error opening file");
+            //     }
+            
+
+            
+            //     size_t items_written = fwrite(buffer, 800*600*3, 1, file);
+            
+            //     // if (items_written != 5) {
+            //         printf(" writing file %x\n", items_written);
+            //     // }
+            
+            //     fclose(file); // 关闭文件
+            // }
             // QImage img(rasterizer.getFrame(), WIDTH, HEIGHT, QImage::Format::Format_RGB888);
             // this->setPixmap(QPixmap::fromImage(img));
             fps++;
@@ -78,35 +101,36 @@ void Renderer::renderThread() {
             // start = t;
         // }
 
-        {
-            std::unique_lock<std::mutex> lock(pause_mtx);
-            if (pause) {
-                resumed = true;
-                modifier_cv.notify_one();
-                render_cv.wait(lock, [&]() { return !pause; });
-                resumed = false;
-            }
-        }
+        // {
+        //     std::unique_lock<std::mutex> lock(pause_mtx);
+        //     if (pause) {
+        //         resumed = true;
+        //         modifier_cv.notify_one();
+        //         render_cv.wait(lock, [&]() { return !pause; });
+        //         resumed = false;
+        //     }
+        // }
 
-    }
+    // }
+    return buffer;
 }
 
 int Renderer::addModel(string& m, string& t, string& n) {
-    {
-        std::unique_lock<std::mutex> lock(pause_mtx);
-        pause = true;
-        modifier_cv.wait(lock, [&] { return resumed; });
-    }
+    // {
+    //     std::unique_lock<std::mutex> lock(pause_mtx);
+    //     pause = true;
+    //     modifier_cv.wait(lock, [&] { return resumed; });
+    // }
 
-    // int result = scene.addModel(m.toStdString(), t.toStdString(), n.toStdString());
+    int result = scene.addModel(m, t, n);
 
-    {
-        std::unique_lock<std::mutex> lock(pause_mtx);
-        pause = false;
-        render_cv.notify_one();
-    }
+    // {
+    //     std::unique_lock<std::mutex> lock(pause_mtx);
+    //     pause = false;
+    //     render_cv.notify_one();
+    // }
 
-    return 0;
+    return result;
 }
 
 void Renderer::rmModel(int index) {
