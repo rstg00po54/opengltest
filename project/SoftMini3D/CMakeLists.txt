@@ -16,6 +16,7 @@ add_executable(SoftMini3D
     Mini3DCalcLines.cpp
     Mini3DDevice.cpp
     Mini3DRender.cpp
+    Mini3DDrawCube.cpp
 )
  
 # target_link_libraries(SDLDemo glfw SDL2 glew32)

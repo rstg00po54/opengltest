@@ -216,3 +216,8 @@ systemd=true
 
 [automount]
 options = "metadata"
+
+https://github.com/DFCFXH/smallpt-/tree/main
+https://github.com/fhh200000/fhhrenderer
+https://github.com/DrFlower/GAMES_101_202_Homework/tree/main
+https://github.com/Quanwei1992/GAMES101

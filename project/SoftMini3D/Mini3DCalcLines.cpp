@@ -75,9 +75,10 @@ point_t calcM(point_t t, device_t *device) {
 	// ImGui::SliderFloat4("out", (float *)&out, -3.0f, 3.0f);
 
 	// }
-    // matrix_apply(&out, &t, &device->transform.mvp);
+	// matrix_apply(&out, &t, &device->transform.mvp);
 
-    return out;
+
+	return out;
 
 }
 void inter(vector_t *pin1, vector_t*pin0, float t){
@@ -93,6 +94,7 @@ void transform_home0(const transform_t *ts,
 				vector_t *pin0, vector_t *pin1) {
 	vector_t t,o;
 	float hw;
+	ImGui::Text("-------");
 	ImGui::SliderFloat4("输入0", (float *)pin0, 0.0f, 50.0f);
 	ImGui::SliderFloat4("输入1", (float *)pin1, 0.0f, 50.0f);
 	static bool v = true;
@@ -162,30 +164,42 @@ void transform_home0(const transform_t *ts,
 	pin1->w = hw*pin1->w;
 	
 	ImGui::SliderFloat4("pin1归一化", (float *)pin1, 0.0f, 50.0f);
-	ImGui::SliderFloat4("o", (float *)&o, 0.0f, 50.0f);
+	// ImGui::SliderFloat4("o", (float *)&o, 0.0f, 50.0f);
 
-	pout0->x = (pin0->x+1)*ts->w*0.5f;//400
-	pout0->y = (pin0->y+1)*ts->h*0.5f;//300
-	pout0->z = pin0->z;
-	pout1->x = (pin1->x+1)*ts->w*0.5f;
-	pout1->y = (pin1->y+1)*ts->h*0.5f;
-	ImGui::SliderFloat4("pout0", (float *)pout0, 0.0f, 50.0f);
-	ImGui::SliderFloat4("pout1", (float *)pout1, 0.0f, 50.0f);
+	// pout0->x = (pin0->x+1)*ts->w*0.5f;//400
+	// pout0->y = (pin0->y+1)*ts->h*0.5f;//300
+	// pout0->z = pin0->z;
+	// pout1->x = (pin1->x+1)*ts->w*0.5f;
+	// pout1->y = (pin1->y+1)*ts->h*0.5f;
 
-	pout0->y = 600 - pout0->y;
-	pout1->y = 600 - pout1->y;
+	// pout0->y = 600 - pout0->y;
+	// pout1->y = 600 - pout1->y;
 	
+	// ImGui::SliderFloat4("pout0", (float *)pout0, 0.0f, 50.0f);
+	// ImGui::SliderFloat4("pout1", (float *)pout1, 0.0f, 50.0f);
 
 }
 
 void transform_Normalization(const transform_t *ts, vector_t *po1, vector_t *po0, vector_t *pin1, vector_t*pin0) {
 	// vector_t po0,po1;
+	float rhw;
 	transform_home0(ts, po0, po1, pin0, pin1);
 	transform_home0(ts, po1, po0, pin1, pin0);
 	// *pin0 = po0;
 	// *pin1 = po1;
+	// pout0->y = 600 - pout0->y;
+	// pout1->y = 600 - pout1->y;
 
+	*po0 = *pin0;
+	*po1 = *pin1;
+	rhw = 1.f/po0->w;
+	po0->x = (po0->x * rhw + 1.0f) * ts->w * 0.5f;
+	po0->y = (1.0f - po0->y * rhw) * ts->h * 0.5f;
+	rhw = 1.f/po1->w;
+	po1->x = (po1->x * rhw + 1.0f) * ts->w * 0.5f;
+	po1->y = (1.0f - po1->y * rhw) * ts->h * 0.5f;
 }
+#if 0
 void drawTestLines(device_t *device) {
 
 	static float x = 15.0f;
@@ -201,12 +215,21 @@ void drawTestLines(device_t *device) {
 	for(int i = 0;i<len;i++) {
 		psrc[0][1].x = x;
 		psrc[0][0].x = -x;
-		p[0] = calcM(psrc[i][0],device);
-		p[1] = calcM(psrc[i][1],device);
-		transform_Normalization(&device->transform,&phome[0], &phome[1], &p[0], &p[1]);
+#if 0
+		// p[0] = calcM(psrc[i][0],device);
+		// p[1] = calcM(psrc[i][1],device);
+		// transform_Normalization(&device->transform,&phome[0], &phome[1], &p[0], &p[1]);
+#else
+		matrix_apply(&p[0], &psrc[i][0],  &device->transform.mvp);
+		matrix_apply(&p[1], &psrc[i][1],  &device->transform.mvp);
+		transform_homogenize(&device->transform, &phome[0], &p[0]);
+		transform_homogenize(&device->transform, &phome[1], &p[1]);
+#endif
 		device_draw_line(device, phome[0].x, phome[0].y, phome[1].x, phome[1].y, 0);
 	}
+	
 }
+#endif
 void drawMyLines(device_t *device) {
 
 	ImGui::Begin("draw_box");
@@ -219,11 +242,12 @@ void drawMyLines(device_t *device) {
 	// point_t po2[2];
 	matrix_t m_out[2];
 	point_t psrc[][2] = {
-		{{0,0,0,1},{10,0,0,1}},
-		{{0,0,0,1},{0,10,0,1}},
+		{{0,0,0,1},{1,0,0,1}},
+		{{0,0,0,1},{0,5,0,1}},
 		{{0,0,0,1},{0,0,10,1}},
 
-		{{0.5f,0,0,1},{0.5f,0,1,1}},
+		{{0,0,0,1},{1,1,1,1}},
+		// {{0,0,0,1},{1,1,1,1}},
 
 		// {{1,-1,-1,1},{1,1,1,1}},
 		// {{-1,-1,1,1},{-1,1,-1,1}},
@@ -238,17 +262,19 @@ void drawMyLines(device_t *device) {
 		// y = psrc[0][0].y;
 	int len = sizeof(psrc)/sizeof(psrc[0]);
 	for(int i = 0;i<len;i++) {
-        p[0] = calcM(psrc[i][0],device);
-        p[1] = calcM(psrc[i][1],device);
 
-#if 0
+#if 1
 		matrix_apply( &p[0], &psrc[i][0], &device->transform.mvp);
 		matrix_apply( &p[1], &psrc[i][1], &device->transform.mvp);
+		// p[0].z = -p[0].z;
+		// p[1].z = -p[1].z;
         transform_homogenize(&device->transform, &phome[0], &p[0]);
         transform_homogenize(&device->transform, &phome[1], &p[1]);
 
 #else
-		transform_Normalization(&device->transform,&phome[0], &phome[1], &p[0], &p[1]);
+        // p[0] = calcM(psrc[i][0],device);
+        // p[1] = calcM(psrc[i][1],device);
+		// transform_Normalization(&device->transform,&phome[0], &phome[1], &p[0], &p[1]);
 
 #endif
         float rhw = 1.0f / p[1].w;
@@ -262,9 +288,10 @@ void drawMyLines(device_t *device) {
 		// transform_home(&device->transform, &phome[0], &phome[1], &p[0], &p[1]);
 
 		// SDL_RenderDrawLine(renderer,0,0,po.x, po.y);
-		int c[] = {0xff,0xff00,0xff0000,0,0};
+		int c[] = {0xff,0xff00,0x0000,0,0};
 		device_draw_line(device, phome[0].x, phome[0].y, phome[1].x, phome[1].y, c[i>3?3:i]);
 	}
 	// drawTestLines(device);
+	device_draw_line(device, 0.f, 0.f, 400.f, 400.f, 0);
 	ImGui::End();
 }
