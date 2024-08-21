@@ -6,4 +6,5 @@
 
 point_t draw_box(device_t *device);
 void draw_cube(device_t *device);
+void init_cube();
 #endif

@@ -37,6 +37,15 @@ float vector_dotproduct(const vector_t *x, const vector_t *y) {
 	return x->x * y->x + x->y * y->y + x->z * y->z;
 }
 
+// 矢量缩放
+vector_t vector_dotfloat(const vector_t *x, const float *y) {
+	vector_t v;
+	v.x = x->x * *y;
+	v.y = x->y * *y;
+	v.z = x->z * *y;
+	v.w = x->w * *y;
+	return v;
+}
 // 矢量叉乘
 void vector_crossproduct(vector_t *z, const vector_t *x, const vector_t *y) {
 	float m1, m2, m3;
