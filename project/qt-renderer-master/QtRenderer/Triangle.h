@@ -11,6 +11,7 @@ struct TriVert {
 	Eigen::Vector2f tex_coord;
 	Eigen::Vector3f color;
 	Eigen::Vector3f view_pos;
+	int number;
 
 	const TriVert operator*(const float& f) const{
 		return { f * pos, f * normal, f * tex_coord, f * color, f * view_pos };
@@ -51,13 +52,13 @@ public:
 	//TriVert vertices[3];
 
 	
-	Eigen::Vector4f vertices[3]; //转换到屏幕空间的齐次坐标
+	Eigen::Vector4f vertices[3]; //杞崲鍒板睆骞曠┖闂寸殑榻愭鍧愭爣
 
-	Eigen::Vector3f normals[3]; //法线
-	Eigen::Vector2f tex_coords[3]; //纹理坐标uv
-	Eigen::Vector3f color[3]; //顶点颜色
+	Eigen::Vector3f normals[3]; //娉曠嚎
+	Eigen::Vector2f tex_coords[3]; //绾圭悊鍧愭爣uv
+	Eigen::Vector3f color[3];  //椤剁偣棰滆壊
 
-	Eigen::Vector3f view_pos[3]; //经过mv矩阵后的世界坐标
+	Eigen::Vector3f view_pos[3]; //缁忚繃mv鐭╅樀鍚庣殑涓栫晫鍧愭爣
 	
 	//shared_ptr<Texture> normalTexture;
 	Model* model;

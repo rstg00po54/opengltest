@@ -3,13 +3,17 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <memory>
+#include "main.h"
 
 int Scene::addModel(string path, string texp, string norp) {
     //Model tempm;
 
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_FlipUVs);
-    if (!scene) return 0;
+    if (!scene) {
+        printf("importer.ReadFile error\n");
+        return 0;
+    } 
 
     shared_ptr<Texture> sp;
     if (texp != "") sp = make_shared<Texture>(texp.c_str());
@@ -50,7 +54,7 @@ int Scene::addModel(string path, string texp, string norp) {
             }
         }
 
-
+        pr_debug("scene->mMeshes[%d]->mNumFaces %d", i, scene->mMeshes[i]->mNumFaces);
         models.back().indexBuffer.reserve(scene->mMeshes[i]->mNumFaces * 3);
         for (int j = 0; j < scene->mMeshes[i]->mNumFaces; j++) {
             for (int k = 0; k < 3; k++) {
@@ -67,7 +71,7 @@ int Scene::addModel(string path, string texp, string norp) {
         }
         modelMatrices.push_back(Eigen::Matrix4f::Identity());
     }
-
+    printf("%s --\n", __func__);
     return scene->mNumMeshes;
 }
 
