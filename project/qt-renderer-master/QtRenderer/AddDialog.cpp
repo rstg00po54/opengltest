@@ -23,9 +23,18 @@ AddDialog::AddDialog() {
 	// 	this->close();
 	// 	});
 }
+void AddDialog::load() {
+	ui.modelFile->setText(QFileInfo(model).baseName());
+	ui.normalFile->setText("-");
+	ui.textureFile->setText("-");
+	// model.clear();
+	normal.clear();
+	texture.clear();
 
+	show();
+}
 void AddDialog::selectModel() {
-	// model = fd->getOpenFileName(this, u8"??????", "./", "*.obj");
+	// model = fd->getOpenFileName(this, u8"Select Module", "./", "*.obj");
 	// if(model.isEmpty()){
 	// 	ui.modelFile->setText("-");
 	// }else{
@@ -35,13 +44,13 @@ void AddDialog::selectModel() {
 }
 
 void AddDialog::selectNormal() {
-	// normal = fd->getOpenFileName(this, u8"????????", "./", "*.jpg *.png *.bmp *.tga");
+	// normal = fd->getOpenFileName(this, u8"选择法线贴图", "./", "*.jpg *.png *.bmp *.tga");
 	// if (normal.isEmpty()) ui.normalFile->setText("-");
 	// else ui.normalFile->setText(QFileInfo(normal).baseName());
 }
 
 void AddDialog::selectTexture() {
-	// texture = fd->getOpenFileName(this, u8"??????????", "./", "*.jpg *.png *.bmp *.tga");
+	// texture = fd->getOpenFileName(this, u8"选择纹理贴图", "./", "*.jpg *.png *.bmp *.tga");
 	// if (texture.isEmpty()) ui.textureFile->setText("-");
 	// else ui.textureFile->setText(QFileInfo(texture).baseName());
 }

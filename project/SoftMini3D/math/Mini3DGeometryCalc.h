@@ -17,8 +17,8 @@ void vertex_interp(vertex_t *y, const vertex_t *x1, const vertex_t *x2, float t)
 void vertex_division(vertex_t *y, const vertex_t *x1, const vertex_t *x2, float w);
 
 void vertex_add(vertex_t *y, const vertex_t *x);
-int trapezoid_init_triangle(trapezoid_t *trap, const vertex_t *p1, 
-	const vertex_t *p2, const vertex_t *p3);
-void trapezoid_edge_interp(trapezoid_t *trap, float y);
-void trapezoid_init_scan_line(const trapezoid_t *trap, scanline_t *scanline, int y);
+// int trapezoid_init_triangle(trapezoid_t *trap, const vertex_t *p1, 
+// 	const vertex_t *p2, const vertex_t *p3);
+// void trapezoid_edge_interp(trapezoid_t *trap, float y);
+// void trapezoid_init_scan_line(const trapezoid_t *trap, scanline_t *scanline, int y);
 #endif

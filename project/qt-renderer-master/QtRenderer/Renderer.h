@@ -10,8 +10,30 @@
 #include <condition_variable>
 #include <iostream>
 
-#define WIDTH 800
-#define HEIGHT 600
+#define WIDTH 400
+#define HEIGHT 300
+
+
+
+//���Դ�ӡ����
+#define __DEBUG
+
+
+#include <string.h> //strrchr()��������ͷ�ļ�
+// windows:
+// #define filename(x) strrchr(x,'\\')?strrchr(x,'\\')+1:x
+// linux:
+#define filename(x) strrchr(x,'/')?strrchr(x,'/')+1:x
+
+// ���ã�
+// printf("filename:%s\n", filename(__FILE__) );
+
+ 
+#ifdef __DEBUG
+#define minfo(format, ...) printf("[%s][Line: %d][%s]: \n", filename(__FILE__), __LINE__, __func__, ##__VA_ARGS__)
+#else
+#define minfo(format, ...)
+#endif
 
 using namespace std;
 

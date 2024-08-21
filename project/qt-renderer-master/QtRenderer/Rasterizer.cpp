@@ -110,7 +110,7 @@ void Rasterizer::drawLine(int x0, int y0, int x1, int y1, Eigen::Vector3f color 
 	}
 
 }
-
+//������������
 static std::tuple<float, float, float> computeBarycentric2D(float x, float y, const Eigen::Vector4f* v) {
 	//float c1 = (x * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * y + v[1].x() * v[2].y() - v[2].x() * v[1].y()) / (v[0].x() * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * v[0].y() + v[1].x() * v[2].y() - v[2].x() * v[1].y());
 	//float c2 = (x * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * y + v[2].x() * v[0].y() - v[0].x() * v[2].y()) / (v[1].x() * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * v[1].y() + v[2].x() * v[0].y() - v[0].x() * v[2].y());
@@ -304,7 +304,9 @@ static inline vector<Triangle> clip(const TriVert& va, const TriVert& vb, const 
 	pr_debug("ans %d", ans.size());
 	return ans;
 
+    return ans; // ���زü����������
 }
+
 /*
 static inline bool allInside(const TriVert& va, const TriVert& vb, const TriVert& vc) {
 	return insideClip(clipPlanes[0], va.pos) && insideClip(clipPlanes[0], vb.pos) && insideClip(clipPlanes[0], vc.pos) &&

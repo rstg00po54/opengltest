@@ -176,8 +176,8 @@ void device_set_texture(device_t *device, void *bits, long pitch, int w, int h) 
 	device->max_u = (float)(w - 1);
 	device->max_v = (float)(h - 1);
 }
-#define TEXTURE_W 300
-#define TEXTURE_H 1800
+#define TEXTURE_W 256
+#define TEXTURE_H 256
 // 0xe3c08cff 1024=0x400
 /*
 int a[3][2]
@@ -192,11 +192,11 @@ void init_texture(device_t *device, uint8_t *buffer) {
 	for (j = 0; j < TEXTURE_H; j++) {
 		for (i = 0; i < TEXTURE_W; i++) {
 			int x = i / 32, y = j / 32;
-			// texture[j][i] = ((x + y) & 1)? 0xffffffff : 0xe3c08cff;//8*16=128
-			texture[j][i] = SDL_MapRGB(SDL_AllocFormat(SDL_PIXELFORMAT_RGB24), 
-				buffer[j*300*3+i*3], 
-				buffer[j*300*3+i*3+1], 
-				buffer[j*300*3+i*3+2]);
+			texture[j][i] = ((x + y) & 1)? 0xffffffff : 0xe3c08cff;//8*16=128
+			// texture[j][i] = SDL_MapRGB(SDL_AllocFormat(SDL_PIXELFORMAT_RGB24), 
+			// 	buffer[j*898+i*3], 
+			// 	buffer[j*898+i*3+1], 
+			// 	buffer[j*898+i*3+2]);
 			// texture[j][i] = buffer[j*256+i];
 			// if(texture[j][i] == 0){
 			// 	printf("error\n");

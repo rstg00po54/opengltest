@@ -16,7 +16,7 @@ static void draw_plane(device_t *device, int a, int b, int c, int d, int count) 
 	vertex_t p2 = mesh[b];
 	vertex_t p3 = mesh[c];
 	vertex_t p4 = mesh[d];
-	float h = 1.f/6;
+	float h = 1.f;
 	/*
 	v
 	|
@@ -31,9 +31,9 @@ static void draw_plane(device_t *device, int a, int b, int c, int d, int count) 
 	float u[2],v[2];
 
 	u[0] = 0;
-	u[1] = 1.f/3;
-	v[0] = count*h;
-	v[1] = count*h+1.f/18;
+	u[1] = 1.f;
+	v[0] = 0;
+	v[1] = 1.f;
 
 	p1.tc.u = u[0];
 	p1.tc.v = v[0];
@@ -47,7 +47,7 @@ static void draw_plane(device_t *device, int a, int b, int c, int d, int count) 
 	p4.tc.u = u[1];
 	p4.tc.v = v[0];
 	device_draw_triangle(device, &p1, &p2, &p3);
-	device_draw_triangle(device, &p3, &p4, &p1);
+	// device_draw_triangle(device, &p3, &p4, &p1);
 }
 void draw_panel(device_t *device) {
     device->module = 1;

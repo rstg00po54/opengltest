@@ -77,8 +77,8 @@ void device_pixel(device_t *device, int x, int y, IUINT32 color) {
 
 void device_point(device_t *device, int x, int y, IUINT32 color) {
 	int i,j;
-	for(i=-1;i<3;i++){
-		for(j=-1;j<3;j++){
+	for(i=-2;i<3;i++){
+		for(j=-2;j<3;j++){
 			device_pixel(device, x+i, y+j, color);
 
 		}
@@ -130,6 +130,7 @@ void device_draw_line(device_t *device, int x1, int y1, int x2, int y2, IUINT32 
 		}
 	}
 }
+extern int print;
 IUINT32 device_texture_read(const device_t *device, float u, float v) {
 	int x, y;
 	IUINT32 value;
@@ -141,6 +142,7 @@ IUINT32 device_texture_read(const device_t *device, float u, float v) {
 	y = (int)(v0 + 0.5f);
 	x = CMID(x, 0, device->tex_width - 1);
 	y = CMID(y, 0, device->tex_height - 1);
+	// if(print == 0)
 	// printf("x/y= %d/%d,u/v = %f/%f\n",x,y,u,v);
 	if(device->module == 0) {
 		value = device->texture[y][x];
@@ -160,18 +162,23 @@ IUINT32 device_texture_read(const device_t *device, float u, float v) {
 	// }
 	return value;
 }
-
+extern int print;
 // 绘制扫描线
 void device_draw_scanline(device_t *device, scanline_t *scanline) {
 	IUINT32 *framebuffer = device->framebuffer[scanline->y];
 	float *zbuffer = device->zbuffer[scanline->y];
 	int x = scanline->x;
-	int w = scanline->w;
+	int w0 = scanline->w;
 	int width = device->width;
 	int render_state = device->render_state;
-	for (; w > 0; x++, w--) {
-		if (x >= 0 && x < width) {
+	if(print == 0){
+		printf("%s y = %d, rhw = %f\n", __func__, scanline->y, scanline->v.rhw);
+	}
+	for (; w0 > 0; x++, w0--) {
+		if (x >= 0) {
 			float rhw = scanline->v.rhw;
+			// if((print == 0) && (x < (scanline->x+1)))
+			// 	printf("x = %d, rhw = %3.2f\n", x, 1.0f/rhw);
 			if (rhw >= zbuffer[x]) {	
 				float w = 1.0f / rhw;
 				zbuffer[x] = rhw;
@@ -190,16 +197,20 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 				if (render_state & RENDER_STATE_TEXTURE) {
 					float u = scanline->v.tc.u * w;
 					float v = scanline->v.tc.v * w;
+					if(print == 0 && w0 == 1){
+						printf("u %f, v %f, w %f, scanline uv %f %f\n", u, v, w, scanline->v.tc.u, scanline->v.tc.v);
+					}
 					IUINT32 cc;
 					if(device->module != 2) {
 						cc = device_texture_read(device, u, v);
 
 					}else{
-						int z = zbuffer[x]*255.0f*5;
+						int z = rhw*255.0f*5;
 						cc = z|(z<<8)|(z<<16);
 
 					}
-
+			// if((print == 0) && (x < (scanline->x+1)))
+			// 	printf("x = %d, rhw = %3.2f, u = %3.2f, v = %3.2f\n", x, rhw,u,v);
 					// framebuffer[x] = z|(z<<8)|(z<<16);
 					framebuffer[x] = cc;
 					// if(cc == 0)

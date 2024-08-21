@@ -21,7 +21,7 @@ struct Vertex {
 };
 
 /// <summary>
-/// 一个Model只对应一个Mesh，一种材质
+/// 一锟斤拷Model只锟斤拷应一锟斤拷Mesh锟斤拷一锟街诧拷锟斤拷
 /// </summary>
 class Model {
 

@@ -3,7 +3,7 @@
 #include <cmath>
 #include <eigen3/Eigen/eigen>
 #include "Model.h"
-
+#include <stdio.h>
 struct Light {
 	Eigen::Vector3f position;
 	float intensity;
@@ -75,3 +75,25 @@ public:
 	vector<Light> lightBuffer;
 
 };
+
+
+
+//调试打印开关
+#define __DEBUG
+
+
+#include <string.h> //strrchr()函数所需头文件
+// windows:
+// #define filename(x) strrchr(x,'\\')?strrchr(x,'\\')+1:x
+// linux:
+#define filename(x) strrchr(x,'/')?strrchr(x,'/')+1:x
+
+// 调用：
+// printf("filename:%s\n", filename(__FILE__) );
+
+ 
+#ifdef __DEBUG
+#define minfo(format, ...) printf("[%s][Line: %d][%s]: " format"\n", filename(__FILE__), __LINE__, __func__, ##__VA_ARGS__)
+#else
+#define minfo(format, ...)
+#endif
