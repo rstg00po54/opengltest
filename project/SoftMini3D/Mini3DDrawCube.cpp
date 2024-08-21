@@ -175,8 +175,8 @@ void draw_cube(device_t *device) {
 	static point_t ro = {0.f, 0.f, 0.f,0.f};
 	point_t ro0 = {0.f, 0.f, 0.f,0.f};
 
-	oltoquat(&quat, garc0);
-	matrix_set_Quaternion(&t->rotate, quat);
+	// oltoquat(&quat, garc0);
+	// matrix_set_Quaternion(&t->rotate, quat);
 
 
 	matrix_set_translate(&t->trans, 1, 1, 1);

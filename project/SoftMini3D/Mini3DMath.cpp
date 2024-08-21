@@ -271,8 +271,8 @@ void matrix_set_perspective(matrix_t *m, float fovy, float aspect, float zn, flo
 #if 1
 	m->m[0][0] = (float)(fax / (aspect));
 	m->m[1][1] = (float)(fax);
-	m->m[2][2] =- (zn + zf) / (zn - zf);
-	m->m[2][3] =  2*zn * zf / (zn - zf);
+	m->m[2][2] = (zn + zf) / (zn - zf);
+	m->m[2][3] =-  2*zn * zf / (zn - zf);
 	m->m[3][2] = 1;
 #else
 	// m->m[0][0] = (float)(fax / aspect);
