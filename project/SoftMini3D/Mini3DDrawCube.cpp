@@ -96,10 +96,10 @@ static void oltoquat(vector_t *quat, vector_t ol){
 	float sb = sinf(beta/2);
 	float sy = sinf(gama/2);
 
-	quat->x = ca*cb*cy+sa*sb*sy;
-	quat->y = sa*cb*cy-ca*sb*sy;
-	quat->z = ca*sb*cy+sa*cb*sy;
-	quat->w = ca*cb*sy-sa*sb*cy;
+	quat->w = ca*cb*cy+sa*sb*sy;
+	quat->x = sa*cb*cy-ca*sb*sy;
+	quat->y = ca*sb*cy+sa*cb*sy;
+	quat->z = ca*cb*sy-sa*sb*cy;
 }
 static vector_t garc;
 static vector_t garc0;
@@ -174,33 +174,36 @@ void draw_cube(device_t *device) {
 	// matrix_set_rotate(&t->rotate, 0, 1, 0, garc0.x);
 	static point_t ro = {0.f, 0.f, 0.f,0.f};
 	point_t ro0 = {0.f, 0.f, 0.f,0.f};
-
-	// oltoquat(&quat, garc0);
-	// matrix_set_Quaternion(&t->rotate, quat);
+	static bool v = true;
+	ImGui::Checkbox("clip", &v);
+	if(v){
+		oltoquat(&quat, garc0);
+		matrix_set_Quaternion(&t->rotate, quat);
+	}
 
 
 	matrix_set_translate(&t->trans, 1, 1, 1);
 	transform_update(t);
-	draw_box(device);	
+	// draw_box(device);	
 
 	// printf("----\n");
-	// for(i = -1;i<2;i++){
-	// 	for(j=-1;j<2;j++){
-	// 		for(k=-1;k<2;k++){
-	// 			if(i == key){
-	// 				ro = garc0;
-	// 			}else{
-	// 				ro = ro0;
-	// 			}
-	// 			oltoquat(&quat, ro);
-	// 			matrix_set_Quaternion(&t->rotate, quat);
-	// 			matrix_set_translate(&t->trans, trans.x+i, trans.y+j, trans.z+k);
-	// 			transform_update(t);
-	// 			// point[i+1][j+1] = draw_box(device);	
-	// 			draw_box(device);
-	// 			// ImGui::SliderFloat4("cube", (float *)&point[i+1][j+1], 0.0f, 360.0f);
-	// 		}
-	// 	}
-	// }
+	for(i = -1;i<2;i++){
+		for(j=-1;j<2;j++){
+			for(k=-1;k<2;k++){
+				if(i == key){
+					ro = garc0;
+				}else{
+					ro = ro0;
+				}
+				oltoquat(&quat, ro);
+				matrix_set_Quaternion(&t->rotate, quat);
+				matrix_set_translate(&t->trans, trans.x+i, trans.y+j, trans.z+k);
+				transform_update(t);
+				// point[i+1][j+1] = draw_box(device);	
+				draw_box(device);
+				// ImGui::SliderFloat4("cube", (float *)&point[i+1][j+1], 0.0f, 360.0f);
+			}
+		}
+	}
 	ImGui::End();
 }

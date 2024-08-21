@@ -260,6 +260,8 @@ void drawMyLines(device_t *device) {
 	};
 		// x = psrc[0][0].x;
 		// y = psrc[0][0].y;
+	matrix_set_rotate(&device->transform.rotate, 0, 1, 0,  0.f);
+	transform_update(&device->transform);
 	int len = sizeof(psrc)/sizeof(psrc[0]);
 	for(int i = 0;i<len;i++) {
 
