@@ -1,6 +1,6 @@
 #include "Rasterizer.h"
 #include <climits>
-#include <QImage>
+// #include <QImage>
 
 static Eigen::Vector3f normal_fragment_shader(const fragment_shader_payload& payload)
 {

@@ -1,36 +1,36 @@
 #pragma once
 
-#include <QtWidgets/QMainWindow>
-#include "uic/ui_QtRenderer.h"
+// #include <QtWidgets/QMainWindow>
+// #include "uic/ui_QtRenderer.h"
 #include "Renderer.h"
-#include <QKeyEvent>
-#include <QTimer>
-#include <QList>
+// #include <QKeyEvent>
+// #include <QTimer>
+// #include <QList>
 #include "AddDialog.h"
 
-class QtRenderer : public QMainWindow
+class QtRenderer 
 {
-    Q_OBJECT
+    
 
 public:
-    QtRenderer(QWidget *parent = nullptr);
+    QtRenderer();
     ~QtRenderer();
 private:
-    Ui::QtRendererClass ui;
-    QTimer* fpsTimer;
-    QLabel* fpsLabel;
+    // Ui::QtRendererClass ui;
+    // QTimer* fpsTimer;
+    // QLabel* fpsLabel;
     AddDialog* ad;
 
-    QList<QListWidgetItem*> modelList;
-    QList<QListWidgetItem*> lightList;
-private slots:
+    // QList<QListWidgetItem*> modelList;
+    // QList<QListWidgetItem*> lightList;
+// private slots:
     void addModel();
     void removeItem();
     void onFPS() {
-        fpsLabel->setText("FPS: " + QString::number(ui.rendererLabel->getFPS()));
-        fpsTimer->start(1000);
+        // fpsLabel->setText("FPS: " + QString::number(ui.rendererLabel->getFPS()));
+        // fpsTimer->start(1000);
     }
-    void receiveModel(QString& m, QString& t, QString& n);
+    void receiveModel(string& m, string& t, string& n);
 
     void itemChanged();
 };

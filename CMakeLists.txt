@@ -34,6 +34,7 @@ add_subdirectory(library/shader)
 add_subdirectory(project/Trangle)
 add_subdirectory(project/imguiDemo)
 add_subdirectory(project/SoftMini3D)
+add_subdirectory(project/qt-renderer-master)
 
 
 find_package(glfw3 REQUIRED)

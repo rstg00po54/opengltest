@@ -1,7 +1,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include "Texture.h"
-#include <QImage>
+// #include <QImage>
 #include <iostream>
 
 Texture::Texture(const char* path) {

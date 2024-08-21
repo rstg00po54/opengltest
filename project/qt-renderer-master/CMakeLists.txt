@@ -12,13 +12,13 @@ endif()
 
 message("cmake source dir = ${CMAKE_SOURCE_DIR}")
 
-set (Qt5_DIR "/mingw64/lib/cmake/Qt5")
+# set (Qt5_DIR "/mingw64/lib/cmake/Qt5")
 
 include_directories(SYSTEM ./QtRenderer/)
 
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
+# find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
-add_executable(helloworld
+add_executable(qtrender
     QtRenderer/main.cpp
     QtRenderer/QtRenderer.cpp
     QtRenderer/Model.cpp
@@ -29,4 +29,4 @@ add_executable(helloworld
     QtRenderer/Texture.cpp
 )
 
-target_link_libraries(helloworld Qt5::Widgets Assimp)
+target_link_libraries(qtrender Assimp)

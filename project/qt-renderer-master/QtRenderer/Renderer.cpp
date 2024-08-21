@@ -1,12 +1,12 @@
 #include "Renderer.h"
-#include <QDebug>
-#include <QDateTime>
+// #include <QDebug>
+// #include <QDateTime>
 
-Renderer::Renderer(QWidget* parent)
-	: QLabel(parent), rasterizer(WIDTH, HEIGHT), index(-1)
+Renderer::Renderer()
+	: rasterizer(WIDTH, HEIGHT), index(-1)
 {
-    setFixedSize(WIDTH, HEIGHT);
-    setFocusPolicy(Qt::StrongFocus);
+    // setFixedSize(WIDTH, HEIGHT);
+    // setFocusPolicy(Qt::StrongFocus);
 
     scene.setCamera(Eigen::Vector3f{ 0,1,0.3 }.normalized(), Eigen::Vector3f{ 0,-0.3,1 }.normalized(), { 0,5,-5 });
     scene.setPerspective(60, float(HEIGHT) / WIDTH, 0.1f, 50.f);
@@ -24,59 +24,59 @@ Renderer::~Renderer()
     rt.join();
 }
 
-void Renderer::keyPressEvent(QKeyEvent* event) {
-    if (index < 0) return;
-    switch (event->key()) {
-    case Qt::Key_W:
-        scene.translateModel(index, { 0,0,0.1 });
-        break;
-    case Qt::Key_S:
-        scene.translateModel(index, { 0,0,-0.1 });
-        break;
-    case Qt::Key_A:
-        scene.translateModel(index, { -0.1,0,0 });
-        break;
-    case Qt::Key_D:
-        scene.translateModel(index, { 0.1,0,0 });
-        break;
-    case Qt::Key_Q:
-        scene.rotateModel(index, -1, { 0,1,0 });
-        break;
-    case Qt::Key_E:
-        scene.rotateModel(index, 1, { 0,1,0 });
-        break;
-    case Qt::Key_Z:
-        scene.scaleModel(index, { 1.2,1.2,1.2 });
-        break;
-    case Qt::Key_X:
-        scene.scaleModel(index, { 0.8,0.8,0.8 });
-        break;
-    default:
-        break;
-    }
-    /*
-    rasterizer.render(&scene);
-    QImage img(rasterizer.getFrame(), WIDTH, HEIGHT, QImage::Format::Format_RGB888);
-    this->setPixmap(QPixmap::fromImage(img));
-    */
-}
+// void Renderer::keyPressEvent(QKeyEvent* event) {
+//     if (index < 0) return;
+//     switch (event->key()) {
+//     case Qt::Key_W:
+//         scene.translateModel(index, { 0,0,0.1 });
+//         break;
+//     case Qt::Key_S:
+//         scene.translateModel(index, { 0,0,-0.1 });
+//         break;
+//     case Qt::Key_A:
+//         scene.translateModel(index, { -0.1,0,0 });
+//         break;
+//     case Qt::Key_D:
+//         scene.translateModel(index, { 0.1,0,0 });
+//         break;
+//     case Qt::Key_Q:
+//         scene.rotateModel(index, -1, { 0,1,0 });
+//         break;
+//     case Qt::Key_E:
+//         scene.rotateModel(index, 1, { 0,1,0 });
+//         break;
+//     case Qt::Key_Z:
+//         scene.scaleModel(index, { 1.2,1.2,1.2 });
+//         break;
+//     case Qt::Key_X:
+//         scene.scaleModel(index, { 0.8,0.8,0.8 });
+//         break;
+//     default:
+//         break;
+//     }
+//     /*
+//     rasterizer.render(&scene);
+//     QImage img(rasterizer.getFrame(), WIDTH, HEIGHT, QImage::Format::Format_RGB888);
+//     this->setPixmap(QPixmap::fromImage(img));
+//     */
+// }
 
 void Renderer::renderThread() {
     pause = false; resumed = false;
     int seg = 1000 / FPSLimit;
-    qint64 start = QDateTime::currentDateTime().toMSecsSinceEpoch();
+    // qint64 start = QDateTime::currentDateTime().toMSecsSinceEpoch();
     while (rendering) {
 
-        qint64 t = QDateTime::currentDateTime().toMSecsSinceEpoch();
+        // qint64 t = QDateTime::currentDateTime().toMSecsSinceEpoch();
 
-        if (t - start > seg) {
+        // if (t - start > seg) {
             rasterizer.render(&scene);
-            QImage img(rasterizer.getFrame(), WIDTH, HEIGHT, QImage::Format::Format_RGB888);
-            this->setPixmap(QPixmap::fromImage(img));
+            // QImage img(rasterizer.getFrame(), WIDTH, HEIGHT, QImage::Format::Format_RGB888);
+            // this->setPixmap(QPixmap::fromImage(img));
             fps++;
 
-            start = t;
-        }
+            // start = t;
+        // }
 
         {
             std::unique_lock<std::mutex> lock(pause_mtx);
@@ -91,14 +91,14 @@ void Renderer::renderThread() {
     }
 }
 
-int Renderer::addModel(QString& m, QString& t, QString& n) {
+int Renderer::addModel(string& m, string& t, string& n) {
     {
         std::unique_lock<std::mutex> lock(pause_mtx);
         pause = true;
         modifier_cv.wait(lock, [&] { return resumed; });
     }
 
-    int result = scene.addModel(m.toStdString(), t.toStdString(), n.toStdString());
+    // int result = scene.addModel(m.toStdString(), t.toStdString(), n.toStdString());
 
     {
         std::unique_lock<std::mutex> lock(pause_mtx);
@@ -106,7 +106,7 @@ int Renderer::addModel(QString& m, QString& t, QString& n) {
         render_cv.notify_one();
     }
 
-    return result;
+    return 0;
 }
 
 void Renderer::rmModel(int index) {

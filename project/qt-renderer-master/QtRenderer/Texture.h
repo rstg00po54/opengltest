@@ -6,6 +6,11 @@
 
 using namespace std;
 
+static float clamp(float u, float min_, float max_){
+	float x = min(u, max_);
+
+	return max(x, min_);
+}
 class Texture {
 
 public:
