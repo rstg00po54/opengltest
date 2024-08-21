@@ -4,6 +4,7 @@
 
 typedef struct { float m[4][4]; } matrix_t;
 typedef struct { float x, y, z, w; } vector_t;
+typedef struct { int x, y, z, w; } vector_int;
 typedef vector_t point_t;
 
 
@@ -21,5 +22,11 @@ void matrix_set_translate(matrix_t *m, float x, float y, float z);
 void matrix_set_Quaternion(matrix_t *m, vector_t quat);
 
 void matrix_set_zero(matrix_t *m);
+
+void vector_add(vector_t *z, const vector_t *x, const vector_t *y);
+void vector_sub(vector_t *z, const vector_t *x, const vector_t *y);
+vector_t vector_dotfloat(const vector_t *x, const float *y);
+void vector_crossproduct(vector_t *z, const vector_t *x, const vector_t *y);
+float vector_dotproduct(const vector_t *x, const vector_t *y);
 // void matrix_apply_r(vector_t *y, const vector_t *x, const matrix_t *m);
 #endif

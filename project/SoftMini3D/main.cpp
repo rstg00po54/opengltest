@@ -207,6 +207,21 @@ void init_texture(device_t *device, uint8_t *buffer) {
 	device_set_texture(device, texture, TEXTURE_W * 4, TEXTURE_W, TEXTURE_H);
 	printf("%s ---\n", __func__);
 }
+union FloatInt
+{
+    int    i;
+    float           f;
+};
+int FloatToInt(float f)
+{
+    FloatInt ret, bias;
+    ret.f = f;
+    bias.i = (23 + 127) << 23;
+    if(f < 0.0f){bias.i = ((23 + 127) << 23) + (1 << 22);}
+    ret.f += bias.f;
+    ret.i -= bias.i;
+    return ret.i;
+}
 #undef main
 int main(void)
 {
@@ -257,6 +272,8 @@ int main(void)
 	float thetax = 0.f,thetay = 0.f;
 	float dthetax,dthetay;
 	float r = camera.z;
+
+	init_cube();
 
 	// return 0;
 	while (!quit) {
