@@ -10,27 +10,27 @@
 
 class QtRenderer 
 {
-    
+	
 
 public:
-    QtRenderer();
-    ~QtRenderer();
+	QtRenderer();
+	~QtRenderer();
 private:
-    // Ui::QtRendererClass ui;
-    // QTimer* fpsTimer;
-    // QLabel* fpsLabel;
-    AddDialog* ad;
+	// Ui::QtRendererClass ui;
+	// QTimer* fpsTimer;
+	// QLabel* fpsLabel;
+	AddDialog* ad;
 
-    // QList<QListWidgetItem*> modelList;
-    // QList<QListWidgetItem*> lightList;
+	// QList<QListWidgetItem*> modelList;
+	// QList<QListWidgetItem*> lightList;
 // private slots:
-    void addModel();
-    void removeItem();
-    void onFPS() {
-        // fpsLabel->setText("FPS: " + QString::number(ui.rendererLabel->getFPS()));
-        // fpsTimer->start(1000);
-    }
-    void receiveModel(string& m, string& t, string& n);
+	void addModel();
+	void removeItem();
+	void onFPS() {
+		// fpsLabel->setText("FPS: " + QString::number(ui.rendererLabel->getFPS()));
+		// fpsTimer->start(1000);
+	}
+	void receiveModel(string& m, string& t, string& n);
 
-    void itemChanged();
+	void itemChanged();
 };
