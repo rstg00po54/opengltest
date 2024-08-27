@@ -38,25 +38,25 @@
 #include "Mini3DRender.h"
 #include "Mini3DDrawCube.h"
 #include "Mini3DDrawPanel.h"
-//调试打印开关
-#define __DEBUG
+// //调试打印开关
+// #define __DEBUG
  
-#ifdef __DEBUG
+// #ifdef __DEBUG
 
 
-#define MYFILE(x) strrchr(x,'/')?strrchr(x,'/')+1:x
-// windows:
-#define filename(x) strrchr(x,'\\')?strrchr(x,'\\')+1:x
-// linux:
-// #define filename(x) strrchr(x,'/')?strrchr(x,'/')+1:x
-#define pr_debug(format, ...) printf("[%10s][Line: %6d][%s]: \033[32m" format "\033[32;0m\n", filename(__FILE__), __LINE__, __func__, ##__VA_ARGS__)
-#define pr_info(format, ...) printf("[" __FILE__ "][Line: %d][%s]: \033[33m" format "\033[32;0m\n", __LINE__, __func__, ##__VA_ARGS__)
-#define pr_err(format, ...) printf("[" __FILE__ "][Line: %d][%s]: \033[31m" format "\033[32;0m\n", __LINE__, __func__, ##__VA_ARGS__)
-#else
-#define normal_info(format, ...)
-#define warn_info(format, ...)
-#define error_info(format, ...)
-#endif
+// #define MYFILE(x) strrchr(x,'/')?strrchr(x,'/')+1:x
+// // windows:
+// #define filename(x) strrchr(x,'\\')?strrchr(x,'\\')+1:x
+// // linux:
+// // #define filename(x) strrchr(x,'/')?strrchr(x,'/')+1:x
+// #define pr_debug(format, ...) printf("[%10s][Line: %6d][%s]: \033[32m" format "\033[32;0m\n", filename(__FILE__), __LINE__, __func__, ##__VA_ARGS__)
+// #define pr_info(format, ...) printf("[" __FILE__ "][Line: %d][%s]: \033[33m" format "\033[32;0m\n", __LINE__, __func__, ##__VA_ARGS__)
+// #define pr_err(format, ...) printf("[" __FILE__ "][Line: %d][%s]: \033[31m" format "\033[32;0m\n", __LINE__, __func__, ##__VA_ARGS__)
+// #else
+// #define normal_info(format, ...)
+// #define warn_info(format, ...)
+// #define error_info(format, ...)
+// #endif
 
 
 
@@ -240,8 +240,8 @@ int main(void)
 	unsigned char *screen_fb;
 	// uint8_t *bmpBuffer;
 	// readBmpFromFile("./skin_debug.bmp", &bmpFileHeader_p, &bmpInfoHeader_p, &bmpBuffer);
-	readBmpFromFile("./ts0.bmp", &bmpFileHeader_p, &bmpInfoHeader_p, &device.bmpBuffer);
-	// readBmpFromFile("./skin_debug.bmp", &bmpFileHeader_p, &bmpInfoHeader_p, &device.bmpBuffer);
+	// readBmpFromFile("./ts0.bmp", &bmpFileHeader_p, &bmpInfoHeader_p, &device.bmpBuffer);
+	readBmpFromFile("./skin_debug.bmp", &bmpFileHeader_p, &bmpInfoHeader_p, &device.bmpBuffer);
 	displayBmpHeader( &bmpFileHeader_p, &bmpInfoHeader_p);
 	char title[] = "Mini3d (software render tutorial) ";
 		// _T("Left/Right: rotation, Up/Down: forward/backward, Space: switch state");
@@ -504,6 +504,7 @@ int main(void)
 
 		matrix_set_translate(&t->trans, trans.x, trans.y, trans.z);
 		transform_update(t);
+		drawMyLines(&device);
 		// drawMyLines(&device);
 
 		// device_draw_line(&device, 0, 0, 100, 100, device.foreground);

@@ -77,8 +77,9 @@ void device_pixel(device_t *device, int x, int y, IUINT32 color) {
 
 void device_point(device_t *device, int x, int y, IUINT32 color) {
 	int i,j;
-	for(i=-2;i<3;i++){
-		for(j=-2;j<3;j++){
+	int r = 1;
+	for(i=-r;i<r;i++){
+		for(j=-r;j<r;j++){
 			device_pixel(device, x+i, y+j, color);
 
 		}
@@ -172,13 +173,18 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 	int width = device->width;
 	int render_state = device->render_state;
 	if(print == 0){
-		printf("%s y = %d, rhw = %f\n", __func__, scanline->y, scanline->v.rhw);
+		// pr_debug("%s y = %d, rhw = %f\n", __func__, scanline->y, scanline->v.rhw);
 	}
 	for (; w0 > 0; x++, w0--) {
 		if (x >= 0) {
 			float rhw = scanline->v.rhw;
+			float t;
 			// if((print == 0) && (x < (scanline->x+1)))
 			// 	printf("x = %d, rhw = %3.2f\n", x, 1.0f/rhw);
+
+			if(print == 0){
+				// pr_debug("t %3.2f\n", t);
+			}
 			if (rhw >= zbuffer[x]) {	
 				float w = 1.0f / rhw;
 				zbuffer[x] = rhw;
@@ -198,23 +204,48 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 					float u = scanline->v.tc.u * w;
 					float v = scanline->v.tc.v * w;
 					if(print == 0 && w0 == 1){
-						printf("u %f, v %f, w %f, scanline uv %f %f\n", u, v, w, scanline->v.tc.u, scanline->v.tc.v);
+						// pr_debug("u %f, v %f, w %f, scanline uv %f %f\n", u, v, w, scanline->v.tc.u, scanline->v.tc.v);
 					}
 					IUINT32 cc;
+					IUINT32 z;
 					if(device->module != 2) {
 						cc = device_texture_read(device, u, v);
 
 					}else{
-						int z = rhw*255.0f*5;
-						cc = z|(z<<8)|(z<<16);
+						// z = rhw*255.0f*5;
+						// cc = z|(z<<8)|(z<<16);
 
 					}
-			// if((print == 0) && (x < (scanline->x+1)))
-			// 	printf("x = %d, rhw = %3.2f, u = %3.2f, v = %3.2f\n", x, rhw,u,v);
-					// framebuffer[x] = z|(z<<8)|(z<<16);
-					framebuffer[x] = cc;
-					// if(cc == 0)
-					// printf("x = %d\n",x);
+					// scanline->v.spos.x, scanline->v.spos.y, scanline->v.spos.z
+
+					// float  r = sqrt(pow(scanline->v.spos.x, 2.f)+ pow(scanline->v.spos.z, 2.f));
+					// pr_debug("z %3.2f\n", scanline->v.spos.z);
+
+					t = (x-scanline->x)*1.f/scanline->w;
+					point_t pp;
+					// scanline->p0.x *= w;
+					// scanline->p0.z *= w;
+					// scanline->p1.x *= w;
+					// scanline->p1.z *= w;
+
+					pp.x = scanline->p0.x+t*(scanline->p1.x-scanline->p0.x);
+					pp.z = scanline->p0.z+t*(scanline->p1.z-scanline->p0.z);
+					float  r = sqrt(pow(pp.x*w, 2.f)+ pow(pp.z, 2.f));
+					// float  r = pp.z;
+					int  pixs = 0;
+					pixs = r*20;
+					pixs = pixs|(pixs<<8)|(pixs<<16);
+					framebuffer[x] = pixs;
+					if(r<2.f){
+						framebuffer[x] = 0xff;
+					}else if (r<3.f){
+						framebuffer[x] = 0xff00;
+					}else {
+						framebuffer[x] = 0xffffff;
+					}
+						framebuffer[x] = cc;
+
+
 				}
 			}
 		}

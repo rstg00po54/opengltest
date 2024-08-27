@@ -6,11 +6,31 @@
 
 typedef struct { float r, g, b; } color_t;
 typedef struct { float u, v; } texcoord_t;
-typedef struct { point_t pos; texcoord_t tc; color_t color; float rhw; } vertex_t;
+typedef struct { 
+	point_t pos; 
+	point_t spos;
+	texcoord_t tc; 
+	color_t color; 
+	float rhw; 
+} vertex_t;
 
-typedef struct { vertex_t v, v1, v2; } edge_t;//v1 v2是两个顶点
-typedef struct { float top, bottom; edge_t left, right; } trapezoid_t;
-typedef struct { vertex_t v, step; int x, y, w; } scanline_t;
+typedef struct {
+	vertex_t v, v1, v2; 
+} edge_t;//v1 v2是两个顶点
+
+typedef struct {
+	float top, bottom;
+	edge_t left, right;
+	float t;
+	bool isShort;
+} trapezoid_t;
+
+typedef struct { 
+	vertex_t v,step;
+	int x, y, w;
+	// float x0,x1,z0,z1;
+	point_t p0,p1;
+} scanline_t;
 
 void vertex_rhw_init(vertex_t *v);
 void vertex_interp(vertex_t *y, const vertex_t *x1, const vertex_t *x2, float t);
