@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <string.h>
 #include "Mini3DDevice.h"
+#include "Mini3DRender.h"
 #include <SDL2/SDL.h>
 
 // 设备初始化，fb为外部帧缓存，非 NULL 将引用外部帧缓存（每行 4字节对齐）
@@ -172,9 +173,10 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 	int w0 = scanline->w;
 	int width = device->width;
 	int render_state = device->render_state;
-	if(print == 0){
-		// pr_debug("%s y = %d, rhw = %f\n", __func__, scanline->y, scanline->v.rhw);
-	}
+	int i = 0;
+
+
+
 	for (; w0 > 0; x++, w0--) {
 		if (x >= 0) {
 			float rhw = scanline->v.rhw;
@@ -185,9 +187,17 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 			if(print == 0){
 				// pr_debug("t %3.2f\n", t);
 			}
-			if (rhw >= zbuffer[x]) {	
+			if (rhw < zbuffer[x])
+				continue;
+			// if (rhw >= zbuffer[x]) {	
 				float w = 1.0f / rhw;
 				zbuffer[x] = rhw;
+				float p = (x - scanline->x)*1.f/scanline->w;
+				vertex_t pos0 = interp_spos(scanline->p0, scanline->p1, p);
+				float mmm = abs(pos0.spos.x)/10.f;
+				float radis = sqrt(pow(pos0.spos.x, 2.f)+ pow(pos0.spos.z, 2.f));
+				// pr_debug("mmm %3.2f\n", mmm);
+				// framebuffer[x] *= mmm;
 				if (render_state & RENDER_STATE_COLOR) {
 					float r = scanline->v.color.r * w;
 					float g = scanline->v.color.g * w;
@@ -210,46 +220,41 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 					IUINT32 z;
 					if(device->module != 2) {
 						cc = device_texture_read(device, u, v);
+						float m0 = pow(cosf(radis/15.f),5.f);
+						int B = (cc & 0xff)*m0;
+						int G = ((cc>>8) & 0xff)*m0;
+						int R = ((cc>>16) & 0xff)*m0;
+						framebuffer[x] = (R << 16) | (G << 8) | (B);
+						// framebuffer[x] = mmm * 255.f;
 
 					}else{
 						// z = rhw*255.0f*5;
 						// cc = z|(z<<8)|(z<<16);
 
 					}
-					// scanline->v.spos.x, scanline->v.spos.y, scanline->v.spos.z
 
-					// float  r = sqrt(pow(scanline->v.spos.x, 2.f)+ pow(scanline->v.spos.z, 2.f));
-					// pr_debug("z %3.2f\n", scanline->v.spos.z);
-
-					t = (x-scanline->x)*1.f/scanline->w;
-					point_t pp;
-					// scanline->p0.x *= w;
-					// scanline->p0.z *= w;
-					// scanline->p1.x *= w;
-					// scanline->p1.z *= w;
-
-					pp.x = scanline->p0.x+t*(scanline->p1.x-scanline->p0.x);
-					pp.z = scanline->p0.z+t*(scanline->p1.z-scanline->p0.z);
-					float  r = sqrt(pow(pp.x*w, 2.f)+ pow(pp.z, 2.f));
-					// float  r = pp.z;
-					int  pixs = 0;
-					pixs = r*20;
-					pixs = pixs|(pixs<<8)|(pixs<<16);
-					framebuffer[x] = pixs;
-					if(r<2.f){
+					if(x == scanline->x+10){
+					// device_point(device, scanline->p1.pos.x, scanline->p1.pos.y, 0xff00);
 						framebuffer[x] = 0xff;
-					}else if (r<3.f){
-						framebuffer[x] = 0xff00;
-					}else {
-						framebuffer[x] = 0xffffff;
 					}
-						framebuffer[x] = cc;
+
+
+					// if (pos0.spos.x < 0.f){
+					// 	framebuffer[x] = 0xff00;
+					// }
+					// if (pos0.spos.z < 0.f){
+					// 	framebuffer[x] = 0xff00;
+					// }
 
 
 				}
-			}
+			// }
 		}
 		vertex_add(&scanline->v, &scanline->step);
 		if (x >= width) break;
+	}
+
+	for(i = 0;i<10;i++) {
+		framebuffer[scanline->x+i-20] = 0xff00;
 	}
 }

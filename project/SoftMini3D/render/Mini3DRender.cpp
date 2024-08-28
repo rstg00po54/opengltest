@@ -37,6 +37,45 @@ int print;
 // 	// if(print == 0)
 // 	// 	printf("scanline %3.2f\n", scanline->v.rhw);
 // }
+
+						/*
+						|-------------->  x
+						|    v1
+						|   /t1
+						|  / v
+						| /
+						|v2
+						y
+						*/
+vertex_t interp_spos(vertex_t v1, vertex_t v2, float t) {
+	float x_target = interp(v1.pos.x, v2.pos.x, t);
+	float y_target = interp(v1.pos.y, v2.pos.y, t);
+	vertex_t p;
+
+	// 计算插值参数
+	float p_x = (x_target - v1.pos.x) / (v2.pos.x - v1.pos.x);
+	float p_y = (y_target - v1.pos.y) / (v2.pos.y - v1.pos.y);
+
+	// 线性插值透视齐次坐标
+	float rhw_target = interp(v1.rhw ,v2.rhw ,p_x);
+
+	// 线性插值实际三维坐标
+	float x_target_w = interp(v1.spos.x*v1.rhw, v2.spos.x*v2.rhw, p_x);
+	float z_target_w = interp(v1.spos.z*v1.rhw, v2.spos.z*v2.rhw, p_x);
+
+	// 
+	// float w = 10.f/4;
+	// 应用透视校正
+	p.spos.x = x_target_w / rhw_target;
+	// float y_real = y_target_w * rhw_target;
+	p.spos.z = z_target_w / rhw_target;
+	p.rhw = rhw_target;
+
+	p.pos.x = x_target;
+	p.pos.y = y_target;
+	return p;
+
+}
 /*
 lv2   rv2
 -------
@@ -48,7 +87,11 @@ lv\---| rv
 	 \
 lv1   rv1
 */
-
+/*
+p3--t1.bottom
+p2--t0.bottom t1.top
+p1--t0.top		
+*/	
 // 主渲染函数
 void device_render_trap(device_t *device, trapezoid_t *trap) {
 	scanline_t scanline;
@@ -66,7 +109,7 @@ void device_render_trap(device_t *device, trapezoid_t *trap) {
 		}
 		if (j >= 0 && j < device->height) {
 			// trapezoid_edge_interp(trap, (float)j + 0.5f);
-			{
+			// {
 				//=====================================================================
 				// 按照 Y 坐标计算出左右两条边纵坐标等于 Y 的顶点
 				// static void trapezoid_edge_interp(trapezoid_t *trap, float y) {
@@ -79,93 +122,32 @@ void device_render_trap(device_t *device, trapezoid_t *trap) {
 
 				vertex_interp(&trap->left.v, &trap->left.v1, &trap->left.v2, t1);
 				vertex_interp(&trap->right.v, &trap->right.v1, &trap->right.v2, t2);
-				if(trap->t != 0){
-					if(trap->isShort){ // Right
-						// t = interp(trap->right.v1.spos.z, trap->right.v2.spos.z, trap->t);
-						// scanline.p0.x = interp(trap->left.v1.spos.z, trap->left.v2.spos.z, t01);
-						// scanline.p1.x = interp(trap->right.v1.spos.z, trap->right.v2.spos.z, t01*t02);
-					}else{ // Left
-
-						point_t sposv1 = trap->left.v1.spos;
-						point_t sposv2 = trap->left.v2.spos;
-						vertex_t v1 = trap->left.v1; 
-						vertex_t v2 = trap->left.v2; 
-						/*
-						|-------------->  x
-						|    v1
-						|   /t1
-						|  / v
-						| /
-						|v2
-						y
-						*/
-// ------------------------------------------------
-
-						float x_target = interp(v1.pos.x, v2.pos.x, t1);
-						float y_target = interp(v1.pos.y, v2.pos.y, t1);
-
-						// 计算插值参数
-						float p_x = (x_target - v1.pos.x) / (v2.pos.x - v1.pos.x);
-						float p_y = (y_target - v1.pos.y) / (v2.pos.y - v1.pos.y);
-
-						// 线性插值透视齐次坐标
-						float rhw_target = interp(v1.rhw ,v2.rhw ,p_x);
-
-						// 线性插值实际三维坐标
-
-						float x_target_w = interp(v1.spos.x*v1.rhw, v2.spos.x*v2.rhw, p_x);
-						float z_target_w = interp(v1.spos.z*v1.rhw, v2.spos.z*v2.rhw, p_x);
-
-						// 
-						float w = 10.f/4;
-						float target_w = interp(v1.spos.z*v1.rhw, v2.spos.z*v2.rhw, w);
-						float target = interp(v1.rhw ,v2.rhw , w);
-						// 应用透视校正
-						float x_real = x_target_w / rhw_target;
-						// float y_real = y_target_w * rhw_target;
-						float z_real = z_target_w / rhw_target;
-
-						if(z_real > z_max)
-							z_max = z_real;
-						if(z_real < z_min)
-							z_min = z_real;
+				// if(trap->t != 0) {
+					vertex_t v1l = trap->left.v1; 
+					vertex_t v2l = trap->left.v2; 
+					vertex_t v1r = trap->right.v1; 
+					vertex_t v2r = trap->right.v2; 
+					vertex_t sposleft = interp_spos(v1l,v2l,t1);
+					vertex_t sposright = interp_spos(v1r,v2r,t2);
 
 
-						if (z_real <(w)){
-							device_point(device, x_target, y_target, 0xff00);
-						}
-						// pr_debug("z %3.2f\n", z_real);
-					}
-/*
-p3--t1.bottom
-p2--t0.bottom t1.top
-p1--t0.top		
-*/	
-					if (j == ((top+bottom)/2)) {
-						ImGui::SliderFloat3("leftv1", (float *)&trap->left.v1.spos, -10.f, 10.0f);
-						ImGui::SliderFloat3("leftv2", (float *)&trap->left.v2.spos, -10.f, 10.0f);
-						ImGui::SliderFloat3("rightv1", (float *)&trap->right.v1.spos, -10.f, 10.0f);
-						ImGui::SliderFloat3("rightv2", (float *)&trap->right.v2.spos, -10.f, 10.0f);
-						ImGui::SliderFloat("t1", (float *)&t1, -10.f, 10.0f);
-						ImGui::SliderFloat("t2", (float *)&t2, -10.f, 10.0f);
-						ImGui::SliderFloat3("x0", (float *)&scanline.p0, -10.f, 10.0f);
-						ImGui::SliderFloat3("x1", (float *)&scanline.p1, -10.f, 10.0f);
-						ImGui::SliderInt("top    ", &top, -10.f, 10.0f);
-						ImGui::SliderInt("bottom    ", &bottom, -10.f, 10.0f);
-						ImGui::SliderInt("j    ", &j, -10.f, 10.0f);
+					// float x_target_l = interp(v1l.pos.x, v2l.pos.x, t1);
+					// float y_target_l = interp(v1l.pos.y, v2l.pos.y, t1);
 
-
-
-
-						// ImGui::Text("t01 %3.2f t02 %3.2f x1 %3.2f %c", t01, t02, scanline.x1, trap->isShort?'R':'L');
-						// ImGui::Text("x0 %3.2f/%3.2f", scanline.x0, scanline.x1);
-
-					}
-				}
+					// float x_target_r = interp(v1r.pos.x, v2r.pos.x, t2);
+					// float y_target_r = interp(v1r.pos.y, v2r.pos.y, t2);
+					// float w = 10.f/4;
+					// if (sposleft.spos.z >(w)){
+					// 	device_point(device, x_target_l, y_target_l, 0xff00);
+					// }
+					// if (sposright.spos.z >(w)){
+					// 	device_point(device, x_target_r, y_target_r, 0xff00);
+					// }
+				// }
 // }
-			}
+			// }
 			// trapezoid_init_scan_line(trap, &scanline, j);
-			{
+			// {
 				// 根据左右两边的端点，初始化计算出扫描线的起点和步长
 			// static void trapezoid_init_scan_line(const trapezoid_t *trap, scanline_t *scanline, int y) {
 				float width = trap->right.v.pos.x - trap->left.v.pos.x;
@@ -173,6 +155,9 @@ p1--t0.top
 				scanline.w = (int)(trap->right.v.pos.x + 0.5f) - scanline.x;
 				scanline.y = j;
 				scanline.v = trap->left.v;
+				scanline.p0 = sposleft;
+				scanline.p1 = sposright;
+
 				if(print == 0){
 					pr_debug("y = %d, rhw = %3.2F\n", j, trap->left.v.rhw);
 				}
@@ -181,7 +166,7 @@ p1--t0.top
 				// if(print == 0)
 				// 	printf("scanline %3.2f\n", scanline->v.rhw);
 			// }
-			}
+			// }
 			// if(print == 0) pr_debug("%3.2f/%3.2f/%3.2f\n", scanline.v.spos.x, scanline.v.spos.y, scanline.v.spos.z);
 
 			device_draw_scanline(device, &scanline);

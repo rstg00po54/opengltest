@@ -8,7 +8,9 @@
 int CMID(int x, int min, int max) { return (x < min)? min : ((x > max)? max : x); }
 
 // 计算插值：t 为 [0, 1] 之间的数值
-float interp(float x1, float x2, float t) { return x1 + (x2 - x1) * t; }
+float interp(float x1, float x2, float t) {
+	return x1 + (x2 - x1) * t;
+}
 
 // | v |
 float vector_length(const vector_t *v) {

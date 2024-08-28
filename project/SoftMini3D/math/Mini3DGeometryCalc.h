@@ -29,7 +29,7 @@ typedef struct {
 	vertex_t v,step;
 	int x, y, w;
 	// float x0,x1,z0,z1;
-	point_t p0,p1;
+	vertex_t p0,p1;
 } scanline_t;
 
 void vertex_rhw_init(vertex_t *v);

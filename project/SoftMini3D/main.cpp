@@ -38,6 +38,7 @@
 #include "Mini3DRender.h"
 #include "Mini3DDrawCube.h"
 #include "Mini3DDrawPanel.h"
+#include "SDL2/SDL_ttf.h"
 // //调试打印开关
 // #define __DEBUG
  
@@ -72,18 +73,19 @@ int output_length = 0;
 char buffer_text[1024];
 
 SDL_Texture* texture;
+SDL_Texture* textureText;
 SDL_Renderer* renderer;
 int pitch;
 
 // 定义一个函数，将字符串追加到全局数组中
 void append_to_output(const char *format, ...) {
-    va_list args;
-    va_start(args, format);
+	va_list args;
+	va_start(args, format);
 
-    // 在output中追加字符串
-    output_length += vsnprintf(output + output_length, MAX_OUTPUT_SIZE - output_length, format, args);
+	// 在output中追加字符串
+	output_length += vsnprintf(output + output_length, MAX_OUTPUT_SIZE - output_length, format, args);
 
-    va_end(args);
+	va_end(args);
 }
 #define PRINT_POINT(c1) append_to_output(#c1);append_to_output(":%3.2f %3.2f %3.2f %3.f\n", c1.x, c1.y, c1.z, c1.w);
 // #define PRINTF_POINT(c1) printf(#c1);printf(":% 3.2f % 3.2f % 3.2f % 3.2f\n", c1.x, c1.y, c1.z, c1.w);
@@ -115,9 +117,54 @@ SDL_Window* window;
 // ImGuiIO &io;
 int screen_init(int w, int h, const char *title, unsigned char **screen_fb) {
 	SDL_Init(SDL_INIT_VIDEO);
+	if (TTF_Init() == -1) {
+		pr_debug( "TTF_Init Error: " , TTF_GetError() );
+		SDL_Quit();
+		return 1;
+	}
+
 	window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, h, SDL_WINDOW_SHOWN);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_STREAMING, w, h);
+
+	// 创建字体
+    // TTF_Font* font = TTF_OpenFont("arial.ttf", 50);
+    TTF_Font* font = TTF_OpenFontDPI("simsun.ttc", 16, 500, 500);
+	if (font == nullptr) {
+        pr_debug( "TTF_OpenFont Error: " ) ;
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        TTF_Quit();
+        SDL_Quit();
+        return 1;
+    }
+// TTF_SetFontHinting(font, TTF_HINTING_LIGHT );
+	    // 创建字体颜色
+    SDL_Color textColor = {255, 255, 255}; // 白色
+
+    // 渲染文本
+    SDL_Surface* textSurface = TTF_RenderText_Solid(font, "abcd", textColor);
+    if (textSurface == nullptr) {
+        printf("TTF_RenderText_Solid Error: %s\n", TTF_GetError());
+        TTF_CloseFont(font);
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        TTF_Quit();
+        SDL_Quit();
+        return 1;
+    }
+   textureText = SDL_CreateTextureFromSurface(renderer, textSurface);
+    SDL_FreeSurface(textSurface);
+    if (texture == nullptr) {
+        printf("SDL_CreateTextureFromSurface Error: %s\n", SDL_GetError());
+        TTF_CloseFont(font);
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        TTF_Quit();
+        SDL_Quit();
+        return 1;
+    }
+
 	// unsigned char **p = &screen_fb;
 	SDL_LockTexture(texture, NULL, (void **)screen_fb, &pitch);
 	SDL_UnlockTexture(texture);
@@ -210,18 +257,18 @@ void init_texture(device_t *device, uint8_t *buffer) {
 }
 union FloatInt
 {
-    int    i;
-    float           f;
+	int    i;
+	float           f;
 };
 int FloatToInt(float f)
 {
-    FloatInt ret, bias;
-    ret.f = f;
-    bias.i = (23 + 127) << 23;
-    if(f < 0.0f){bias.i = ((23 + 127) << 23) + (1 << 22);}
-    ret.f += bias.f;
-    ret.i -= bias.i;
-    return ret.i;
+	FloatInt ret, bias;
+	ret.f = f;
+	bias.i = (23 + 127) << 23;
+	if(f < 0.0f){bias.i = ((23 + 127) << 23) + (1 << 22);}
+	ret.f += bias.f;
+	ret.i -= bias.i;
+	return ret.i;
 }
 #undef main
 int main(void)
@@ -532,7 +579,11 @@ int main(void)
 		// SDL_Delay(30);
 		// 渲染纹理
 		SDL_RenderClear(renderer);
-		SDL_RenderCopy(renderer, texture, NULL, NULL);
+		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+
+		// 设置文本的位置和大小
+        SDL_Rect renderQuad = {400, 100, 16*4, 16}; // x, y, w, h
+        SDL_RenderCopy(renderer, textureText, nullptr, &renderQuad);
 		ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
 		SDL_RenderPresent(renderer);
 		// SDL_Delay(300);
