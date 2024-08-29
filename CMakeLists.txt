@@ -35,6 +35,7 @@ add_subdirectory(project/Trangle)
 add_subdirectory(project/imguiDemo)
 add_subdirectory(project/SoftMini3D)
 add_subdirectory(project/qt-renderer-master)
+add_subdirectory(project/OpenCL)
 
 
 find_package(glfw3 REQUIRED)
