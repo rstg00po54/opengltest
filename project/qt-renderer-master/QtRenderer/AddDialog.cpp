@@ -23,16 +23,16 @@ AddDialog::AddDialog() {
 	// 	this->close();
 	// 	});
 }
-void AddDialog::load() {
-	ui.modelFile->setText(QFileInfo(model).baseName());
-	ui.normalFile->setText("-");
-	ui.textureFile->setText("-");
-	// model.clear();
-	normal.clear();
-	texture.clear();
+// void AddDialog::load() {
+// 	ui.modelFile->setText(QFileInfo(model).baseName());
+// 	ui.normalFile->setText("-");
+// 	ui.textureFile->setText("-");
+// 	// model.clear();
+// 	normal.clear();
+// 	texture.clear();
 
-	show();
-}
+// 	show();
+// }
 void AddDialog::selectModel() {
 	// model = fd->getOpenFileName(this, u8"Select Module", "./", "*.obj");
 	// if(model.isEmpty()){

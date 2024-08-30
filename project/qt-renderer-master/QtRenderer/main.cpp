@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 {
 	Renderer render;
 	int count = 10;
-	string m("bunny.obj");
+	string m("plane.obj");
 	// string m("bunny.obj");
 	string t,n;
 	int ret = render.addModel(m, t, n);
@@ -112,8 +112,9 @@ int main(int argc, char *argv[])
 
 
 
-		// memcpy(pixelData, b, 800*600*3);
-
+#if 0
+		memcpy(pixelData, b, 800*600*3);
+#else
 		for (int y = 0; y < 600; ++y) {
 			for (int x = 0; x < 800; ++x) {
 		// pixel 4 byte
@@ -128,7 +129,7 @@ int main(int argc, char *argv[])
 		// 		// printf("0x%x, x %d, y %d\n", pixelData[y*device.width+x],x,y);
 			}
 		}
-
+#endif
 				// 解锁纹理
 		SDL_UnlockTexture(texture);
 		// 渲染纹理

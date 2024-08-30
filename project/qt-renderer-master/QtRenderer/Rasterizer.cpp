@@ -158,13 +158,15 @@ void Rasterizer::drawTriangle(const Triangle& t, const Scene* scene) {
 	// pr_debug("%3.2f/%3.2f/%3.2f", t.vertices[2].x(), t.vertices[2].y(), t.vertices[2].z());
 	// printf("w %d, h %d \n", right-left, top-bottom);
 	// int64_t begin =  getTimestamp();
-
+	int inTra = 0;
+	int outTra = 0;
 	for (int y = bottom; y <= top; y++) {
 		int64_t begin =  getTimestamp();
 		int64_t end;
 		for (int x = left; x <= right; x++) {
 			auto [alpha, beta, gamma] = computeBarycentric2D(x + 0.5, y + 0.5, t.vertices);
 			if (alpha > 0 && beta > 0 && gamma > 0) {
+				inTra++;
 				float Z = 1.0 / (alpha / t.vertices[0].w() + beta / t.vertices[1].w() + gamma / t.vertices[2].w());
 				/*
 				float zp = alpha * t.vertices[0].z() / t.vertices[0].w() + beta * t.vertices[1].z() / t.vertices[1].w() + gamma * t.vertices[2].z() / t.vertices[2].w();
@@ -188,10 +190,12 @@ void Rasterizer::drawTriangle(const Triangle& t, const Scene* scene) {
 					setPixel(x, y, color);
 					depthBuffer[index] = zp;
 				}
+			}else{
+				outTra++;
 			}
 		}
 		end = getTimestamp();
-		// pr_debug("time %d ms", end-begin);
+		pr_debug("time %d ms, hit %d/%d", end-begin, inTra, outTra);
 	}
 	// printf("%s ---\n", __func__);
 }
@@ -389,6 +393,7 @@ transformed_vertex = MVP * in_vertex
 
 			for (auto& t : triangles) {
 				//Perspective Divide
+				//   1/w
 				for (auto& vec : t.vertices) {
 					vec[0] /= vec[3];
 					vec[1] /= vec[3];
