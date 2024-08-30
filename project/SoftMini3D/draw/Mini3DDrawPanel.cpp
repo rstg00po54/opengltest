@@ -47,7 +47,7 @@ static void draw_plane(device_t *device, int a, int b, int c, int d, int count) 
 	p4.tc.u = u[1];
 	p4.tc.v = v[0];
 	device_draw_triangle(device, &p1, &p2, &p3);
-	// device_draw_triangle(device, &p3, &p4, &p1);
+	device_draw_triangle(device, &p3, &p4, &p1);
 }
 void draw_panel(device_t *device) {
     device->module = 1;

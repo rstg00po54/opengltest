@@ -22,6 +22,8 @@ void matrix_set_translate(matrix_t *m, float x, float y, float z);
 void matrix_set_Quaternion(matrix_t *m, vector_t quat);
 
 void matrix_set_zero(matrix_t *m);
+void vector_normalize(vector_t *v);
+float vector_length(const vector_t *v);
 
 void vector_add(vector_t *z, const vector_t *x, const vector_t *y);
 void vector_sub(vector_t *z, const vector_t *x, const vector_t *y);

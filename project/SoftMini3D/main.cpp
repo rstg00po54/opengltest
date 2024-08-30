@@ -312,7 +312,7 @@ int main(void)
 	SDL_Event e;
 	SDL_Keycode key;
 	vector_t pos = {0,0,-1,1};
-	point_t camera  = { 0, 0, 10, 1 };//相机位置eye
+	point_t camera  = { 0, 10, 10, 1 };//相机位置eye
 	point_t target  = { 0, 0, 0, 1 };//观察目标 at
 	point_t up  = { 0, 1, 0, 1 };
 	int mouse_state = 0;

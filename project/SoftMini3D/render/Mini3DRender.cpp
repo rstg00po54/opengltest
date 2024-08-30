@@ -47,6 +47,8 @@ int print;
 						|v2
 						y
 						*/
+static vector_t LightPoint = {0,1.f,0};
+static vector_t LightDir = {0,-1.f,0};
 vertex_t interp_spos(vertex_t v1, vertex_t v2, float t) {
 	float x_target = interp(v1.pos.x, v2.pos.x, t);
 	float y_target = interp(v1.pos.y, v2.pos.y, t);
@@ -61,13 +63,14 @@ vertex_t interp_spos(vertex_t v1, vertex_t v2, float t) {
 
 	// 线性插值实际三维坐标
 	float x_target_w = interp(v1.spos.x*v1.rhw, v2.spos.x*v2.rhw, p_x);
+	float y_target_w = interp(v1.spos.y*v1.rhw, v2.spos.y*v2.rhw, p_x);
 	float z_target_w = interp(v1.spos.z*v1.rhw, v2.spos.z*v2.rhw, p_x);
 
 	// 
 	// float w = 10.f/4;
 	// 应用透视校正
 	p.spos.x = x_target_w / rhw_target;
-	// float y_real = y_target_w * rhw_target;
+	p.spos.y = y_target_w / rhw_target;
 	p.spos.z = z_target_w / rhw_target;
 	p.rhw = rhw_target;
 
@@ -105,7 +108,7 @@ void device_render_trap(device_t *device, trapezoid_t *trap) {
 		// 	printf("draw %d line, %3.2f\n", j, trap->left.v.rhw);
 		// }
 		if(print == 0){
-			pr_debug("---\n");
+			// pr_debug("---\n");
 		}
 		if (j >= 0 && j < device->height) {
 			// trapezoid_edge_interp(trap, (float)j + 0.5f);
@@ -157,9 +160,10 @@ void device_render_trap(device_t *device, trapezoid_t *trap) {
 				scanline.v = trap->left.v;
 				scanline.p0 = sposleft;
 				scanline.p1 = sposright;
-
+				scanline.lightdir = LightDir;
+				scanline.lightpoint = LightPoint;
 				if(print == 0){
-					pr_debug("y = %d, rhw = %3.2F\n", j, trap->left.v.rhw);
+					// pr_debug("y = %d, rhw = %3.2F\n", j, trap->left.v.rhw);
 				}
 				if (trap->left.v.pos.x >= trap->right.v.pos.x) scanline.w = 0;
 				vertex_division(&scanline.step, &trap->left.v, &trap->right.v, width);
@@ -285,7 +289,7 @@ void device_draw_triangle(device_t *device,
 
 	int render_state = device->render_state;
 
-	ImGui::Begin("Hello");
+	ImGui::Begin("device_draw_triangle");
 
 	// 按照 Transform 变化
 	// transform_apply(&device->transform, &c1, &v1->pos);
@@ -356,7 +360,8 @@ void device_draw_triangle(device_t *device,
 		// printf("n=%d\n",n);
 		// ImGui::SliderFloat4("t1", (float *)&t1.pos,0,1);
 		// ImGui::SliderFloat4("t2", (float *)&t2.pos,0,1);
-		// ImGui::SliderFloat4("t3", (float *)&t3.pos,0,1);
+		ImGui::SliderFloat4("LightDir", (float *)&LightDir,-10,10);
+		ImGui::SliderFloat4("LightPoint", (float *)&LightPoint,-10,10);
 		// ImGui::SliderInt("n", (int *)&n, -3, 3);
 		static bool v, v1, v2;
 		// ImGui::Checkbox("v", &v);
@@ -365,7 +370,7 @@ void device_draw_triangle(device_t *device,
 		if (n >= 1) {
 			device_render_trap(device, &traps[0]);
 		}
-		// if (n >= 2) device_render_trap(device, &traps[1]);
+		if (n >= 2) device_render_trap(device, &traps[1]);
 
 
 		if(n>=1){
@@ -508,8 +513,7 @@ void device_draw_triangle(device_t *device,
 					// }
 				}
 				// pr_debug("%3.2f/%3.2f\n",pmin, pmax);
-				ImGui::SliderFloat2("pvalue", (float *)pvalue,0,1);
-				ImGui::SliderFloat("x_realmax", (float *)&x_realmax,-10,10);
+
 #endif
 
 

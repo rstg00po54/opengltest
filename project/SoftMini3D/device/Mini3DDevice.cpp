@@ -164,6 +164,39 @@ IUINT32 device_texture_read(const device_t *device, float u, float v) {
 	// }
 	return value;
 }
+/*
+
+光源方向通常由一个单位向量 D
+目标点到光源的向量 L
+P是目标点的坐标，
+S是光源的位置。
+L=P−S
+cos(θ)= L⋅D / |L||D|
+I = I0 * cos(θ)²/d²
+L⋅D
+​
+*/
+ 
+// vector_sub(&light, &light, &lightpoint);
+// vector_normalize(&light);
+// vector_normalize(&lightdir);
+// float vout = vector_dotproduct(&lightdir, &normal);
+float calcLight(point_t pos, point_t lightpoint, point_t lightdir) {
+	float I;
+	float I0 = 10;
+	point_t light;
+	vector_sub(&light, &pos, &lightpoint);
+	vector_normalize(&light);
+	vector_normalize(&lightdir);
+	float theta = vector_dotproduct(&lightdir, &light);
+	if(theta<0)
+		theta = 0;
+	float d = vector_length(&light);
+	I =  pow(theta, 6.f)/(d*d);
+
+	return I;
+}
+
 extern int print;
 // 绘制扫描线
 void device_draw_scanline(device_t *device, scanline_t *scanline) {
@@ -193,11 +226,18 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 				float w = 1.0f / rhw;
 				zbuffer[x] = rhw;
 				float p = (x - scanline->x)*1.f/scanline->w;
+
+
 				vertex_t pos0 = interp_spos(scanline->p0, scanline->p1, p);
-				float mmm = abs(pos0.spos.x)/10.f;
-				float radis = sqrt(pow(pos0.spos.x, 2.f)+ pow(pos0.spos.z, 2.f));
+				vector_t lightpoint = scanline->lightpoint;
+				vector_t lightdir = scanline->lightdir;
+				point_t normal = {0,1.f,0};
+
 				// pr_debug("mmm %3.2f\n", mmm);
 				// framebuffer[x] *= mmm;
+				float mmm = calcLight(pos0.spos, lightpoint, lightdir);
+				if(mmm > 1)
+					pr_debug("%3.2f\n", mmm);
 				if (render_state & RENDER_STATE_COLOR) {
 					float r = scanline->v.color.r * w;
 					float g = scanline->v.color.g * w;
@@ -220,7 +260,8 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 					IUINT32 z;
 					if(device->module != 2) {
 						cc = device_texture_read(device, u, v);
-						float m0 = pow(cosf(radis/15.f),5.f);
+						// float m0 = pow(cosf(vout/15.f),5.f);
+						float m0 = mmm;
 						int B = (cc & 0xff)*m0;
 						int G = ((cc>>8) & 0xff)*m0;
 						int R = ((cc>>16) & 0xff)*m0;
@@ -233,10 +274,10 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 
 					}
 
-					if(x == scanline->x+10){
-					// device_point(device, scanline->p1.pos.x, scanline->p1.pos.y, 0xff00);
-						framebuffer[x] = 0xff;
-					}
+					// if(x == scanline->x+10){
+					// // device_point(device, scanline->p1.pos.x, scanline->p1.pos.y, 0xff00);
+					// 	framebuffer[x] = 0xff;
+					// }
 
 
 					// if (pos0.spos.x < 0.f){
@@ -254,7 +295,7 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 		if (x >= width) break;
 	}
 
-	for(i = 0;i<10;i++) {
-		framebuffer[scanline->x+i-20] = 0xff00;
-	}
+	// for(i = 0;i<10;i++) {
+	// 	framebuffer[scanline->x+i-20] = 0xff00;
+	// }
 }

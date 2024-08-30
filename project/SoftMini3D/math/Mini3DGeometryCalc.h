@@ -30,6 +30,8 @@ typedef struct {
 	int x, y, w;
 	// float x0,x1,z0,z1;
 	vertex_t p0,p1;
+	vector_t lightpoint;
+	vector_t lightdir;
 } scanline_t;
 
 void vertex_rhw_init(vertex_t *v);

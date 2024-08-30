@@ -232,7 +232,7 @@ void drawTestLines(device_t *device) {
 #endif
 void drawMyLines(device_t *device) {
 
-	ImGui::Begin("draw_box");
+	// ImGui::Begin("draw_box");
 
 
 	static float x = 1.0f;
@@ -295,5 +295,5 @@ void drawMyLines(device_t *device) {
 	}
 	// drawTestLines(device);
 	device_draw_line(device, 0.f, 0.f, 400.f, 400.f, 0);
-	ImGui::End();
+	// ImGui::End();
 }
