@@ -38,6 +38,7 @@
 #include "Mini3DRender.h"
 #include "Mini3DDrawCube.h"
 #include "Mini3DDrawPanel.h"
+#include "Mini3DDrawCircle.h"
 #include "SDL2/SDL_ttf.h"
 // //调试打印开关
 // #define __DEBUG
@@ -465,7 +466,7 @@ int main(void)
 		ImGui::SliderFloat3("trans", (float *)&trans, -3.0f, 3.0f);
 
 		char *items[] = {"渲染纹理", "渲染颜色","渲染线框"};
-		static int curIndex = 0;
+		static int curIndex = 2;
 
 		ImGui::Combo("mode", &curIndex, items, 3);
 
@@ -547,7 +548,8 @@ int main(void)
 		ImGui::SliderFloat("rotate_box", (float *)&rotate_box, -10.f, 10.0f);
 #endif
 		// draw_cube(&device);
-		draw_panel(&device);
+		// draw_panel(&device);
+		draw_circle(&device);
 
 		matrix_set_translate(&t->trans, trans.x, trans.y, trans.z);
 		transform_update(t);

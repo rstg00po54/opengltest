@@ -265,9 +265,9 @@ void drawMyLines(device_t *device) {
 	int len = sizeof(psrc)/sizeof(psrc[0]);
 	for(int i = 0;i<len;i++) {
 
-#if 1
 		matrix_apply( &p[0], &psrc[i][0], &device->transform.mvp);
 		matrix_apply( &p[1], &psrc[i][1], &device->transform.mvp);
+#if 0
 		// p[0].z = -p[0].z;
 		// p[1].z = -p[1].z;
         transform_homogenize(&device->transform, &phome[0], &p[0]);
@@ -276,7 +276,7 @@ void drawMyLines(device_t *device) {
 #else
         // p[0] = calcM(psrc[i][0],device);
         // p[1] = calcM(psrc[i][1],device);
-		// transform_Normalization(&device->transform,&phome[0], &phome[1], &p[0], &p[1]);
+		transform_Normalization(&device->transform,&phome[0], &phome[1], &p[0], &p[1]);
 
 #endif
         float rhw = 1.0f / p[1].w;
