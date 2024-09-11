@@ -19,7 +19,8 @@
 #include <math.h>
 #include <assert.h>
 #include <string.h> //strrchr()函数所需头文件
-
+#include <iostream>
+#include <fstream>
 // #include <windows.h>
 // #include <tchar.h>
 #include <SDL2/SDL.h>
@@ -72,10 +73,10 @@ char output[MAX_OUTPUT_SIZE] = {0};
 int output_length = 0;
 
 char buffer_text[1024];
-
-SDL_Texture* texture;
+static void DumpSurfaceToFile(SDL_Surface* surface, const char* filename) ;
+// SDL_Texture* texture;
 SDL_Texture* textureText;
-SDL_Renderer* renderer;
+// SDL_Renderer* renderer;
 int pitch;
 
 // 定义一个函数，将字符串追加到全局数组中
@@ -91,17 +92,7 @@ void append_to_output(const char *format, ...) {
 #define PRINT_POINT(c1) append_to_output(#c1);append_to_output(":%3.2f %3.2f %3.2f %3.f\n", c1.x, c1.y, c1.z, c1.w);
 // #define PRINTF_POINT(c1) printf(#c1);printf(":% 3.2f % 3.2f % 3.2f % 3.2f\n", c1.x, c1.y, c1.z, c1.w);
 #define PRINTF_POINT(c1) 
-
-
-
 IUINT32 device_texture_read(const device_t *device, float u, float v);
-
-
-
-
-
-
-
 
 //=====================================================================
 // Win32 窗口及图形绘制：为 device 提供一个 DibSection 的 FB
@@ -116,7 +107,7 @@ long screen_pitch = 0;
 
 SDL_Window* window;
 // ImGuiIO &io;
-int screen_init(int w, int h, const char *title, unsigned char **screen_fb) {
+int screen_init(device_t *device, int w, int h, const char *title, unsigned char **screen_fb) {
 	SDL_Init(SDL_INIT_VIDEO);
 	if (TTF_Init() == -1) {
 		pr_debug( "TTF_Init Error: " , TTF_GetError() );
@@ -125,15 +116,15 @@ int screen_init(int w, int h, const char *title, unsigned char **screen_fb) {
 	}
 
 	window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, h, SDL_WINDOW_SHOWN);
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_STREAMING, w, h);
+	device->renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	device->sdltexture = SDL_CreateTexture(device->renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_STREAMING, w, h);
 
 	// 创建字体
-    // TTF_Font* font = TTF_OpenFont("arial.ttf", 50);
-    TTF_Font* font = TTF_OpenFontDPI("simsun.ttc", 16, 500, 500);
-	if (font == nullptr) {
+    device->font = TTF_OpenFont("arial.ttf", 50);
+    // device->font = TTF_OpenFontDPI("simsun.ttc", 16, 500, 500);
+	if (device->font == nullptr) {
         pr_debug( "TTF_OpenFont Error: " ) ;
-        SDL_DestroyRenderer(renderer);
+        SDL_DestroyRenderer(device->renderer);
         SDL_DestroyWindow(window);
         TTF_Quit();
         SDL_Quit();
@@ -144,22 +135,23 @@ int screen_init(int w, int h, const char *title, unsigned char **screen_fb) {
     SDL_Color textColor = {255, 255, 255}; // 白色
 
     // 渲染文本
-    SDL_Surface* textSurface = TTF_RenderText_Solid(font, "abcd", textColor);
+    SDL_Surface* textSurface = TTF_RenderText_Solid(device->font, "abcd", textColor);
     if (textSurface == nullptr) {
         printf("TTF_RenderText_Solid Error: %s\n", TTF_GetError());
-        TTF_CloseFont(font);
-        SDL_DestroyRenderer(renderer);
+        TTF_CloseFont(device->font);
+        SDL_DestroyRenderer(device->renderer);
         SDL_DestroyWindow(window);
         TTF_Quit();
         SDL_Quit();
         return 1;
     }
-   textureText = SDL_CreateTextureFromSurface(renderer, textSurface);
+   textureText = SDL_CreateTextureFromSurface(device->renderer, textSurface);
+   DumpSurfaceToFile(textSurface, "main.yuv");
     SDL_FreeSurface(textSurface);
-    if (texture == nullptr) {
+    if (textureText == nullptr) {
         printf("SDL_CreateTextureFromSurface Error: %s\n", SDL_GetError());
-        TTF_CloseFont(font);
-        SDL_DestroyRenderer(renderer);
+        TTF_CloseFont(device->font);
+        SDL_DestroyRenderer(device->renderer);
         SDL_DestroyWindow(window);
         TTF_Quit();
         SDL_Quit();
@@ -167,12 +159,12 @@ int screen_init(int w, int h, const char *title, unsigned char **screen_fb) {
     }
 
 	// unsigned char **p = &screen_fb;
-	SDL_LockTexture(texture, NULL, (void **)screen_fb, &pitch);
-	SDL_UnlockTexture(texture);
+	SDL_LockTexture(device->sdltexture, NULL, (void **)screen_fb, &pitch);
+	SDL_UnlockTexture(device->sdltexture);
 	printf("buffer %p\n", *screen_fb);
 	return 0;
 }
-ImGuiIO & imgui_init() {
+ImGuiIO & imgui_init(device_t *dev) {
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -186,8 +178,8 @@ ImGuiIO & imgui_init() {
 	//ImGui::StyleColorsLight();
 
 	// Setup Platform/Renderer backends
-	ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
-	ImGui_ImplSDLRenderer2_Init(renderer);
+	ImGui_ImplSDL2_InitForSDLRenderer(window, dev->renderer);
+	ImGui_ImplSDLRenderer2_Init(dev->renderer);
 	return io;
 }
 
@@ -206,6 +198,41 @@ ImGuiIO & imgui_init() {
 // 主程序
 //=====================================================================
 
+static void DumpSurfaceToFile(SDL_Surface* surface, const char* filename) {
+    if (!surface) {
+        printf("Surface is null\n");
+        return;
+    }
+SDL_LockSurface(surface);
+    // 获取像素数据
+    Uint32* pixels = (Uint32*)surface->pixels;
+    int pitch = surface->pitch; // 每行字节数
+    int width = surface->w;     // 宽度（像素）
+    int height = surface->h;    // 高度（像素）
+	int BytesPerPixel = surface->format->BytesPerPixel;
+	char bufname[100];
+	sprintf(bufname, "main_%dx%x_%d.yuv", width, height, pitch);
+
+    // 打开输出文件
+    std::ofstream file(bufname, std::ios::out | std::ios::binary);
+    if (!file.is_open()) {
+        printf("Failed to open file %s\n", bufname);
+        return;
+    }
+
+
+	pr_debug("pitch %d, width %dx%d BytesPerPixel %d \n", pitch, width, height, BytesPerPixel);
+
+    // 写入每一行的像素数据
+    for (int y = 0; y < height; ++y) {
+        file.write(reinterpret_cast<const char*>(pixels + ( surface->pitch*y/4)), pitch);
+    }
+
+    // 关闭文件
+    file.close();
+	 SDL_UnlockSurface(surface);
+    printf("Surface data dumped to file %s\n", filename);
+}
 
 // 根据坐标读取纹理
 
@@ -294,10 +321,10 @@ int main(void)
 	char title[] = "Mini3d (software render tutorial) ";
 		// _T("Left/Right: rotation, Up/Down: forward/backward, Space: switch state");
 
-	if (screen_init(SCREEN_W, SCREEN_H, title, &screen_fb)) 
+	if (screen_init(&device, SCREEN_W, SCREEN_H, title, &screen_fb)) 
 		return -1;
 	printf("buffer %p\n", screen_fb);
-	ImGuiIO &io = imgui_init();
+	ImGuiIO &io = imgui_init(&device);
 
 	ImFont* font = io.Fonts->AddFontFromFileTTF(
 		"simsun.ttc", 16.0f, NULL, io.Fonts->GetGlyphRangesChineseFull());
@@ -351,13 +378,18 @@ int main(void)
 				switch (e.type) {
 					case SDL_MOUSEWHEEL:
 						// printf("x ==-= %d\n",e.wheel.y);
-						r+=(e.wheel.y*0.1f);
+						r+=(e.wheel.y*0.2f);
 							// thetax = dx*0.01f+thetax;
 							// thetay = dy*0.01+thetay;
+						if(r>0.15f){
+
 
 							camera.y = r*sinf(thetay);
 							camera.x = -r*cosf(thetay)*sinf(thetax);
 							camera.z = r*cosf(thetay)*cosf(thetax);
+						}else{
+							r = 0.15f;
+						}
 							// printf("thetax %f/%f\n", thetax, thetay);
 						break;
 					case SDL_MOUSEMOTION:
@@ -375,9 +407,12 @@ int main(void)
 							if(thetay<-1.57)
 								thetay = -1.57;
 
+
+
 							camera.y = r*sinf(thetay);
 							camera.x = -r*cosf(thetay)*sinf(thetax);
 							camera.z = r*cosf(thetay)*cosf(thetax);
+
 							float ra = sqrtf(pow(camera.x, 2.f)+pow(camera.y, 2.f)+pow(camera.z, 2.f));
 
 							// printf("mouse move %d %d, theta % 3.2f/% 3.2f, ra %3.2f\n", e.motion.x, e.motion.y, thetax, thetay, ra);
@@ -445,30 +480,34 @@ int main(void)
 			pos.x = pos.y = pos.z = 0;
 			pos.w = 1;
 		}
-		ImGui::SliderFloat("rotate", (float *)&rotate, 0.0f, 360.0f);
-		ImGui::SliderFloat("fovy", (float *)&fovy, 0.0f, 90.0f);
-			// point_t p1, p2, p3, c1, c2, c3;
-		ImGui::SliderFloat3("camera", (float *)&camera, -10.0f, 10.0f);
-		ImGui::SameLine();
-		if(ImGui::Button("reset1")) {
-			camera.x = camera.y = 0;
-			camera.w = 1;
-			camera.z = 3;
-			thetay = dthetax = 0.f;
-			thetax = dthetay = 0.f;
-			printf("camera reset\n");
-		}else{
-			
-		}
+ 		if (ImGui::CollapsingHeader("Configuration")){
+			ImGui::SliderFloat3("target", (float *)&target, -10.f, 10.0f);
+			ImGui::SliderFloat3("scale", (float *)&scale, 0.2f, 2.0f);
+			ImGui::SliderFloat3("trans", (float *)&trans, -3.0f, 3.0f);
+			ImGui::SliderFloat("rotate", (float *)&rotate, 0.0f, 360.0f);
+			ImGui::SliderFloat("fovy", (float *)&fovy, 0.0f, 90.0f);
+			ImGui::SliderFloat("r", (float *)&r, 0.0f, 90.0f);
+				// point_t p1, p2, p3, c1, c2, c3;
+			ImGui::SliderFloat3("camera", (float *)&camera, -10.0f, 10.0f);
+			ImGui::SameLine();
+			if(ImGui::Button("reset1")) {
+				camera.x = camera.y = 0;
+				camera.w = 1;
+				camera.z = 3;
+				thetay = dthetax = 0.f;
+				thetax = dthetay = 0.f;
+				printf("camera reset\n");
+			}
+ 		}
 
-		ImGui::SliderFloat3("target", (float *)&target, -10.f, 10.0f);
-		ImGui::SliderFloat3("scale", (float *)&scale, 0.2f, 2.0f);
-		ImGui::SliderFloat3("trans", (float *)&trans, -3.0f, 3.0f);
 
-		char *items[] = {"渲染纹理", "渲染颜色","渲染线框"};
+		char *items[] = {(char *)"渲染纹理", (char *)"渲染颜色", (char *)"渲染线框"};
 		static int curIndex = 2;
 
 		ImGui::Combo("mode", &curIndex, items, 3);
+
+		ImGui::SliderFloat4("LightDir", (float *)&device.LightDir, -10, 10);
+		ImGui::SliderFloat4("LightPoint", (float *)&device.LightPoint, -10, 10);
 
 
 		ImGui::ColorEdit4("Color Picker", (float *)&color);
@@ -492,8 +531,6 @@ int main(void)
 	//camera target up
 		// matrix_set_lookat(&device.transform.view, &camera, &target, &up);
 		// transform_update(&device.transform);
-
-		matrix_t m_scale, m_rotate, m_trans, m_out;
 		transform_t *t = &device.transform;
 
 		Uint32 currentTime = SDL_GetTicks();
@@ -503,13 +540,13 @@ int main(void)
 		// 锁定纹理以获取像素数据
 		void* pixels;
 		int pitch;
-		SDL_LockTexture(texture, NULL, &pixels, &pitch);
+		SDL_LockTexture(device.sdltexture, NULL, &pixels, &pitch);
 		Uint32* pixelData = (Uint32*)pixels;
 		// printf("%p\n", pixelData);
 		matrix_set_scale(&t->scale, scale.x/2, scale.y/2, scale.z/2);
 		matrix_set_rotate(&t->rotate, 0, 1, 0,  currentTime*0.04f);
 		matrix_set_rotate(&t->rotate, 0, 1, 0,  rotate);
-		matrix_set_perspective(&t->projection, fovy, device.aspect_ratio, 1.0f, 100.0f);
+		matrix_set_perspective(&t->projection, fovy, device.aspect_ratio, 0.1f, 100.0f);
 		matrix_set_lookat(&t->view, &camera, &target, &up);
 		transform_update(t);
 
@@ -547,17 +584,32 @@ int main(void)
 		
 		ImGui::SliderFloat("rotate_box", (float *)&rotate_box, -10.f, 10.0f);
 #endif
+		ImGui::CheckboxFlags("cube", &device.drawcube, ImGuiConfigFlags_NoMouse);
+		ImGui::SameLine();
+		ImGui::CheckboxFlags("line", &device.drawlines, ImGuiConfigFlags_NoMouse);
+		ImGui::SameLine();
+		ImGui::CheckboxFlags("circle", &device.drawcircle, ImGuiConfigFlags_NoMouse);
+		ImGui::SameLine();
+		ImGui::CheckboxFlags("palne", &device.drawplane, ImGuiConfigFlags_NoMouse);
 		// draw_cube(&device);
-		// draw_panel(&device);
-		draw_circle(&device);
+		if(device.drawplane)
+			draw_panel(&device);
+		if(device.drawcircle)
+			draw_circle(&device);
+		if(device.drawlines)
+			drawMyLines(&device);
+		if(device.drawcube)
+			draw_box(&device);
+
 
 		matrix_set_translate(&t->trans, trans.x, trans.y, trans.z);
 		transform_update(t);
-		drawMyLines(&device);
+		// point_t pt = drawMyLines(&device);
 		// drawMyLines(&device);
 
 		// device_draw_line(&device, 0, 0, 100, 100, device.foreground);
 		// 绘制一个绿色的矩形 800*600 pitch = 3200 = 800*4
+#if 0
 		for (int y = 0; y < device.height; ++y) {
 			for (int x = 0; x < 100; ++x) {
 				int index = y * (pitch / sizeof(Uint32)) + x;
@@ -571,23 +623,24 @@ int main(void)
 				// printf("0x%x, x %d, y %d\n", pixelData[y*device.width+x],x,y);
 			}
 		}
+#endif
 		ImGui::End();
 
 				// printf("index = %d\n", pitch);
 		// 解锁纹理
-		SDL_UnlockTexture(texture);
+		SDL_UnlockTexture(device.sdltexture);
 
 		ImGui::Render();
 		// SDL_Delay(30);
 		// 渲染纹理
-		SDL_RenderClear(renderer);
-		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+		SDL_RenderClear(device.renderer);
+		SDL_RenderCopy(device.renderer, device.sdltexture, nullptr, nullptr);
 
 		// 设置文本的位置和大小
-        SDL_Rect renderQuad = {400, 100, 16*4, 16}; // x, y, w, h
-        SDL_RenderCopy(renderer, textureText, nullptr, &renderQuad);
+        // SDL_Rect renderQuad = {pt.x, pt.y, 16*4, 16}; // x, y, w, h
+        // SDL_RenderCopy(device.renderer, textureText, nullptr, &renderQuad);
 		ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
-		SDL_RenderPresent(renderer);
+		SDL_RenderPresent(device.renderer);
 		// SDL_Delay(300);
 
 	}

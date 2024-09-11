@@ -59,12 +59,22 @@ void subdivide(device_t *device, vertex_t v1, vertex_t v2, vertex_t v3, int dept
 		v1.tc.u = 0.f;
 		v1.tc.v = 0.f;
 		v1.color.b = 0.5f;
+		v1.color.g = 0.f;
+		v1.color.r = 0.f;
 
 		v2.tc.u = 1.f;
 		v2.tc.v = 0.f;
+		v2.color.b = 0.f;
+		v2.color.g = 0.5f;
+		v2.color.r = 0.f;
+
 
 		v3.tc.u = 0.f;
 		v3.tc.v = 1.f;
+		v3.color.b = 0.f;
+		v3.color.g = 0.f;
+		v3.color.r = 0.5f;
+
 
 		v1.pos = vector_dotfloat(&v1.pos, &length);
 		v1.pos.w = 1.f;
@@ -250,8 +260,9 @@ static void draw_cube20(device_t *device, int a, int b, int c, int d) {
 
 void draw_circle(device_t *device) {
 	// pr_debug("--\n");
-	ImGui::Begin("draw_circle");
+	// ImGui::Begin("draw_circle");
 	// ImGui::Text("111");
+	
 	ImGui::SliderInt("loop", &loop, 0, 5);
 	device->module = 1;
 	matrix_set_translate(&device->transform.trans, 0, 0, 0);
@@ -262,7 +273,7 @@ void draw_circle(device_t *device) {
 	// draw_plane(device, 0, 2, 3, 3);
 	// draw_plane(device, 1, 2, 3, 3);
 
-	ImGui::End();
+	// ImGui::End();
 
 	// device->module = 2;
 	// matrix_set_translate(&device->transform.trans, 0, -1, 0);

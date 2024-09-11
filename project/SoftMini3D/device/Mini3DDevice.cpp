@@ -78,7 +78,7 @@ void device_pixel(device_t *device, int x, int y, IUINT32 color) {
 
 void device_point(device_t *device, int x, int y, IUINT32 color) {
 	int i,j;
-	int r = 1;
+	int r = 3;
 	for(i=-r;i<r;i++){
 		for(j=-r;j<r;j++){
 			device_pixel(device, x+i, y+j, color);
@@ -87,7 +87,10 @@ void device_point(device_t *device, int x, int y, IUINT32 color) {
 	}
 
 }
+void device_draw_line(device_t *device, point_t x, point_t y, IUINT32 c) {
+	device_draw_line(device, x.x, x.y, y.x, y.y, c);
 
+}
 // 绘制线段
 void device_draw_line(device_t *device, int x1, int y1, int x2, int y2, IUINT32 c) {
 	// pr_debug("%d %d, %d %d", x1, y1, x2, y2);
@@ -146,6 +149,7 @@ IUINT32 device_texture_read(const device_t *device, float u, float v) {
 	y = CMID(y, 0, device->tex_height - 1);
 	// if(print == 0)
 	// printf("x/y= %d/%d,u/v = %f/%f\n",x,y,u,v);
+
 	if(device->module == 0) {
 		value = device->texture[y][x];
 	}else if(device->module == 1) {
@@ -159,6 +163,7 @@ IUINT32 device_texture_read(const device_t *device, float u, float v) {
 		// value = ((int)(color.x * 255)<<16)|((int)(color.y * 255)<<8)|((int)(color.z * 255)<<0);
 		// printf("value 0x%x\n", value);
 	}
+	value = device->texture[y][x];
 	// if(value==0){
 	// 	printf("y %d ,x %d, texture[%d] = %p\n", y, x, y,  device->texture[y]);
 	// }
@@ -258,21 +263,22 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 					}
 					IUINT32 cc;
 					IUINT32 z;
-					if(device->module != 2) {
+					// if(device->module != 2) {
 						cc = device_texture_read(device, u, v);
 						// float m0 = pow(cosf(vout/15.f),5.f);
-						float m0 = mmm;
+						float m0 = mmm+0.2f;
+						// m0 = 1.f;
 						int B = (cc & 0xff)*m0;
 						int G = ((cc>>8) & 0xff)*m0;
 						int R = ((cc>>16) & 0xff)*m0;
 						framebuffer[x] = (R << 16) | (G << 8) | (B);
 						// framebuffer[x] = mmm * 255.f;
 
-					}else{
+					// }else{
 						// z = rhw*255.0f*5;
 						// cc = z|(z<<8)|(z<<16);
 
-					}
+					// }
 
 					// if(x == scanline->x+10){
 					// // device_point(device, scanline->p1.pos.x, scanline->p1.pos.y, 0xff00);

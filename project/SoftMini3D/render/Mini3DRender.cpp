@@ -2,6 +2,7 @@
 #include "Mini3DDevice.h"
 #include <stdio.h>
 #include <math.h>
+
 int print;
 //=====================================================================
 // 渲染实现
@@ -47,8 +48,8 @@ int print;
 						|v2
 						y
 						*/
-static vector_t LightPoint = {0,1.f,0};
-static vector_t LightDir = {0,-1.f,0};
+// static vector_t LightPoint = {0,1.f,0};
+// static vector_t LightDir = {0,-1.f,0};
 vertex_t interp_spos(vertex_t v1, vertex_t v2, float t) {
 	float x_target = interp(v1.pos.x, v2.pos.x, t);
 	float y_target = interp(v1.pos.y, v2.pos.y, t);
@@ -160,8 +161,8 @@ void device_render_trap(device_t *device, trapezoid_t *trap) {
 				scanline.v = trap->left.v;
 				scanline.p0 = sposleft;
 				scanline.p1 = sposright;
-				scanline.lightdir = LightDir;
-				scanline.lightpoint = LightPoint;
+				scanline.lightdir = device->LightDir;
+				scanline.lightpoint = device->LightPoint;
 				if(print == 0){
 					// pr_debug("y = %d, rhw = %3.2F\n", j, trap->left.v.rhw);
 				}
@@ -276,8 +277,28 @@ p1--t0.top
 	return 2;
 }
 
+void device_trans_line(device_t *device, point_t p1, point_t p2, point_t p3, IUINT32 c) {
+	device_draw_line(device, (int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y, c);	
+	device_draw_line(device, (int)p1.x, (int)p1.y, (int)p3.x, (int)p3.y, c);
+	device_draw_line(device, (int)p3.x, (int)p3.y, (int)p2.x, (int)p2.y, c);
+}
 
+static void inter(vector_t *pin1, vector_t*pin0, float t){
 
+	pin1->x = pin1->x+t*(pin0->x-pin1->x);
+	pin1->y = pin1->y+t*(pin0->y-pin1->y);
+	pin1->z = pin1->z+t*(pin0->z-pin1->z);
+	pin1->w = pin1->w+t*(pin0->w-pin1->w);
+}
+static point_t inter_point(point_t p0, point_t p1, float t) {
+	point_t ret;
+	ret.x = p0.x + t * (p1.x-p0.x);
+	ret.y = p0.y + t * (p1.y-p0.y);
+	ret.z = p0.z + t * (p1.z-p0.z);
+	ret.w = p0.w + t * (p1.w-p0.w);
+
+	return ret;
+}
 // #define PRINT_POINT(c1) printf(#c1);printf(":%f %f %f\n", c1.x, c1.y, c1.z);
 // #define PRINTF_NAME_VALUE(X) {sprintf(&buffer_text[strlen(buffer_text)-2], #X); sprintf(buffer_text, "   %f %f %f\n", X.x, X.y, X.z);}
 // 根据 render_state 绘制原始三角形
@@ -291,6 +312,10 @@ void device_draw_triangle(device_t *device,
 
 	ImGui::Begin("device_draw_triangle");
 
+
+
+
+
 	// 按照 Transform 变化
 	// transform_apply(&device->transform, &c1, &v1->pos);
 	matrix_apply( &c1, &v1->pos, &device->transform.mvp);
@@ -299,24 +324,143 @@ void device_draw_triangle(device_t *device,
 	// transform_apply(&device->transform, &c3, &v3->pos);
 	matrix_apply( &c3, &v3->pos, &device->transform.mvp);
 
+	/*
+		if(pin1->z < -abs(pin1->w)){
+			ImGui::Text("clip z -");
+			//t = (w1-z1)/((w1-z1)-(w2-z2))
+			//I = Q1+t*(Q2-Q1)		
+		}
+		if(pin1->z > abs(pin1->w)){
+			ImGui::Text("clip z +");
+			//t = (w1-z1)/((w1-z1)-(w2-z2))
+			//I = Q1+t*(Q2-Q1)	
+			// vector_t ret;
+			float t = (pin1->w - pin1->z)/((pin1->w-pin1->z)-(pin0->w-pin0->z));
+			inter(pin1, pin0, t);
+			// ImGui::SliderFloat4("裁剪z+", (float *)pin1, 0.0f, 50.0f);
 
+		}
+
+	*/
+	ImGui::CheckboxFlags("circle", &device->test, ImGuiConfigFlags_NoMouse);
+	if(device->test){
+		if (c1.w < 0 && c2.w < 0 && c3.w < 0){
+			ImGui::End();
+			return;
+		}
+
+	}
 	// 归一化
 	transform_homogenize(&device->transform, &p1, &c1);
 	transform_homogenize(&device->transform, &p2, &c2);
 	transform_homogenize(&device->transform, &p3, &c3);
-	// PRINTF_POINT(p1);
-	// PRINTF_POINT(p2);
-	// PRINTF_POINT(p3);
-		char *items[] = {(char *)"mode1", (char *)"mode2", (char *)"mode3"};
-		static int curIndex = 0;
 
-		ImGui::Combo("mode", &curIndex, items, 3);
-		device->module = curIndex;
-		ImGui::Text("index %d", curIndex);
-		if(ImGui::Button("p")){
-			printf("click\n");
-			print = 1;
-		}
+	point_t co1, co2, co3;
+	point_t po1, po2, po3, po4;
+	// ImGui::SliderFloat4("c1", (float *)&c1, 0, 1.f);
+	// ImGui::SliderFloat4("c2", (float *)&c2, 0, 1.f);
+	// ImGui::SliderFloat4("c3", (float *)&c3, 0, 1.f);
+	// ImGui::SliderFloat4("p1", (float *)&p1, 0, 1.f);
+	// ImGui::SliderFloat4("p2", (float *)&p2, 0, 1.f);
+	// ImGui::SliderFloat4("p3", (float *)&p3, 0, 1.f);
+
+	if (c1.z > abs(c1.w)) {
+	// if (c1.w < 0) {
+		ImGui::Text("clip z+");
+		float t2, t3;
+
+
+
+			point_t tm1, tm2, tm;
+#if 1
+{
+		point_t po00,po11;
+		float rhw;
+		po00 = render_transform_home(device, &c2, &c1);
+		po11 = render_transform_home(device, &c3, &c1);
+
+		rhw = 1.f/po00.w;
+		po00.x = (po00.x * rhw + 1.0f) * device->transform.w * 0.5f;
+		po00.y = (1.0f - po00.y * rhw) * device->transform.h * 0.5f;
+		rhw = 1.f/po11.w;
+		po11.x = (po11.x * rhw + 1.0f) * device->transform.w * 0.5f;
+		po11.y = (1.0f - po11.y * rhw) * device->transform.h * 0.5f;
+
+		device_draw_line(device, po00, p2, 0xff);
+		device_draw_line(device, po11, p3, 0xff);
+		ImGui::SliderFloat4("po00", (float *)&po00, 0, 1.f);
+		ImGui::SliderFloat4("po11", (float *)&po11, 0, 1.f);
+		drawCharAt(device, po00.x+30, po00.y, "po00");
+		drawCharAt(device, po11.x+30, po11.y, "po11");
+}
+
+
+#else
+		#if 1
+			tm1 = c1;
+			transform_Normalization(&device->transform, &po2, &po1, &c2, &tm1);
+			device_draw_line(device, po2, po1, 0xff);
+			tm2 = c1;
+			transform_Normalization(&device->transform, &po3, &po4, &c3, &tm2);
+			device_draw_line(device, po4, po3, 0xff00);
+		#else
+			tm = c1;
+			transform_home0(&device->transform, &c2, &tm);
+			transform_homogenize(&device->transform, &tm1, &tm);
+			device_draw_line(device, tm1, p2, 0xff);
+ImGui::SliderFloat4("tm1", (float *)&tm, 0, 1.f);
+
+			tm = c1;
+			transform_home0(&device->transform, &c3, &tm);
+			transform_homogenize(&device->transform, &tm2, &tm);
+			device_draw_line(device, tm2, p3, 0xff);
+ImGui::SliderFloat4("tm2", (float *)&tm, 0, 1.f);
+
+
+			// transform_homogenize(&device->transform, &tm, &c1);
+			ImGui::SliderFloat4("pc1", (float *)&tm1, 0, 1.f);
+			ImGui::SliderFloat4("pc2", (float *)&tm2, 0, 1.f);
+		#endif
+#endif
+
+			// device_trans_line(device, po1, po3, p2, 0xff);
+			// device_trans_line(device, po1, po2, p3, 0xff);
+			// drawCharAt(device, po2.x, po2.y, "po2");
+			// drawCharAt(device, po3.x, po3.y, "po3");
+
+
+	}
+	vector<point_t> subjectPolygon = {
+	   p1,p2,p3
+	};
+	point_t minpoint{0, 0};
+	point_t maxpoint{(float)device->width, (float)device->height};
+	vector<point_t> out = Hodgmanmain(minpoint, maxpoint, subjectPolygon);
+	int transCount = out.size();
+	ImGui::Text("out %d\n", out.size());
+
+	device_point(device, p1.x, p1.y, 0xff0000);
+	drawCharAt(device, p1.x, p1.y, "p1");
+	drawCharAt(device, p2.x, p2.y, "p2");
+	drawCharAt(device, p3.x, p3.y, "p3");
+
+
+	// if(transCount == 4) {
+	// 	device_trans_line(device, out[0], out[1], out[2], device->foreground);
+	// 	device_trans_line(device, out[0], out[2], out[3], device->foreground);
+	// }
+
+	
+	ImGui::End();
+
+
+
+	if (render_state & RENDER_STATE_WIREFRAME) {		// 线框绘制
+		device_trans_line(device, p1, p2, p3, device->foreground);
+		// device_draw_line(device, (int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y, device->foreground);	
+		// device_draw_line(device, (int)p1.x, (int)p1.y, (int)p3.x, (int)p3.y, device->foreground);
+		// device_draw_line(device, (int)p3.x, (int)p3.y, (int)p2.x, (int)p2.y, device->foreground);
+	}
 	// 纹理或者色彩绘制
 	if (render_state & (RENDER_STATE_TEXTURE | RENDER_STATE_COLOR)) {
 		vertex_t t1 = *v1, t2 = *v2, t3 = *v3;
@@ -350,23 +494,7 @@ void device_draw_triangle(device_t *device,
 		// 拆分三角形为0-2个梯形，并且返回可用梯形数量
 		n = trapezoid_init_triangle(traps, &t1, &t2, &t3);
 
-
-
-		// if(print == 0){
-		// 	pr_debug("--> %3.2f/%3.2f/%3.2f\n",  t1.rhw, t2.rhw, t3.rhw);
-		// 	pr_debug("v1 rhw %f, u/v %f/%f\n", traps[0].left.v1.rhw, traps[0].left.v1.tc.u, traps[0].left.v1.tc.v);
-		// 	pr_debug("v2 rhw %f, u/v %f/%f\n", traps[0].left.v2.rhw, traps[0].left.v2.tc.u, traps[0].left.v2.tc.v);
-		// }
-		// printf("n=%d\n",n);
-		// ImGui::SliderFloat4("t1", (float *)&t1.pos,0,1);
-		// ImGui::SliderFloat4("t2", (float *)&t2.pos,0,1);
-		ImGui::SliderFloat4("LightDir", (float *)&LightDir,-10,10);
-		ImGui::SliderFloat4("LightPoint", (float *)&LightPoint,-10,10);
-		// ImGui::SliderInt("n", (int *)&n, -3, 3);
 		static bool v, v1, v2;
-		// ImGui::Checkbox("v", &v);
-		// ImGui::Checkbox("v1", &v1);
-		// ImGui::Checkbox("v2", &v2);
 		if (n >= 1) {
 			device_render_trap(device, &traps[0]);
 		}
@@ -566,11 +694,7 @@ void device_draw_triangle(device_t *device,
 		// }
 	}
 
-	if (render_state & RENDER_STATE_WIREFRAME) {		// 线框绘制
-		device_draw_line(device, (int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y, device->foreground);	
-		device_draw_line(device, (int)p1.x, (int)p1.y, (int)p3.x, (int)p3.y, device->foreground);
-		device_draw_line(device, (int)p3.x, (int)p3.y, (int)p2.x, (int)p2.y, device->foreground);
-	}
-	ImGui::End();
+
+	// ImGui::End();
 	print = 1;
 }

@@ -5,6 +5,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "SDL2/SDL_ttf.h"
 typedef unsigned int IUINT32;
 //=====================================================================
 // 渲染设备
@@ -28,6 +29,19 @@ typedef struct {
 	int module;
 	int rgb;
 	ImVec4 color;
+
+	int drawlines = 0;
+	int drawcube = 0;
+	int drawplane = 0;
+	int drawcircle = 0;
+
+	int test = 1;
+	TTF_Font* font;
+	SDL_Texture* sdltexture;
+	SDL_Renderer* renderer;
+
+	vector_t LightPoint = {0,1.f,0};
+	vector_t LightDir = {0,-1.f,0};
 }	device_t;
 
 #define RENDER_STATE_WIREFRAME      1		// 渲染线框
