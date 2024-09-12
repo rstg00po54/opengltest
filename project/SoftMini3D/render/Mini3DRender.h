@@ -20,6 +20,6 @@ struct vec2 {
 	vec2(float x = 0, float y = 0, string name = "def") : x(x), y(y), name(name) {}
 };
 vector<point_t> Hodgmanmain(point_t min, point_t max, vector<point_t> subjectPolygon);
-void drawCharAt(device_t *device, int xpos, int ypos, char *c);
+void drawCharAt(device_t *device, int xpos, int ypos, std::string c);
 
 #endif

@@ -26,6 +26,7 @@ add_executable(SoftMini3D
     render/Mini3DRender.cpp
     render/Mini3DHodgman.cpp
     render/Mini3DRenderFont.cpp
+    render/Mini3DCalcrhw.cpp
     draw/Mini3DDrawCube.cpp
     draw/Mini3DDrawPanel.cpp
     draw/Mini3DDrawCircle.cpp

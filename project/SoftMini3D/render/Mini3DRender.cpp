@@ -1,5 +1,7 @@
 #include "Mini3DRender.h"
 #include "Mini3DDevice.h"
+#include "Mini3DDraw.h"
+#include "Mini3DCalcrhw.h"
 #include <stdio.h>
 #include <math.h>
 
@@ -311,11 +313,6 @@ void device_draw_triangle(device_t *device,
 	int render_state = device->render_state;
 
 	ImGui::Begin("device_draw_triangle");
-
-
-
-
-
 	// 按照 Transform 变化
 	// transform_apply(&device->transform, &c1, &v1->pos);
 	matrix_apply( &c1, &v1->pos, &device->transform.mvp);
@@ -324,32 +321,14 @@ void device_draw_triangle(device_t *device,
 	// transform_apply(&device->transform, &c3, &v3->pos);
 	matrix_apply( &c3, &v3->pos, &device->transform.mvp);
 
-	/*
-		if(pin1->z < -abs(pin1->w)){
-			ImGui::Text("clip z -");
-			//t = (w1-z1)/((w1-z1)-(w2-z2))
-			//I = Q1+t*(Q2-Q1)		
-		}
-		if(pin1->z > abs(pin1->w)){
-			ImGui::Text("clip z +");
-			//t = (w1-z1)/((w1-z1)-(w2-z2))
-			//I = Q1+t*(Q2-Q1)	
-			// vector_t ret;
-			float t = (pin1->w - pin1->z)/((pin1->w-pin1->z)-(pin0->w-pin0->z));
-			inter(pin1, pin0, t);
-			// ImGui::SliderFloat4("裁剪z+", (float *)pin1, 0.0f, 50.0f);
-
-		}
-
-	*/
 	ImGui::CheckboxFlags("circle", &device->test, ImGuiConfigFlags_NoMouse);
-	if(device->test){
-		if (c1.w < 0 && c2.w < 0 && c3.w < 0){
-			ImGui::End();
-			return;
-		}
+	// if(device->test){
+	// 	if (c1.w < 0 && c2.w < 0 && c3.w < 0){
+	// 		ImGui::End();
+	// 		return;
+	// 	}
 
-	}
+	// }
 	// 归一化
 	transform_homogenize(&device->transform, &p1, &c1);
 	transform_homogenize(&device->transform, &p2, &c2);
@@ -364,72 +343,10 @@ void device_draw_triangle(device_t *device,
 	// ImGui::SliderFloat4("p2", (float *)&p2, 0, 1.f);
 	// ImGui::SliderFloat4("p3", (float *)&p3, 0, 1.f);
 
-	if (c1.z > abs(c1.w)) {
-	// if (c1.w < 0) {
-		ImGui::Text("clip z+");
-		float t2, t3;
-
-
-
-			point_t tm1, tm2, tm;
-#if 1
-{
-		point_t po00,po11;
-		float rhw;
-		po00 = render_transform_home(device, &c2, &c1);
-		po11 = render_transform_home(device, &c3, &c1);
-
-		rhw = 1.f/po00.w;
-		po00.x = (po00.x * rhw + 1.0f) * device->transform.w * 0.5f;
-		po00.y = (1.0f - po00.y * rhw) * device->transform.h * 0.5f;
-		rhw = 1.f/po11.w;
-		po11.x = (po11.x * rhw + 1.0f) * device->transform.w * 0.5f;
-		po11.y = (1.0f - po11.y * rhw) * device->transform.h * 0.5f;
-
-		device_draw_line(device, po00, p2, 0xff);
-		device_draw_line(device, po11, p3, 0xff);
-		ImGui::SliderFloat4("po00", (float *)&po00, 0, 1.f);
-		ImGui::SliderFloat4("po11", (float *)&po11, 0, 1.f);
-		drawCharAt(device, po00.x+30, po00.y, "po00");
-		drawCharAt(device, po11.x+30, po11.y, "po11");
-}
-
-
-#else
-		#if 1
-			tm1 = c1;
-			transform_Normalization(&device->transform, &po2, &po1, &c2, &tm1);
-			device_draw_line(device, po2, po1, 0xff);
-			tm2 = c1;
-			transform_Normalization(&device->transform, &po3, &po4, &c3, &tm2);
-			device_draw_line(device, po4, po3, 0xff00);
-		#else
-			tm = c1;
-			transform_home0(&device->transform, &c2, &tm);
-			transform_homogenize(&device->transform, &tm1, &tm);
-			device_draw_line(device, tm1, p2, 0xff);
-ImGui::SliderFloat4("tm1", (float *)&tm, 0, 1.f);
-
-			tm = c1;
-			transform_home0(&device->transform, &c3, &tm);
-			transform_homogenize(&device->transform, &tm2, &tm);
-			device_draw_line(device, tm2, p3, 0xff);
-ImGui::SliderFloat4("tm2", (float *)&tm, 0, 1.f);
-
-
-			// transform_homogenize(&device->transform, &tm, &c1);
-			ImGui::SliderFloat4("pc1", (float *)&tm1, 0, 1.f);
-			ImGui::SliderFloat4("pc2", (float *)&tm2, 0, 1.f);
-		#endif
-#endif
-
-			// device_trans_line(device, po1, po3, p2, 0xff);
-			// device_trans_line(device, po1, po2, p3, 0xff);
-			// drawCharAt(device, po2.x, po2.y, "po2");
-			// drawCharAt(device, po3.x, po3.y, "po3");
-
-
-	}
+	drawLine(device, v1->pos, v2->pos, 1);
+	drawLine(device, v1->pos, v3->pos, 1);
+	drawLine(device, v2->pos, v3->pos);
+	
 	vector<point_t> subjectPolygon = {
 	   p1,p2,p3
 	};
@@ -439,10 +356,11 @@ ImGui::SliderFloat4("tm2", (float *)&tm, 0, 1.f);
 	int transCount = out.size();
 	ImGui::Text("out %d\n", out.size());
 
-	device_point(device, p1.x, p1.y, 0xff0000);
-	drawCharAt(device, p1.x, p1.y, "p1");
-	drawCharAt(device, p2.x, p2.y, "p2");
-	drawCharAt(device, p3.x, p3.y, "p3");
+
+	// device_point(device, p1.x, p1.y, 0xff0000);
+	// drawCharAt(device, p1.x, p1.y, "p1");
+	// drawCharAt(device, p2.x, p2.y, "p2");
+	// drawCharAt(device, p3.x, p3.y, "p3");
 
 
 	// if(transCount == 4) {
@@ -456,7 +374,7 @@ ImGui::SliderFloat4("tm2", (float *)&tm, 0, 1.f);
 
 
 	if (render_state & RENDER_STATE_WIREFRAME) {		// 线框绘制
-		device_trans_line(device, p1, p2, p3, device->foreground);
+		// device_trans_line(device, p1, p2, p3, device->foreground);
 		// device_draw_line(device, (int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y, device->foreground);	
 		// device_draw_line(device, (int)p1.x, (int)p1.y, (int)p3.x, (int)p3.y, device->foreground);
 		// device_draw_line(device, (int)p3.x, (int)p3.y, (int)p2.x, (int)p2.y, device->foreground);
@@ -502,196 +420,9 @@ ImGui::SliderFloat4("tm2", (float *)&tm, 0, 1.f);
 
 
 		if(n>=1){
-			// device_draw_line(device, device->width/2, (int)traps[0].top, device->width/2, (int)traps[0].bottom, 0x0);
-			float x = ((traps[0].left.v1.pos.x+traps[0].left.v2.pos.x)/2);
-			float y = ((traps[0].left.v1.pos.y+traps[0].left.v2.pos.y)/2);
-
-			{
-#if 1
-
-				float rhw1 = 1.f/traps[0].left.v1.pos.w;
-				// float rhw1 = traps[0].left.v1.rhw;
-				float rhw2 = 1.f/traps[0].left.v2.pos.w;
-				float h = traps[0].bottom-traps[0].top;
-				int y;
-				// pr_debug("---\n");
-				float pvalue[2] = {0,1};
-				float x_realmax = -100;
-				for(y=traps[0].bottom-0.5;y>traps[0].top;y--) {
-					vertex_t v1 = traps[0].left.v1;
-					vertex_t v2 = traps[0].left.v2;
-					float p = (y-v2.pos.y+0.5f)/(v1.pos.y-v2.pos.y);
-					if(p>pvalue[0])
-						pvalue[0] = p;
-					if(p<pvalue[1])
-						pvalue[1] = p;
-
-
-					float u = v2.tc.u + p*(v1.tc.u-v2.tc.u);
-					float rhw = v2.rhw + p*(v1.rhw-v2.rhw);
-					float u0 = u/rhw;
-
-
-
-					// {---------------------------------------------------------
-						point_t sposv1 = traps[0].left.v1.spos;
-						point_t sposv2 = traps[0].left.v2.spos;
-						struct Vertexm {
-							float x_w, y_w, z_w;  // 实际三维坐标
-							float x_s, y_s;       // 屏幕坐标
-							float rhw;            // 透视齐次坐标
-						};
-
-						// 已知顶点//(10,10)(-10,-10)
-						Vertexm v1m = {sposv1.x, sposv1.y, sposv1.z, traps[0].left.v1.pos.x, traps[0].left.v1.pos.y, traps[0].left.v1.rhw};  // (x_w, y_w, z_w, x_s, y_s, rhw)
-						Vertexm v2m = {sposv2.x, sposv2.y, sposv2.z, traps[0].left.v2.pos.x, traps[0].left.v2.pos.y, traps[0].left.v2.rhw}; // (x_w, y_w, z_w, x_s, y_s, rhw)
-
-						// float pp = 0.3f;
-						// 目标屏幕坐标
-						float x_target = traps[0].left.v2.pos.x + p *(traps[0].left.v1.pos.x-traps[0].left.v2.pos.x) ;
-						float y_target = traps[0].left.v2.pos.y + p *(traps[0].left.v1.pos.y-traps[0].left.v2.pos.y) ;
-
-						// 计算插值参数
-						float p_x = (x_target - v1m.x_s) / (v2m.x_s - v1m.x_s);
-						float p_y = (y_target - v1m.y_s) / (v2m.y_s - v1m.y_s);
-
-						// 线性插值透视齐次坐标
-						float rhw_target = v2m.rhw + p_x * (v1m.rhw - v2m.rhw);
-
-						// 线性插值实际三维坐标
-						float x_target_w = v1m.x_w*v1m.rhw + p_x * (v2m.x_w*v2m.rhw - v1m.x_w*v1m.rhw);
-						float y_target_w = v1m.y_w + p_y * (v2m.y_w - v1m.y_w);
-						float z_target_w = v1m.z_w*v1m.rhw + p_y * (v2m.z_w*v2m.rhw - v1m.z_w*v1m.rhw);
-
-						// 应用透视校正
-						float x_real = x_target_w / rhw_target;
-						float y_real = y_target_w / rhw_target;
-						float z_real = z_target_w / rhw_target;
-
-						if(x_real > x_realmax)
-							x_realmax = x_real;
-						// pr_debug("%3.2f/%3.2f/%3.2f\n", x_real, y_real, z_real);
-						if(z_real < 5.f){
-							// float x0 = traps[0].left.v1.pos.x + p*(traps[0].left.v2.pos.x-traps[0].left.v1.pos.x);
-							// float y0 = traps[0].left.v1.pos.y + p*(traps[0].left.v2.pos.y-traps[0].left.v1.pos.y);
-							// pr_debug("%3.2f/%3.2f\n", x0, y0);
-
-							// device_point(device, x_target, y_target, 0xff0000);
-							// pr_debug("%3.2f\n", z_real);
-							// break;
-							// device_point(device, x0, y0, 0xff00);
-							// ImGui::SliderFloat("p", (float *)&p,0,1);
-							break;
-						}
-							// pr_debug("x %3.2f p %3.2f\n", x_real, p);
-
-					// }----------------------------------------------------
-					// {----------------------------------------------------
-						// vertex_t v1 = traps[0].left.v1;
-						// vertex_t v2 = traps[0].left.v2;
-
-						// 计算插值参数 p
-						// float p = (y - v2.pos.y + 0.5f) / (v1.pos.y - v2.pos.y);
-						
-
-						// 计算在 y 位置上的纹理坐标 u 和反向齐次坐标 rhw
-						float I1 = v1.tc.u;
-						float I2 = v2.tc.u;
-						float Z1 = v1.rhw;
-						float Z2 = v2.rhw;
-						//-----------------------------------------------------------
-
-						// 计算透视校正的属性值
-						float I1_div_Z1 = I1;
-						float I2_div_Z2 = I2;
-						// It/Zt = (I1/Z1 + S(I2/Z2-I1/Z1))
-						float It_div_Zt = I2_div_Z2 + p * (I1_div_Z1 - I2_div_Z2);
-
-						// 计算目标位置 Zt
-						float Zt = v2.rhw + p * (v1.rhw - v2.rhw);
-
-						// 计算透视校正后的纹理坐标 u0
-						float u00 = It_div_Zt / Zt;
-						//-----------------------------------------------------------
-						float u2 = I2 + p * (I1 - I2);
-						float rhw2 = Z2 + p * (Z1 - Z2);
-						float u01= u2/rhw2;
-						//-----------------------------------------------------------
-						// pr_debug("%3.2f\n", u01-u0);
-
-					// }----------------------------------------------------
-
-					float x00 = traps[0].left.v2.spos.x + u00*(traps[0].left.v1.spos.x-traps[0].left.v2.spos.x);
-					float y00 = traps[0].left.v2.spos.z + u00*(traps[0].left.v1.spos.z-traps[0].left.v2.spos.z);
-					float r = sqrt(pow(x00, 2.f)+pow(y00, 2.f));
-					// pr_debug("%3.2f/%3.2f/%3.2f\n", x00, y00, r);
-					if(r>8.f){
-						float x0 = traps[0].left.v2.pos.x + p*(traps[0].left.v1.pos.x-traps[0].left.v2.pos.x);
-						float y0 = traps[0].left.v2.pos.y + p*(traps[0].left.v1.pos.y-traps[0].left.v2.pos.y);
-						// device_point(device, x0, y0, 0xff00);
-					}
-
-
-					// if(u0 > 0.875f){
-					// 	float x0 = v2.pos.x + p*(v1.pos.x-v2.pos.x);
-					// 	float y0 = v2.pos.y + p*(v1.pos.y-v2.pos.y);
-					// 	device_point(device, x0, y0, 0xff00);
-					// 	ImGui::SliderFloat("p", (float *)&p,0,1);
-					// 	break;
-					// }
-				}
-				// pr_debug("%3.2f/%3.2f\n",pmin, pmax);
-
-#endif
-
-
-			}
-
-
-
-
-			// ImGui::SliderFloat("x", &x, 0, 1.f);
-			// ImGui::SliderFloat("y", &y, 0, 1.f);
-
-			float xt = 0;
-			float yt = 0;
-
-			// device_point(device, xt, yt, 0xff);
-			if(v){
-				// device_point(device, (int)x, (int)y, 0);
-				device_point(device, (int)traps[0].left.v.pos.x, (int)traps[0].left.v.pos.y, 0);
-
-				// device_draw_line(device, (int)traps[0].left.v1.pos.x, (int)traps[0].left.v1.pos.y, 
-				// 					(int)traps[0].left.v2.pos.x, (int)traps[0].left.v2.pos.y, 0xff);
-				// device_draw_line(device, (int)traps[0].right.v1.pos.x, (int)traps[0].right.v1.pos.y, 
-				// 					(int)traps[0].right.v2.pos.x, (int)traps[0].right.v2.pos.y, 0xff);
-			}
-			if(v1){
-				device_point(device, (int)traps[0].left.v1.pos.x, (int)traps[0].left.v1.pos.y, 0);
-
-				// device_draw_line(device, (int)traps[0].left.v1.pos.x, (int)traps[0].left.v1.pos.y, 
-				// 						(int)traps[0].left.v.pos.x, (int)traps[0].left.v.pos.y, 0xff00);
-
-				// device_draw_line(device, (int)traps[0].right.v1.pos.x, (int)traps[0].right.v1.pos.y, 
-				// 						(int)traps[0].right.v.pos.x, (int)traps[0].right.v.pos.y, 0xff00);
-			}
-			if(v2){
-				device_point(device, (int)traps[0].left.v2.pos.x, (int)traps[0].left.v2.pos.y, 0);
-
-				// device_draw_line(device, (int)traps[0].left.v2.pos.x, (int)traps[0].left.v2.pos.y, 
-				// 						(int)traps[0].left.v.pos.x, (int)traps[0].left.v.pos.y, 0x0);
-				// device_draw_line(device, (int)traps[0].right.v2.pos.x, (int)traps[0].right.v2.pos.y, 
-				// 						(int)traps[0].right.v.pos.x, (int)traps[0].right.v.pos.y, 0x0);
-			}
-			// ImGui::SliderFloat2("v1", (float *)&traps[0].left.v1.pos, -3.0f, 3.0f);
-			// ImGui::SliderFloat2("v2", (float *)&traps[0].left.v2.pos, -3.0f, 3.0f);
-			// ImGui::SliderFloat2("v", (float *)&traps[0].left.v.pos, -3.0f, 3.0f);
+			// calcrhw(device, traps);
 		}
-		// if(n>=2){
-		// 	device_draw_line(device, device->width/2, (int)traps[1].top, device->width/2, (int)traps[1].bottom, 0x0);
-		// 	device_draw_line(device, (int)traps[1].left.v1.pos.x, (int)traps[1].left.v1.pos.y, 
-		// 							(int)traps[1].left.v2.pos.x, (int)traps[1].left.v2.pos.y, 0xffff00);
-		// }
+
 	}
 
 

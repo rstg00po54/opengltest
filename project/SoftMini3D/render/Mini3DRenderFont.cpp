@@ -2,14 +2,15 @@
 #include "Mini3D.h"
 #include "Mini3DDevice.h"
 
+#include <string>
 
-void drawCharAt(device_t *device, int xpos, int ypos, char *c) {
+void drawCharAt(device_t *device, int xpos, int ypos, std::string c) {
 
     // 创建字体颜色
 	SDL_Color textColor = {255, 255, 255}; // 白色
 	TTF_SetFontSize(device->font, 16);
 	// 渲染文本
-	SDL_Surface* textSurface = TTF_RenderText_Solid(device->font, c, textColor);
+	SDL_Surface* textSurface = TTF_RenderText_Solid(device->font, c.c_str(), textColor);
 // 锁定表面以访问像素数据
 	if (SDL_MUSTLOCK(textSurface)) {
 		SDL_LockSurface(textSurface);
