@@ -31,8 +31,8 @@ void calcrhw(device_t *device, trapezoid_t traps[2]) {
 
 
 		// {---------------------------------------------------------
-			point_t sposv1 = traps[0].left.v1.spos;
-			point_t sposv2 = traps[0].left.v2.spos;
+			point_t sposv1 =v1.spos;
+			point_t sposv2 = v2.spos;
 			struct Vertexm {
 				float x_w, y_w, z_w;  // 实际三维坐标
 				float x_s, y_s;       // 屏幕坐标
@@ -40,13 +40,13 @@ void calcrhw(device_t *device, trapezoid_t traps[2]) {
 			};
 
 			// 已知顶点//(10,10)(-10,-10)
-			Vertexm v1m = {sposv1.x, sposv1.y, sposv1.z, traps[0].left.v1.pos.x, traps[0].left.v1.pos.y, traps[0].left.v1.rhw};  // (x_w, y_w, z_w, x_s, y_s, rhw)
-			Vertexm v2m = {sposv2.x, sposv2.y, sposv2.z, traps[0].left.v2.pos.x, traps[0].left.v2.pos.y, traps[0].left.v2.rhw}; // (x_w, y_w, z_w, x_s, y_s, rhw)
+			Vertexm v1m = {sposv1.x, sposv1.y, sposv1.z, v1.pos.x, v1.pos.y, v1.rhw};  // (x_w, y_w, z_w, x_s, y_s, rhw)
+			Vertexm v2m = {sposv2.x, sposv2.y, sposv2.z, v2.pos.x, v2.pos.y, v2.rhw}; // (x_w, y_w, z_w, x_s, y_s, rhw)
 
 			// float pp = 0.3f;
 			// 目标屏幕坐标
-			float x_target = traps[0].left.v2.pos.x + p *(traps[0].left.v1.pos.x-traps[0].left.v2.pos.x) ;
-			float y_target = traps[0].left.v2.pos.y + p *(traps[0].left.v1.pos.y-traps[0].left.v2.pos.y) ;
+			float x_target = v2.pos.x + p *(v1.pos.x-v2.pos.x) ;
+			float y_target = v2.pos.y + p *(v1.pos.y-v2.pos.y) ;
 
 			// 计算插值参数
 			float p_x = (x_target - v1m.x_s) / (v2m.x_s - v1m.x_s);
@@ -67,29 +67,8 @@ void calcrhw(device_t *device, trapezoid_t traps[2]) {
 
 			if(x_real > x_realmax)
 				x_realmax = x_real;
-			// pr_debug("%3.2f/%3.2f/%3.2f\n", x_real, y_real, z_real);
-			if(z_real < 5.f){
-				// float x0 = traps[0].left.v1.pos.x + p*(traps[0].left.v2.pos.x-traps[0].left.v1.pos.x);
-				// float y0 = traps[0].left.v1.pos.y + p*(traps[0].left.v2.pos.y-traps[0].left.v1.pos.y);
-				// pr_debug("%3.2f/%3.2f\n", x0, y0);
-
-				// device_point(device, x_target, y_target, 0xff0000);
-				// pr_debug("%3.2f\n", z_real);
-				// break;
-				// device_point(device, x0, y0, 0xff00);
-				// ImGui::SliderFloat("p", (float *)&p,0,1);
-				break;
-			}
-				// pr_debug("x %3.2f p %3.2f\n", x_real, p);
-
 		// }----------------------------------------------------
 		// {----------------------------------------------------
-			// vertex_t v1 = traps[0].left.v1;
-			// vertex_t v2 = traps[0].left.v2;
-
-			// 计算插值参数 p
-			// float p = (y - v2.pos.y + 0.5f) / (v1.pos.y - v2.pos.y);
-			
 
 			// 计算在 y 位置上的纹理坐标 u 和反向齐次坐标 rhw
 			float I1 = v1.tc.u;
@@ -102,10 +81,11 @@ void calcrhw(device_t *device, trapezoid_t traps[2]) {
 			float I1_div_Z1 = I1;
 			float I2_div_Z2 = I2;
 			// It/Zt = (I1/Z1 + S(I2/Z2-I1/Z1))
-			float It_div_Zt = I2_div_Z2 + p * (I1_div_Z1 - I2_div_Z2);
+			// float It_div_Zt = I2_div_Z2 + p * (I1_div_Z1 - I2_div_Z2);
+			float It_div_Zt = v2.tc.u + p * (v1.tc.u - v2.tc.u);
 
 			// 计算目标位置 Zt
-			float Zt = v2.rhw + p * (v1.rhw - v2.rhw);
+			float Zt = v2.rhw + p * (v1.rhw - v2.rhw);//1/w
 
 			// 计算透视校正后的纹理坐标 u0
 			float u00 = It_div_Zt / Zt;
@@ -125,18 +105,18 @@ void calcrhw(device_t *device, trapezoid_t traps[2]) {
 		if(r>8.f){
 			float x0 = traps[0].left.v2.pos.x + p*(traps[0].left.v1.pos.x-traps[0].left.v2.pos.x);
 			float y0 = traps[0].left.v2.pos.y + p*(traps[0].left.v1.pos.y-traps[0].left.v2.pos.y);
-			device_point(device, x0, y0, 0xff00);
-			break;
+			// device_point(device, x0, y0, 0xff00);
+			// break;
 		}
 
 
-		// if(u0 > 0.875f){
-		// 	float x0 = v2.pos.x + p*(v1.pos.x-v2.pos.x);
-		// 	float y0 = v2.pos.y + p*(v1.pos.y-v2.pos.y);
-		// 	device_point(device, x0, y0, 0xff00);
-		// 	ImGui::SliderFloat("p", (float *)&p,0,1);
-		// 	break;
-		// }
+		if(u01 > 0.875f){
+			float x0 = v2.pos.x + p*(v1.pos.x-v2.pos.x);
+			float y0 = v2.pos.y + p*(v1.pos.y-v2.pos.y);
+			device_point(device, x0, y0, 0xff00);
+			ImGui::SliderFloat("p", (float *)&p,0,1);
+			break;
+		}
 	}
 	// pr_debug("%3.2f/%3.2f\n",pmin, pmax);
 

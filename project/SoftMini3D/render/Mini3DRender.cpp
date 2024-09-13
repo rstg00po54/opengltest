@@ -6,6 +6,7 @@
 #include <math.h>
 
 int print;
+static void device_draw_traps(device_t *device, vertex_t *v1, vertex_t *v2, vertex_t *v3);
 //=====================================================================
 // 渲染实现
 //=====================================================================
@@ -334,18 +335,14 @@ void device_draw_triangle(device_t *device,
 	transform_homogenize(&device->transform, &p2, &c2);
 	transform_homogenize(&device->transform, &p3, &c3);
 
-	point_t co1, co2, co3;
-	point_t po1, po2, po3, po4;
-	// ImGui::SliderFloat4("c1", (float *)&c1, 0, 1.f);
-	// ImGui::SliderFloat4("c2", (float *)&c2, 0, 1.f);
-	// ImGui::SliderFloat4("c3", (float *)&c3, 0, 1.f);
-	// ImGui::SliderFloat4("p1", (float *)&p1, 0, 1.f);
-	// ImGui::SliderFloat4("p2", (float *)&p2, 0, 1.f);
-	// ImGui::SliderFloat4("p3", (float *)&p3, 0, 1.f);
+	// point_t co1, co2, co3;
+	// point_t po1, po2, po3, po4;
 
-	drawLine(device, v1->pos, v2->pos, 1);
-	drawLine(device, v1->pos, v3->pos, 1);
+	VertDraw vert2 = drawLine(device, v1->pos, v2->pos, 1);
+	VertDraw vert3 = drawLine(device, v1->pos, v3->pos, 1);
 	drawLine(device, v2->pos, v3->pos);
+	ImGui::SliderFloat2("vert2", (float *)&vert2.t, 0, 1.f);
+	ImGui::SliderFloat2("vert3", (float *)&vert3.t, 0, 1.f);
 	
 	vector<point_t> subjectPolygon = {
 	   p1,p2,p3
@@ -368,64 +365,109 @@ void device_draw_triangle(device_t *device,
 	// 	device_trans_line(device, out[0], out[2], out[3], device->foreground);
 	// }
 
-	
-	ImGui::End();
-
-
-
 	if (render_state & RENDER_STATE_WIREFRAME) {		// 线框绘制
 		// device_trans_line(device, p1, p2, p3, device->foreground);
 		// device_draw_line(device, (int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y, device->foreground);	
 		// device_draw_line(device, (int)p1.x, (int)p1.y, (int)p3.x, (int)p3.y, device->foreground);
 		// device_draw_line(device, (int)p3.x, (int)p3.y, (int)p2.x, (int)p2.y, device->foreground);
 	}
+	int use0 = 1;
 	// 纹理或者色彩绘制
 	if (render_state & (RENDER_STATE_TEXTURE | RENDER_STATE_COLOR)) {
-		vertex_t t1 = *v1, t2 = *v2, t3 = *v3;
-		trapezoid_t traps[2];
-		int n;
-// v 投影之前
-// c 投影之后
-// p 归一化
+		vertex_t t1, t2, t3, t4;
+		// v 投影之前
 		t1 = *v1;
 		t2 = *v2;
 		t3 = *v3;
-		t1.pos = p1; 
+		float p ;
+		float rhw1, rhw2, rhw3, rhw4;
+		float rhw;
+
+		p = vert3.t[0];
+		rhw1 = 1.f/vert3.clipPosition[0].w;
+		rhw3 = 1.f/c3.w;
+		rhw = rhw1 + p * (rhw3 - rhw1);
+		t1.tc.u = t1.tc.u + p * (t3.tc.u - t1.tc.u);
+		t1.tc.v = t1.tc.v + p * (t3.tc.v - t1.tc.v);
+
+		// p 归一化 屏幕坐标
+		// t1.pos = p1;
+		t1.pos = vert3.screenPosition[0];
 		t2.pos = p2;
 		t3.pos = p3;
-		t1.pos.w = c1.w;
+		// c 投影之后
+		// t1.pos.w = c1.w;
+		t1.pos.w = vert3.localPosition[0].w;
 		t2.pos.w = c2.w;
 		t3.pos.w = c3.w;
-
-		t1.spos = v1->pos;
+/*
+   t3-----t2
+    \    /
+vert3\ _/vert2
+  t1  \/  t4
+      
+*/
+		// t1.spos = v1->pos;
+		t1.spos = vert3.localPosition[0];
 		t2.spos = v2->pos;
 		t3.spos = v3->pos;
-		
-		vertex_rhw_init(&t1);	// 初始化 w
-		vertex_rhw_init(&t2);	// 初始化 w
-		vertex_rhw_init(&t3);	// 初始化 w
+		device_draw_traps(device, &t1, &t2, &t3);
 
-		// t1.pos.z = 0;
-		// t2.pos.z = 0;
-		// t3.pos.z = 0;
-		
-		// 拆分三角形为0-2个梯形，并且返回可用梯形数量
-		n = trapezoid_init_triangle(traps, &t1, &t2, &t3);
+		static texcoord_t tc1,tc2,tc4; 
 
-		static bool v, v1, v2;
-		if (n >= 1) {
-			device_render_trap(device, &traps[0]);
-		}
-		if (n >= 2) device_render_trap(device, &traps[1]);
+		ImGui::SliderFloat2("t2u", (float *)&tc2, 0, 1.f);
+		ImGui::SliderFloat2("t1u", (float *)&tc1, 0, 1.f);
+		ImGui::SliderFloat2("t4u", (float *)&tc4, 0, 1.f);
 
 
-		if(n>=1){
-			// calcrhw(device, traps);
-		}
+
+/*
+   t3-----t2
+    \    /
+vert3\ _/vert2
+  t1  \/  t4
+      
+*/
+		t4.pos   = vert2.screenPosition[0];
+		t4.pos.w = vert2.localPosition[0].w;
+		t4.spos  = vert2.localPosition[0];
+
+		t2.tc.u = 1;
+		t2.tc.v = 0;
+
+		t1.tc.u = vert3.t[0];
+		t1.tc.v = vert3.t[0];
+
+		t4.tc.u = vert2.t[0];
+		t4.tc.v = 0;
+		device_draw_traps(device, &t4, &t2, &t1);
+		drawCharAt(device, t4.pos.x, t4.pos.y-10, "t4");
+		drawCharAt(device, t1.pos.x, t1.pos.y-10, "t1");
+		drawCharAt(device, t2.pos.x, t2.pos.y-10, "t2");
 
 	}
 
 
-	// ImGui::End();
+	ImGui::End();
 	print = 1;
+}
+
+
+
+
+static void device_draw_traps(device_t *device, vertex_t *v1, vertex_t *v2, vertex_t *v3) {
+	trapezoid_t traps[2];
+
+	vertex_rhw_init(v1);	// 初始化 w
+	vertex_rhw_init(v2);	// 初始化 w
+	vertex_rhw_init(v3);	// 初始化 w
+
+	// 拆分三角形为0-2个梯形，并且返回可用梯形数量
+	int n = trapezoid_init_triangle(traps, v1, v2, v3);
+	if (n >= 1) {
+		device_render_trap(device, &traps[0]);
+	}
+	if (n >= 2) 
+		device_render_trap(device, &traps[1]);
+
 }

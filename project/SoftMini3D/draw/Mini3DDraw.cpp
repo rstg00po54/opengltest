@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <Mini3DDevice.h>
+#include "Mini3DDraw.h"
 
 
 static void inter(vector_t *pin1, const vector_t *pin0, float t){
@@ -30,8 +31,8 @@ point_t transform_home0(const device_t *device, const vector_t *from, const vect
 	// }
 	pin0 = (vector_t *)malloc(sizeof(vector_t));
 	pin1 = (vector_t *)malloc(sizeof(vector_t));
-	*pin0 = *from;
-	*pin1 = *to;
+	*pin1 = *from;
+	*pin0 = *to;
 	static bool v = true;
 	// ImGui::Checkbox("clip", &v);
 	// if(abs(pin1->x)>abs(pin1->w)){
@@ -146,7 +147,7 @@ point_t transform_home0(const device_t *device, const vector_t *from, const vect
 
 }
 
-int  transform_Normalization(device_t *device, vector_t *po1, vector_t *po0, vector_t *pin1, vector_t*pin0, int c = 0) {
+float transform_Normalization(device_t *device, vector_t *po1, vector_t *po0, vector_t *pin1, vector_t*pin0, int c = 0) {
 	point_t po00,po11;
 	float rhw1, rhw2;
 	po00 = transform_home0(device, pin0, pin1);
@@ -161,6 +162,9 @@ int  transform_Normalization(device_t *device, vector_t *po1, vector_t *po0, vec
 		// pr_debug("po11 is null\n");
 		return -1;
 	}
+	*po0 = po00;
+	*po1 = po11;
+#if 0
 	float t1, t2;
 	t1 = (po00.x-pin0->x)/(pin1->x-pin0->x);
 	t2 = (po11.x-pin0->x)/(pin0->x-pin1->x);
@@ -190,12 +194,16 @@ int  transform_Normalization(device_t *device, vector_t *po1, vector_t *po0, vec
 		 ImGui::SliderFloat4("po1", (float *)po1, 0.0f, 50.0f);
 		return -1;
 	}
+#endif
 	return 0;
 }
 
-void drawLine(device_t *device, point_t p0, point_t p1, int c = 0) {
+VertDraw drawLine(device_t *device, point_t p0, point_t p1, int c, point_t *out) {
 	point_t v0,v1;
 	point_t vs0,vs1;
+	VertDraw ret;
+	float rhw0, rhw1;
+	float t0, t1;
 	vs0 = {0,0,0,1};
 	vs1 = {0,0,0,1};
 	matrix_apply( &v0, &p0, &device->transform.mvp);
@@ -203,33 +211,69 @@ void drawLine(device_t *device, point_t p0, point_t p1, int c = 0) {
 
 	if ( v0.w < 0 && v1.w < 0){
 		ImGui::Text("do not");
-		return;
+		ret.ret = -1;
+		return ret;
 	}
-	int ret = transform_Normalization(device, &vs0, &vs1, &v0, &v1, c);
-	if (ret < 0){
-		return;
+	float r = transform_Normalization(device, &vs0, &vs1, &v0, &v1, c);
+	if (r < 0){
+		ret.ret = -1;
+		return ret;
 	}
-	// float rhw;
-	// rhw = 1.0f / v0.w;
-	// v0.x = v0.x*rhw;
-	// v0.y = v0.y*rhw;
-	// v0.z = v0.z*rhw;
-	// v0.w = v0.w*rhw;
-	// rhw = 1.0f / v1.w;
-	// v1.x = v1.x*rhw;
-	// v1.y = v1.y*rhw;
-	// v1.z = v1.z*rhw;
-	// v1.w = v1.w*rhw;
-	// ImGui::SliderFloat4("v0", (float *)&v0, 0, 1);
-	// ImGui::SliderFloat4("v1", (float *)&v1, 0, 1);
-	// int c[] = {0xff,0xff00,0x0000,0,0};
-	// if(vs0.x < 0 || vs0.y < 0 || vs0.x > device->width || vs0.y > device->height){
-	// 	ImGui::Text("error1!!");
-	// 	return;
-	// }
-	// if(vs1.x < 0 || vs1.y < 0 || vs1.x > device->width || vs1.y > device->height){
-	// 	ImGui::Text("error0!!");
-	// 	return;
-	// }
-	device_draw_line(device, vs0, vs1, 0);
+	ret.localPosition[0] = vs0;
+	ret.localPosition[1] = vs1;
+	ret.clipPosition[0] = v0;
+	ret.clipPosition[1] = v1;
+
+
+
+	t0 = (vs0.x-v0.x)/(v1.x-v0.x);
+	t1 = (vs1.x-v0.x)/(v0.x-v1.x);
+	if (c == 1) {
+		ImGui::SliderFloat("t0", (float *)&t0, 0.0f, 50.0f);
+		ImGui::SliderFloat4("po00", (float *)&vs0, 0.0f, 50.0f);
+		ImGui::SliderFloat("t1", (float *)&t1, 0.0f, 50.0f);
+		ImGui::SliderFloat4("po11", (float *)&vs1, 0.0f, 50.0f);
+		ImGui::Text("size %d, %d", sizeof(vs0), sizeof(vs1));
+	}
+
+	rhw0 = 1.f/vs0.w;
+	rhw1 = 1.f/vs1.w;
+
+	// 归一化坐标
+	ret.normalPosition[0].x = vs0.x * rhw0;
+	ret.normalPosition[0].y = vs0.y * rhw0;
+	ret.normalPosition[0].z = vs0.z * rhw0;
+	ret.normalPosition[0].w = vs0.w * rhw0;
+	ret.normalPosition[1].x = vs1.x * rhw1;
+	ret.normalPosition[1].y = vs1.y * rhw1;
+	ret.normalPosition[1].z = vs1.z * rhw1;
+	ret.normalPosition[1].w = vs1.w * rhw1;
+
+	// 屏幕坐标
+	ret.screenPosition[0].x = (vs0.x * rhw0 + 1.0f) * device->transform.w * 0.5f;
+	ret.screenPosition[0].y = (1.0f - vs0.y * rhw0) * device->transform.h * 0.5f;
+
+
+	ret.screenPosition[1].x = (vs1.x * rhw1 + 1.0f) * device->transform.w * 0.5f;
+	ret.screenPosition[1].y = (1.0f - vs1.y * rhw1) * device->transform.h * 0.5f;
+
+	vs0 = ret.screenPosition[0];
+	vs1 = ret.screenPosition[1];
+
+
+	if(vs0.x <  -0.1  || vs0.y <  -0.1  || vs0.x > device->width+0.1 || vs0.y > device->height+0.1){
+		ImGui::Text("error4!! t %f", 0);
+		ImGui::SliderFloat4("vs0", (float *)&vs0, 0.0f, 50.0f);
+		return ret;
+	}
+	if(vs1.x < -0.1 || vs1.y <  -0.1  || vs1.x > device->width+0.1 || vs1.y > device->height+0.1){
+		ImGui::Text("error5!! t %f", t1);
+		 ImGui::SliderFloat4("vs1", (float *)&vs1, 0.0f, 50.0f);
+		return ret;
+	}
+	
+	device_draw_line(device, ret.screenPosition[0], ret.screenPosition[1], 0);
+	ret.t[0] = t0;
+	ret.t[1] = t1;
+	return ret;
 }
