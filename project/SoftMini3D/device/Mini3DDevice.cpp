@@ -88,13 +88,35 @@ void device_point(device_t *device, int x, int y, IUINT32 color) {
 
 }
 void device_draw_line(device_t *device, point_t x, point_t y, IUINT32 c) {
-	device_draw_line(device, x.x, x.y, y.x, y.y, c);
+	for(int i = 0;i<2;i++){
 
+		device_draw_line(device, x.x+i, x.y, y.x+i, y.y, c);
+	}
+	// device_draw_line(device, x.x-1, x.y, y.x-1, y.y, c);
+	// device_draw_line(device, x.x+1, x.y, y.x+1, y.y, c);
+
+
+}
+void check_xy(int v, int max){
+	if(v<0){
+		pr_debug("error 1\n");
+	}
+	if(v>max){
+		pr_debug("error 2\n");
+	}
 }
 // 绘制线段
 void device_draw_line(device_t *device, int x1, int y1, int x2, int y2, IUINT32 c) {
 	// pr_debug("%d %d, %d %d", x1, y1, x2, y2);
 	int x, y, rem = 0;
+	int w = device->width;
+	int h = device->height;
+
+	// check_xy(x1, w);
+	// check_xy(x2, w);
+	// check_xy(y1, h);
+	// check_xy(y2, h);
+
 	if (x1 == x2 && y1 == y2) {
 		device_pixel(device, x1, y1, c);
 	}	else if (x1 == x2) {
@@ -267,7 +289,8 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 						cc = device_texture_read(device, u, v);
 						// float m0 = pow(cosf(vout/15.f),5.f);
 						float m0 = mmm+0.2f;
-						// m0 = 1.f;
+
+						m0 = 1.f;
 						int B = (cc & 0xff)*m0;
 						int G = ((cc>>8) & 0xff)*m0;
 						int R = ((cc>>16) & 0xff)*m0;

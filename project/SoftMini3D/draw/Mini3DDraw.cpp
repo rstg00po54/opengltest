@@ -63,12 +63,12 @@ point_t transform_home0(const device_t *device, const vector_t *from, const vect
 			//I = Q1+t*(Q2-Q1)		
 		}
 		if(pin1->z > abs(pin1->w)){
-			// ImGui::Text("clip z +, %f", pin1->z - abs(pin1->w));
 			//t = (w1-z1)/((w1-z1)-(w2-z2))
 			//I = Q1+t*(Q2-Q1)	
 			// vector_t ret;
 			float t = (pin1->w - pin1->z)/((pin1->w-pin1->z)-(pin0->w-pin0->z));
 			if(abs(t)>1.f){
+				ImGui::Text("clip z +, %f", pin1->z - abs(pin1->w));
 				return tn;
 			}
 			inter(pin1, pin0, t);
@@ -79,28 +79,28 @@ point_t transform_home0(const device_t *device, const vector_t *from, const vect
 			//I = Q1+t*(Q2-Q1)		
 			float t = (pin1->w - pin1->x)/((pin1->w-pin1->x)-(pin0->w-pin0->x));
 			if(abs(t)>1.f){
+				ImGui::Text("clip x + t = %f", t);
+				// ImGui::SliderFloat4("裁剪x+", (float *)pin1, 0.0f, 50.0f);
 				return tn;
 			}
 			inter(pin1, pin0, t);
-			// ImGui::Text("clip x + t = %f", t);
-			// ImGui::SliderFloat4("裁剪x+", (float *)pin1, 0.0f, 50.0f);
 		}
 		if(pin1->x < -abs(pin1->w)){
-			// ImGui::Text("clip x -");
 			//t = (w1-x1)/((w1-x1)-(w2-x2))
 			//I = Q1+t*(Q2-Q1)		
 			float t = (pin1->w + pin1->x)/((pin1->w+pin1->x)-(pin0->w+pin0->x));
 			if(abs(t)>1.f){
+				ImGui::Text("clip x -");
+				// ImGui::SliderFloat4("裁剪x-", (float *)pin1, 0.0f, 50.0f);
 				return tn;
 			}
 			inter(pin1, pin0, t);
-			// ImGui::SliderFloat4("裁剪x-", (float *)pin1, 0.0f, 50.0f);
 		}
 		if(pin1->y > abs(pin1->w)){
-			// ImGui::Text("clip y +, pin1->y %f", pin1->y);
 			//t = (w1-x1)/((w1-x1)-(w2-x2))
 			//I = Q1+t*(Q2-Q1)		
 			float t = (pin1->w - pin1->y)/((pin1->w-pin1->y)-(pin0->w-pin0->y));
+				ImGui::Text("clip y +, pin1->y %f", pin1->y);
 			if(abs(t)>1.f){
 				return tn;
 			}
@@ -108,15 +108,15 @@ point_t transform_home0(const device_t *device, const vector_t *from, const vect
 			// ImGui::SliderFloat4("裁剪y+", (float *)pin1, 0.0f, 50.0f);
 		}
 		if(pin1->y < -abs(pin1->w)){
-			// ImGui::Text("clip y -, pin1->y %f", pin1->y);
 			//t = (w1-x1)/((w1-x1)-(w2-x2))
 			//I = Q1+t*(Q2-Q1)		
 			float t = (pin1->w + pin1->y)/((pin1->w+pin1->y)-(pin0->w+pin0->y));
 			if(abs(t)>1.f){
+				ImGui::SliderFloat4("裁剪y-", (float *)pin1, 0.0f, 50.0f);
+				ImGui::Text("clip y -, pin1->y %f", pin1->y);
 				return tn;
 			}
 			inter(pin1, pin0, t);
-			// ImGui::SliderFloat4("裁剪y-", (float *)pin1, 0.0f, 50.0f);
 		}
 	// }
 	// hw = 1.f/pin1->w;
@@ -150,17 +150,18 @@ point_t transform_home0(const device_t *device, const vector_t *from, const vect
 float transform_Normalization(device_t *device, vector_t *po1, vector_t *po0, vector_t *pin1, vector_t*pin0, int c = 0) {
 	point_t po00,po11;
 	float rhw1, rhw2;
+	float ret = 0;
 	po00 = transform_home0(device, pin0, pin1);
 	po11 = transform_home0(device, pin1, pin0);
 	if (po00.w == 0){
-		ImGui::Text("po00 is null");
+		ImGui::Text("po00 out camera");
 		// pr_debug("po00 is null\n");
-		return -1;
+		ret = -1;
 	}
 	if (po11.w == 0){
-		ImGui::Text("po00 is null");
+		ImGui::Text("po11 out camera");
 		// pr_debug("po11 is null\n");
-		return -1;
+		ret = -1;
 	}
 	*po0 = po00;
 	*po1 = po11;
@@ -195,10 +196,10 @@ float transform_Normalization(device_t *device, vector_t *po1, vector_t *po0, ve
 		return -1;
 	}
 #endif
-	return 0;
+	return ret;
 }
 
-VertDraw drawLine(device_t *device, point_t p0, point_t p1, int c, point_t *out) {
+VertDraw drawLine(device_t *device, point_t p0, point_t p1, int c) {
 	point_t v0,v1;
 	point_t vs0,vs1;
 	VertDraw ret;
@@ -208,15 +209,16 @@ VertDraw drawLine(device_t *device, point_t p0, point_t p1, int c, point_t *out)
 	vs1 = {0,0,0,1};
 	matrix_apply( &v0, &p0, &device->transform.mvp);
 	matrix_apply( &v1, &p1, &device->transform.mvp);
-
+	ret.ret = 0;
 	if ( v0.w < 0 && v1.w < 0){
-		ImGui::Text("do not");
-		ret.ret = -1;
+		ImGui::Text("OUT_CAMERA2");
+		ret.ret = OUT_CAMERA2;
 		return ret;
 	}
 	float r = transform_Normalization(device, &vs0, &vs1, &v0, &v1, c);
 	if (r < 0){
-		ret.ret = -1;
+		ImGui::Text("OUT_CAMERA");
+		ret.ret = OUT_CAMERA;
 		return ret;
 	}
 	ret.localPosition[0] = vs0;
@@ -227,7 +229,7 @@ VertDraw drawLine(device_t *device, point_t p0, point_t p1, int c, point_t *out)
 
 
 	t0 = (vs0.x-v0.x)/(v1.x-v0.x);
-	t1 = (vs1.x-v0.x)/(v0.x-v1.x);
+	t1 = (vs1.x-v0.x)/(v1.x-v0.x);
 	if (c == 1) {
 		ImGui::SliderFloat("t0", (float *)&t0, 0.0f, 50.0f);
 		ImGui::SliderFloat4("po00", (float *)&vs0, 0.0f, 50.0f);
@@ -260,20 +262,27 @@ VertDraw drawLine(device_t *device, point_t p0, point_t p1, int c, point_t *out)
 	vs0 = ret.screenPosition[0];
 	vs1 = ret.screenPosition[1];
 
+	if (c == 1)
+		ImGui::SliderFloat4("vs0", (float *)&vs0, 0.0f, 50.0f);
 
 	if(vs0.x <  -0.1  || vs0.y <  -0.1  || vs0.x > device->width+0.1 || vs0.y > device->height+0.1){
-		ImGui::Text("error4!! t %f", 0);
-		ImGui::SliderFloat4("vs0", (float *)&vs0, 0.0f, 50.0f);
-		return ret;
+		ImGui::Text("error4!! vs0 out screen! t %f", t0);
+		ret.ret = OUT_SCREEN;
+		// return ret;
 	}
+	if (c == 1)
+		ImGui::SliderFloat4("vs1", (float *)&vs1, 0.0f, 50.0f);
 	if(vs1.x < -0.1 || vs1.y <  -0.1  || vs1.x > device->width+0.1 || vs1.y > device->height+0.1){
-		ImGui::Text("error5!! t %f", t1);
-		 ImGui::SliderFloat4("vs1", (float *)&vs1, 0.0f, 50.0f);
-		return ret;
+		ImGui::Text("error5!! vs1 out screen! t %f", t1);
+		 ret.ret = OUT_SCREEN;
+		// return ret;
 	}
-	
+	if(ret.ret < 0)
+		return ret;
+
 	device_draw_line(device, ret.screenPosition[0], ret.screenPosition[1], 0);
 	ret.t[0] = t0;
 	ret.t[1] = t1;
+	ImGui::SliderFloat2("t0", (float *)ret.t, 0.0f, 1.0f);
 	return ret;
 }

@@ -253,6 +253,56 @@ void device_set_texture(device_t *device, void *bits, long pitch, int w, int h) 
 }
 #define TEXTURE_W 256
 #define TEXTURE_H 256
+/*
+纹理加字母
+*/
+
+static void drawCharAtTexture(device_t *device, void *texture) {
+
+	int *ptr = (int*)texture;
+	SDL_Color textColor = {255, 255, 255}; // 白色
+	TTF_SetFontSize(device->font, 20);
+	TTF_SetFontStyle(device->font, TTF_STYLE_BOLD);
+
+	for(int c = 0;c<64;c++) {
+
+		char buf[5];
+		sprintf(buf, "%d%d", c/8, c%8);
+		SDL_Surface* textSurface = TTF_RenderText_Solid(device->font, buf, textColor);
+		pr_debug("init text \n");
+		if (SDL_MUSTLOCK(textSurface)) {
+			SDL_LockSurface(textSurface);
+		}
+		uint8_t* pixels = (uint8_t*)textSurface->pixels;
+		int pitch = textSurface->pitch;//48
+		int width = textSurface->w;//25
+		int height = textSurface->h;//56
+		int xoffset = (c%8)*32;
+		int yoffset = (c/8)*32;
+
+		xoffset = xoffset + (32-width)/2;
+		yoffset = yoffset + (32-height)/2;
+		/*
+			256x256 8行8列
+			256/8=32
+		*/
+		pr_debug("pitch %d, width %dx%d\n", pitch, width, height);
+
+		for (int y = 0; y < height; ++y) {
+			for (int x = 0; x < width; ++x) {
+				uint8_t pixel = pixels[(y * pitch ) + x];
+				if(pixel> 0){
+					// device_pixel(device, xpos+x,ypos+y, 0xffffff);//SDL_MapRGB(SDL_AllocFormat(SDL_PIXELFORMAT_BGR888), 255, 255, 255));
+					ptr[x+xoffset+(y+yoffset)*256] = 0;
+				}
+			}
+		}
+		if (SDL_MUSTLOCK(textSurface)) {
+			SDL_UnlockSurface(textSurface);
+		}
+		SDL_FreeSurface(textSurface);
+	}
+}
 // 0xe3c08cff 1024=0x400
 /*
 int a[3][2]
@@ -267,7 +317,11 @@ void init_texture(device_t *device, uint8_t *buffer) {
 	for (j = 0; j < TEXTURE_H; j++) {
 		for (i = 0; i < TEXTURE_W; i++) {
 			int x = i / 32, y = j / 32;
-			texture[j][i] = ((x + y) & 1)? 0xffffffff : 0xe3c08cff;//8*16=128
+			uint8_t r = 256-i;
+			int c = (r<<8)|(r<<16)|(r<<24);
+			c = 0xffffff;
+			texture[j][i] = ((x + y) & 1)? c : 0xe3c08cff;//8*16=128
+
 			// texture[j][i] = SDL_MapRGB(SDL_AllocFormat(SDL_PIXELFORMAT_RGB24), 
 			// 	buffer[j*898+i*3], 
 			// 	buffer[j*898+i*3+1], 
@@ -280,6 +334,7 @@ void init_texture(device_t *device, uint8_t *buffer) {
 		if(j<5)
 			printf("texture[%d] = %p\n", j, texture[j]);
 	}
+	drawCharAtTexture(device, texture);
 	device_set_texture(device, texture, TEXTURE_W * 4, TEXTURE_W, TEXTURE_H);
 	printf("%s ---\n", __func__);
 }
@@ -334,6 +389,8 @@ int main(void)
 
 	init_texture(&device, device.bmpBuffer);
 
+	device.drawlines = 16;
+	device.drawplane = 16;
 
 	matrix_t m;
 	bool quit = false;
@@ -378,7 +435,7 @@ int main(void)
 				switch (e.type) {
 					case SDL_MOUSEWHEEL:
 						// printf("x ==-= %d\n",e.wheel.y);
-						r+=(e.wheel.y*0.2f);
+						r+=(e.wheel.y*0.1f);
 							// thetax = dx*0.01f+thetax;
 							// thetay = dy*0.01+thetay;
 						if(r>0.15f){
@@ -592,14 +649,14 @@ int main(void)
 		ImGui::SameLine();
 		ImGui::CheckboxFlags("palne", &device.drawplane, ImGuiConfigFlags_NoMouse);
 		// draw_cube(&device);
-		if(device.drawplane)
-			draw_panel(&device);
-		if(device.drawcircle)
-			draw_circle(&device);
 		if(device.drawlines)
 			drawMyLines(&device);
+		if(device.drawcircle)
+			draw_circle(&device);
 		if(device.drawcube)
 			draw_box(&device);
+		if(device.drawplane)
+			draw_panel(&device);
 
 
 		matrix_set_translate(&t->trans, trans.x, trans.y, trans.z);

@@ -14,6 +14,9 @@ void calcrhw(device_t *device, trapezoid_t traps[2]) {
 	// pr_debug("---\n");
 	float pvalue[2] = {0,1};
 	float x_realmax = -100;
+
+
+
 	for(y=traps[0].bottom-0.5;y>traps[0].top;y--) {
 		vertex_t v1 = traps[0].left.v1;
 		vertex_t v2 = traps[0].left.v2;
@@ -98,19 +101,19 @@ void calcrhw(device_t *device, trapezoid_t traps[2]) {
 
 		// }----------------------------------------------------
 
-		float x00 = traps[0].left.v2.spos.x + u00*(traps[0].left.v1.spos.x-traps[0].left.v2.spos.x);
-		float y00 = traps[0].left.v2.spos.z + u00*(traps[0].left.v1.spos.z-traps[0].left.v2.spos.z);
+		float x00 = v2.spos.x + u00*(v1.spos.x-v2.spos.x);
+		float y00 = v2.spos.z + u00*(v1.spos.z-v2.spos.z);
 		float r = sqrt(pow(x00, 2.f)+pow(y00, 2.f));
 		// pr_debug("%3.2f/%3.2f/%3.2f\n", x00, y00, r);
 		if(r>8.f){
-			float x0 = traps[0].left.v2.pos.x + p*(traps[0].left.v1.pos.x-traps[0].left.v2.pos.x);
-			float y0 = traps[0].left.v2.pos.y + p*(traps[0].left.v1.pos.y-traps[0].left.v2.pos.y);
+			float x0 = v2.pos.x + p*(v1.pos.x-v2.pos.x);
+			float y0 = v2.pos.y + p*(v1.pos.y-v2.pos.y);
 			// device_point(device, x0, y0, 0xff00);
 			// break;
 		}
 
 
-		if(u01 > 0.875f){
+		if(u01 > (1.f*6/8)){
 			float x0 = v2.pos.x + p*(v1.pos.x-v2.pos.x);
 			float y0 = v2.pos.y + p*(v1.pos.y-v2.pos.y);
 			device_point(device, x0, y0, 0xff00);
@@ -118,9 +121,4 @@ void calcrhw(device_t *device, trapezoid_t traps[2]) {
 			break;
 		}
 	}
-	// pr_debug("%3.2f/%3.2f\n",pmin, pmax);
-
-
-
-
 }

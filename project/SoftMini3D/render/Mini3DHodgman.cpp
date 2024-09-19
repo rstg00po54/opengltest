@@ -6,6 +6,7 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include "Mini3D.h"
 #include "Mini3DRender.h"
+
 // using namespace glm;
 using namespace std;
 
@@ -188,4 +189,105 @@ vector<point_t> Hodgmanmain(point_t min, point_t max, vector<point_t> subjectPol
 	// }
 
 	return clippedPolygon;
+}
+
+
+static vertex_t vertex_interp(const vertex_t *x1, const vertex_t *x2, float t) {
+	vertex_t y;
+	vector_interp(&y.pos, &x1->pos, &x2->pos, t);
+	y.tc.u = interp(x1->tc.u, x2->tc.u, t);
+	y.tc.v = interp(x1->tc.v, x2->tc.v, t);
+	y.color.r = interp(x1->color.r, x2->color.r, t);
+	y.color.g = interp(x1->color.g, x2->color.g, t);
+	y.color.b = interp(x1->color.b, x2->color.b, t);
+	y.rhw = interp(x1->rhw, x2->rhw, t);
+	return y;
+}
+
+
+static void clip(device_t *device, VertDraw vt, vertex_t v1, vertex_t v2, vector<vertex_t> *r) {
+	vertex_t tmp1, tmp2;
+	bool insideS = !(vt.t[0] > 0); // 上一个顶点是否在区域内
+	bool insideE = !(vt.t[1] < 1); // 当前顶点是否在区域内
+
+	ImGui::Checkbox("S", &insideS);
+	ImGui::SameLine();
+	ImGui::Checkbox("E", &insideE);
+
+	// v1.pos = vt.screenPosition[0];
+	// v2.pos = vt.screenPosition[1];
+
+		tmp1 = v1;
+		tmp2 = v2;
+	if(vt.ret < 0)
+		return;
+/*
+	情况1：S内侧，E内侧 => 选择顶点E
+	情况2：S内侧，E外侧 => 选择交点I
+	情况3：S外侧，E内侧 => 先选择交点I，然后选择E
+	情况4：S外侧，E外侧 => 不选择顶点
+*/
+	if (insideE && insideS) { 
+		// 情况1：S内侧，E内侧 => 选择顶点E
+		tmp2.pos = vt.screenPosition[1];
+		r->push_back(tmp2);
+		drawCharAt(device, tmp2.pos, "t12");
+		ImGui::Text("case 1 E");
+	} else if (!insideE && insideS) {
+		// 情况2：S内侧，E外侧 => 选择交点I
+		tmp1 = vertex_interp(&v1, &v2, vt.t[0]);
+		tmp1.pos = vt.screenPosition[1];
+		r->push_back(tmp1);
+		drawCharAt(device, tmp1.pos, "t21");
+		ImGui::Text("case 2 I");
+	} else if (insideE && !insideS) {
+		// 情况3：S外侧，E内侧 => 先选择交点I，然后选择E
+
+		tmp1 = vertex_interp(&v1, &v2, vt.t[0]);
+		tmp1.pos = vt.screenPosition[0];
+
+		tmp2 = vertex_interp(&v1, &v2, vt.t[1]);
+		tmp2.pos = vt.screenPosition[1];
+
+		r->push_back(tmp1);
+		r->push_back(tmp2);
+
+		drawCharAt(device, tmp1.pos, "t31");
+		drawCharAt(device, tmp2.pos, "t32");
+
+
+		ImGui::Text("case 3 I/E");
+
+	} else { // 情况4：S外侧，E外侧 => 选择交点S/E
+		tmp1 = vertex_interp(&v1, &v2, vt.t[0]);
+		tmp2 = vertex_interp(&v1, &v2, vt.t[1]);
+		tmp1.pos = vt.screenPosition[0];
+		tmp2.pos = vt.screenPosition[1];
+		r->push_back(tmp1);
+		r->push_back(tmp2);
+		drawCharAt(device, tmp1.pos, "t41");
+		drawCharAt(device, tmp2.pos, "t42");
+		ImGui::Text("case 4 S/E");
+	}
+
+}
+
+vector<vertex_t> Hodgmanmain(device_t *device, VertDraw vt1, VertDraw vt2, VertDraw vt3, vertex_t v1, vertex_t v2, vertex_t v3){
+	vector<vertex_t> ret;
+	clip(device, vt1, v1, v2, &ret);
+	clip(device, vt2, v2, v3, &ret);
+	clip(device, vt3, v3, v1, &ret);
+	// ImGui::Text("push --");
+	// if(vt3.t[0] > 0) {
+	// 	ImGui::Text("push 0");
+	// }
+	// if(vt3.t[1] < 1.f) {
+	// 	ImGui::Text("push 1");
+	// }
+	// if(vt3.t[0] == 0.f && vt3.t[1] == 1.f){
+	// 	ImGui::Text("no push");
+	// }
+
+
+	return ret;
 }

@@ -6,7 +6,7 @@
 #include <math.h>
 
 int print;
-static void device_draw_traps(device_t *device, vertex_t *v1, vertex_t *v2, vertex_t *v3);
+static void device_draw_traps(device_t *device, vertex_t v1, vertex_t v2, vertex_t v3);
 //=====================================================================
 // 渲染实现
 //=====================================================================
@@ -337,33 +337,39 @@ void device_draw_triangle(device_t *device,
 
 	// point_t co1, co2, co3;
 	// point_t po1, po2, po3, po4;
+	static int flag = 0;
+	ImGui::CheckboxFlags("cube", &flag, ImGuiConfigFlags_NoMouse);
 
-	VertDraw vert2 = drawLine(device, v1->pos, v2->pos, 1);
-	VertDraw vert3 = drawLine(device, v1->pos, v3->pos, 1);
-	drawLine(device, v2->pos, v3->pos);
-	ImGui::SliderFloat2("vert2", (float *)&vert2.t, 0, 1.f);
-	ImGui::SliderFloat2("vert3", (float *)&vert3.t, 0, 1.f);
-	
-	vector<point_t> subjectPolygon = {
-	   p1,p2,p3
-	};
-	point_t minpoint{0, 0};
-	point_t maxpoint{(float)device->width, (float)device->height};
-	vector<point_t> out = Hodgmanmain(minpoint, maxpoint, subjectPolygon);
-	int transCount = out.size();
-	ImGui::Text("out %d\n", out.size());
+	VertDraw vert1 = drawLine(device, v1->pos, v2->pos, 0);
+	ImGui::Text("---");
+	VertDraw vert2 = drawLine(device, v2->pos, v3->pos, 0);
+	ImGui::Text("---");
+	VertDraw vert3 = drawLine(device, v3->pos, v1->pos, 0);
 
 
-	// device_point(device, p1.x, p1.y, 0xff0000);
-	// drawCharAt(device, p1.x, p1.y, "p1");
-	// drawCharAt(device, p2.x, p2.y, "p2");
-	// drawCharAt(device, p3.x, p3.y, "p3");
+
+	// drawCharAt(device, p1, "v1");
+	// drawCharAt(device, p2, "v2");
+	// drawCharAt(device, p3, "v3");
+	vector<vector_t> points;
+	vertex_t t1, t2, t3;
+
+	t1 = *v1;
+	t2 = *v2;
+	t3 = *v3;
 
 
-	// if(transCount == 4) {
-	// 	device_trans_line(device, out[0], out[1], out[2], device->foreground);
-	// 	device_trans_line(device, out[0], out[2], out[3], device->foreground);
-	// }
+	vector<vertex_t> out2 = Hodgmanmain(device, vert1, vert2, vert3, *v1, *v2, *v3);
+	ImGui::Text("draw %d", out2.size());
+
+	if(flag) {
+		ImGui::SliderFloat2("vert", (float *)&out2[0].tc, 0, 1);
+	}
+	for(int i = 0;i<out2.size()-2;i++) {
+		device_trans_line(device, out2[0].pos, out2[i+1].pos, out2[i+2].pos, 0xff);
+	}
+	// drawCharAt(device, out2[0].pos, "axxx");
+	// device_draw_traps(device, out2[0], out2[1], out2[2]);
 
 	if (render_state & RENDER_STATE_WIREFRAME) {		// 线框绘制
 		// device_trans_line(device, p1, p2, p3, device->foreground);
@@ -375,75 +381,64 @@ void device_draw_triangle(device_t *device,
 	// 纹理或者色彩绘制
 	if (render_state & (RENDER_STATE_TEXTURE | RENDER_STATE_COLOR)) {
 		vertex_t t1, t2, t3, t4;
+
+		vertex_t vt3, vt2;
 		// v 投影之前
 		t1 = *v1;
 		t2 = *v2;
 		t3 = *v3;
-		float p ;
-		float rhw1, rhw2, rhw3, rhw4;
-		float rhw;
 
-		p = vert3.t[0];
-		rhw1 = 1.f/vert3.clipPosition[0].w;
-		rhw3 = 1.f/c3.w;
-		rhw = rhw1 + p * (rhw3 - rhw1);
-		t1.tc.u = t1.tc.u + p * (t3.tc.u - t1.tc.u);
-		t1.tc.v = t1.tc.v + p * (t3.tc.v - t1.tc.v);
+		t1.pos = p1;
+		t1.pos.w = c1.w;
+		t1.spos = v1->pos;	
 
-		// p 归一化 屏幕坐标
-		// t1.pos = p1;
-		t1.pos = vert3.screenPosition[0];
 		t2.pos = p2;
-		t3.pos = p3;
-		// c 投影之后
-		// t1.pos.w = c1.w;
-		t1.pos.w = vert3.localPosition[0].w;
 		t2.pos.w = c2.w;
-		t3.pos.w = c3.w;
-/*
-   t3-----t2
-    \    /
-vert3\ _/vert2
-  t1  \/  t4
-      
-*/
-		// t1.spos = v1->pos;
-		t1.spos = vert3.localPosition[0];
 		t2.spos = v2->pos;
+
+		t3.pos = p3;
+		t3.pos.w = c3.w;
 		t3.spos = v3->pos;
-		device_draw_traps(device, &t1, &t2, &t3);
 
-		static texcoord_t tc1,tc2,tc4; 
+		vt2.pos   = vert2.screenPosition[0];
+		vt2.pos.w = vert2.localPosition[0].w;
+		vt2.spos  = vert2.localPosition[0];
 
-		ImGui::SliderFloat2("t2u", (float *)&tc2, 0, 1.f);
-		ImGui::SliderFloat2("t1u", (float *)&tc1, 0, 1.f);
-		ImGui::SliderFloat2("t4u", (float *)&tc4, 0, 1.f);
-
-
-
+		vt3.pos   = vert3.screenPosition[0];
+		vt3.pos.w = vert3.localPosition[0].w;
+		vt3.spos  = vert3.localPosition[0];
 /*
-   t3-----t2
+10 t3-----t2 11
     \    /
-vert3\ _/vert2
-  t1  \/  t4
-      
+vert3\__/vert2
+ vt3  \/  vt2
+      t1
 */
-		t4.pos   = vert2.screenPosition[0];
-		t4.pos.w = vert2.localPosition[0].w;
-		t4.spos  = vert2.localPosition[0];
+		float p;
+		p = vert2.t[0];
+		vt2.tc.u = t1.tc.u + p * (t2.tc.u - t1.tc.u);
+		vt2.tc.v = t1.tc.v + p * (t2.tc.v - t1.tc.v);
+		// p = vert3.t[0];
+		vt3.tc.u = t1.tc.u + p * (t3.tc.u - t1.tc.u);
+		vt3.tc.v = t1.tc.v + p * (t3.tc.v - t1.tc.v);
 
-		t2.tc.u = 1;
-		t2.tc.v = 0;
 
-		t1.tc.u = vert3.t[0];
-		t1.tc.v = vert3.t[0];
+		static texcoord_t tc1,tc2,tc3,tc4; 
 
-		t4.tc.u = vert2.t[0];
-		t4.tc.v = 0;
-		device_draw_traps(device, &t4, &t2, &t1);
-		drawCharAt(device, t4.pos.x, t4.pos.y-10, "t4");
-		drawCharAt(device, t1.pos.x, t1.pos.y-10, "t1");
-		drawCharAt(device, t2.pos.x, t2.pos.y-10, "t2");
+		// ImGui::SliderFloat2("t1u", (float *)&tc1, 0, 1.f);
+		// ImGui::SliderFloat2("t2u", (float *)&tc2, 0, 1.f);
+		// ImGui::SliderFloat2("t4u", (float *)&tc4, 0, 1.f);
+		// t1.tc = tc1;
+		// t2.tc = tc2;
+		// t4.tc = tc4;
+
+		device_draw_traps(device, vt3, t2, t3);
+		if(vert2.ret != -1)
+			device_draw_traps(device, vt3, vt2, t2);
+		device_draw_traps(device, t1, t2, t3);
+		// drawCharAt(device, vt2.pos.x, vt2.pos.y-20, "t4");
+		// drawCharAt(device, t1.pos.x, t1.pos.y-20, "t1");
+		// drawCharAt(device, t2.pos.x, t2.pos.y-20, "t2");
 
 	}
 
@@ -455,19 +450,42 @@ vert3\ _/vert2
 
 
 
-static void device_draw_traps(device_t *device, vertex_t *v1, vertex_t *v2, vertex_t *v3) {
+static void device_draw_traps(device_t *device, vertex_t v1, vertex_t v2, vertex_t v3) {
 	trapezoid_t traps[2];
 
-	vertex_rhw_init(v1);	// 初始化 w
-	vertex_rhw_init(v2);	// 初始化 w
-	vertex_rhw_init(v3);	// 初始化 w
+	vertex_rhw_init(&v1);	// 初始化 w
+	vertex_rhw_init(&v2);	// 初始化 w
+	vertex_rhw_init(&v3);	// 初始化 w
 
 	// 拆分三角形为0-2个梯形，并且返回可用梯形数量
-	int n = trapezoid_init_triangle(traps, v1, v2, v3);
+	int n = trapezoid_init_triangle(traps, &v1, &v2, &v3);
 	if (n >= 1) {
 		device_render_trap(device, &traps[0]);
-	}
-	if (n >= 2) 
-		device_render_trap(device, &traps[1]);
+		// calcrhw(device, traps);
+		device_draw_line(device, traps[0].left.v1.pos, traps[0].left.v2.pos, 0);
+		device_draw_line(device, traps[0].left.v1.pos, traps[0].left.v2.pos, 0);
 
+		// drawCharAt(device, traps[0].left.v1.pos, "v1");
+		// drawCharAt(device, traps[0].left.v2.pos, "v2");
+		// drawCharAt(device, traps[0].left.v.pos,  "v");
+		// drawCharAt(device, traps[0].right.v.pos, "v");
+	}
+	if (n >= 2) {
+		device_render_trap(device, &traps[1]);
+	}
+
+		device_draw_line(device, traps[0].left.v.pos, traps[0].right.v.pos, 0);
+
+		// point_t vp1, vp2;
+		// vp1 = {0,0,0,1};
+		// vp2 = {100,500,0,1};
+		// vp1 = traps[0].left.v.pos;
+		// vp2 = traps[0].right.v.pos;
+
+		// vp1.x -= 50;
+		// vp1.y -= 50;
+
+		// vp2.x += 50;
+		// vp2.y += 50;
+		// device_draw_line(device, vp1, vp2, 0);
 }

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include "Mini3DDraw.h"
+#include "Mini3DRender.h"
 
 static void DumpSurfaceToFile(SDL_Surface* surface, const char* filename) {
     if (!surface) {
@@ -184,9 +185,9 @@ point_t drawMyLines(device_t *device) {
 	// point_t po2[2];
 	matrix_t m_out[2];
 	point_t psrc[][2] = {
-		{{0,0,0,1},{2,0,0,1}},
-		{{0,0,0,1},{0,1,0,1}},
-		{{0,0,0,1},{0,0,2,1}},
+		{{-15,0,-15,1},{0,0,-15,1}},
+		{{-15,0,-15,1},{-15,15,-15,1}},
+		{{-15,0,-15,1},{-15,0,0,1}},
 	};
 	createText(device);
 	// Render(device);
@@ -196,17 +197,19 @@ point_t drawMyLines(device_t *device) {
 	transform_update(&device->transform);
 	int len = sizeof(psrc)/sizeof(psrc[0]);
 	int c[] = {0xff,0xff00,0x0000,0,0};
+	char *str[3] = {"x", "y", "z"};
 	for (int i = 0; i < len; i++) {
 
-		// drawLine(device, psrc[i][0], psrc[i][1], c[i]);
-
+		VertDraw r = drawLine(device, psrc[i][0], psrc[i][1], c[i]);
+		point_t p = r.screenPosition[1];
+		drawCharAt(device, p.x, p.y, str[i]);
 	}
 
 	point_t v1;
 	point_t v2;
 	v1 = { 10, 0, 0, 1}; 
 	v2 = {-10, 0, 0, 1}; 
-	for (int i = 0; i <= 10; i++) {
+	for (int i = -10; i <= 10; i++) {
 		v1.z = i*1.25f;
 		v2.z = i*1.25f;
 		drawLine(device, v1, v2);
