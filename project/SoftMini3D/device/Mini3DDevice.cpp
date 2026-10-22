@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <cmath>
 #include <assert.h>
 #include <string.h>
 #include "Mini3DDevice.h"
@@ -237,7 +238,8 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 
 
 
-	for (; w0 > 0; x++, w0--) {
+	// Clamp the scanline before accessing either buffer.
+	for (; w0 > 0 && x < width; x++, w0--) {
 		if (x >= 0) {
 			float rhw = scanline->v.rhw;
 			float t;
@@ -247,9 +249,8 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 			if(print == 0){
 				// pr_debug("t %3.2f\n", t);
 			}
-			if (rhw < zbuffer[x])
-				continue;
-			// if (rhw >= zbuffer[x]) {	
+			// Failing depth must NOT skip vertex_add: attributes advance for every pixel.
+            if (rhw > 0.0f && std::isfinite(rhw) && rhw >= zbuffer[x]) {
 				float w = 1.0f / rhw;
 				zbuffer[x] = rhw;
 				float p = (x - scanline->x)*1.f/scanline->w;
@@ -318,10 +319,9 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 
 
 				}
-			// }
+			}
 		}
 		vertex_add(&scanline->v, &scanline->step);
-		if (x >= width) break;
 	}
 
 	// for(i = 0;i<10;i++) {
